@@ -1,0 +1,69 @@
+{
+  "name": "affiliate-api",
+  "version": "1.0.0",
+  "description": "affiliate api",
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.blockchainlabs.asia/infinito/affiliate-api.git"
+  },
+  "keywords": [
+    "affiliate",
+    "pool",
+    "api",
+    "infinito"
+  ],
+  "author": "infinito",
+  "license": "ISC",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cross-env ENV_NAME=dev nodemon",
+    "eslint": "eslint .",
+    "eslint:check": "eslint --print-config .eslintrc.js | eslint-config-prettier-check",
+    "eslint:fix": "eslint --fix .",
+    "prettier": "prettier --write \"{,!(node_modules)/**/}*.js\"",
+    "test": "NODE_ENV=test mocha --recursive 'app/feature/**/*.test.js'"
+  },
+  "dependencies": {
+    "axios": "^0.19.0",
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "cross-env": "^7.0.2",
+    "dev": "^0.1.3",
+    "dotenv": "^8.2.0",
+    "email-templates": "^6.0.3",
+    "express": "^4.17.1",
+    "express-rate-limit": "^5.0.0",
+    "express-recaptcha": "^5.0.1",
+    "helmet": "^3.21.2",
+    "i18n": "^0.8.4",
+    "joi": "^14.3.1",
+    "jsonwebtoken": "^8.5.1",
+    "log4js": "^6.0.0",
+    "mongoose": "^5.7.11",
+    "mongoose-diff-history": "^1.6.1",
+    "mongoose-timestamp": "^0.6.0",
+    "morgan": "^1.9.1",
+    "nodemailer": "^6.3.1",
+    "object-mapper": "^6.0.1",
+    "pg": "^7.12.1",
+    "pg-hstore": "^2.3.3",
+    "redis": "^2.8.0",
+    "rootpath": "^0.1.2",
+    "sequelize": "^5.21.2",
+    "sequelize-temporalize": "^4.1.0",
+    "string-template": "^1.0.0",
+    "swagger-jsdoc": "^3.4.0",
+    "swagger-ui-express": "^4.1.2",
+    "web3-utils": "^1.2.4"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "eslint": "^6.6.0",
+    "eslint-config-prettier": "^6.6.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "mocha": "^6.2.2",
+    "nodemon": "^2.0.2",
+    "prettier": "^1.19.1"
+  }
+}
