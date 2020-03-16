@@ -1,6 +1,6 @@
 const Model = require('app/model').affiliate_types;
 
-(async () => {
+module.exports = async () => {
   const count = await Model.count();
 
   if (count === 0) {
@@ -19,4 +19,4 @@ const Model = require('app/model').affiliate_types;
       returning: true
     });
   }
-})();
+};

@@ -1,12 +1,19 @@
 const config = require('app/config');
 
-if (config.enableSeed) {
-  try {
-    require('./organization');
-    require('./affiliate-type');
-    require('./app');
+const seedData = async () => {
+  if (config.enableSeed) {
+    try {
+      await require('./organization')();
+      await require('./affiliate-type')();
+      await require('./app')();
+      await require('./policy')();
+
+      console.log('Seed data completed.');
+    }
+    catch (err) {
+      console.log(err);
+    }
   }
-  catch (err) {
-    console.log(err);
-  }
-}
+};
+
+seedData();

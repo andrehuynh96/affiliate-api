@@ -1,6 +1,6 @@
 
 module.exports = (sequelize, DataTypes) => {
-  const Organization = sequelize.define("organizations", {
+  const Organization = sequelize.define('organizations', {
     id: {
       type: DataTypes.UUID,
       primaryKey: true,
@@ -17,7 +17,5 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true,
   });
 
-  // Organization.hasMany();
-
   return Organization;
-}
+};
