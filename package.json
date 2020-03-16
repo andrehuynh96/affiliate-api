@@ -54,6 +54,7 @@
     "string-template": "^1.0.0",
     "swagger-jsdoc": "^3.4.0",
     "swagger-ui-express": "^4.1.2",
+    "typedi": "^0.8.0",
     "web3-utils": "^1.2.4"
   },
   "devDependencies": {

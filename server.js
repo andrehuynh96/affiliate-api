@@ -1,8 +1,4 @@
-/*eslint no-process-env: "off"*/
-require('dotenv').config();
 require('rootpath')();
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-process.env.PORT = process.env.PORT || 3001;
 const express = require('express');
 const morgan = require('morgan');
 const http = require('http');
@@ -15,13 +11,13 @@ app.use(morgan('dev'));
 
 database.init(async err => {
   if (err) {
-    logger.error(`database start fail:`, err);
+    logger.error('database start fail:', err);
     return;
   }
 
   redis.init(async err => {
     if (err) {
-      logger.error(`Redis start fail:`, err);
+      logger.error('Redis start fail:', err);
       return;
     }
     require('app/model');
@@ -34,8 +30,9 @@ database.init(async err => {
     app.use('/', require('app/index'));
     app.use(express.static('public'));
     const server = http.createServer(app);
-    server.listen(process.env.PORT, function () {
-      console.log(`server start successfully on port: ${process.env.PORT}`);
+
+    server.listen(process.env.APP_PORT, function () {
+      console.log(`server start successfully on port: ${process.env.APP_PORT}`);
     });
     process.on('SIGINT', () => {
       if (redis) {

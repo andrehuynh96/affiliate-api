@@ -62,20 +62,21 @@ router.use(
 );
 
 router.get('/', function (req, res) {
-  let result = {
+  const result = {
     message: 'Hello',
   };
   res.json(result);
 });
 router.get('/health', (req, res) => res.send('OK!'));
 require('app/config/swagger')(router, '/affiliate-api');
-router.use("/.well-known", express.static(path.join(__dirname, "public")));
+router.use('/.well-known', express.static(path.join(__dirname, 'public')));
 router.use('/api', require('app/feature'));
 
 router.use(function (req, res) {
   res.notFound('Not Found');
 });
 
+// eslint-disable-next-line no-unused-vars
 router.use((err, req, res, next) => {
   console.log(err);
   res.serverInternalError(err.message);

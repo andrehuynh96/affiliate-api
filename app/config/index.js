@@ -1,7 +1,3 @@
-/*eslint no-process-env: "off"*/
-require('dotenv').config();
-const fs = require("fs");
-const path = require('path');
 const logFolder = process.env.LOG_FOLDER || './public/logs';
 
 const config = {
@@ -51,19 +47,7 @@ const config = {
     mailSendAs: process.env.MAIL_SEND_AS,
   },
   rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
-  jwt: {
-    options: {
-      issuer: process.env.SIGN_I || "infinito",
-      subject: process.env.SIGN_S || "info@infinito.io",
-      audience: process.env.SIGN_A || "https://www.infinito.io/",
-      expiresIn: process.env.EXPIRESIN ? parseInt(process.env.EXPIRESIN) : 84600,
-      algorithm: "RS256" // RSASSA [ "RS256", "RS384", "RS512" ]
-    },
-    private: fs.readFileSync(path.resolve(__dirname, "../../key/private.key"), "utf8"),
-    public: fs.readFileSync(path.resolve(__dirname, "../../key/public.key"), "utf8")
-  },
-  platform: process.env.PLATFORM ? process.env.PLATFORM.split(",") : ["ATOM"],
-  enableSeed: process.env.ENABLE_SEED == "1"
+  enableSeed: process.env.ENABLE_SEED == '1',
 };
 
 module.exports = config;

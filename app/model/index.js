@@ -4,8 +4,8 @@ const path = require('path');
 
 const basename = path.basename(__filename);
 const db = {};
+const sequelize = database.instanse;
 
-let sequelize = database.instanse;
 fs.readdirSync(__dirname)
   .filter(file => {
     return (
