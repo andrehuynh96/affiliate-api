@@ -1,121 +1,187 @@
-const _ = require('lodash');
-// import { Service } from 'typedi';
-
 class BaseService {
-
-  modelName;
-  model;
-  // protected logger: Logger;
 
   constructor(model, modelName) {
     this.model = model;
     this.modelName = modelName;
-
-    // this.logger = containerHelper.getLogger();
   }
 
+  findAll(cond) {
+    cond = cond || {};
 
-  /*
-  async find(cond?: any): Promise<Array<InstanceType<ISchema>>> {
-    return new Promise<Array<InstanceType<ISchema>>>(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.find(cond);
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  async findById(id: any): Promise<InstanceType<ISchema> | undefined> {
-    return new Promise<InstanceType<ISchema>>(async (resolve, reject) => {
-      try {
-        const result = await this.model.findById(id);
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  async findOne(cond: any): Promise<InstanceType<ISchema> | undefined> {
-    return new Promise<InstanceType<ISchema>>(async (resolve, reject) => {
-      try {
-        if (cond.id) {
-          cond._id = cond.id;
-          delete cond.id;
-        }
-
-        const result = await this.model.findOne(cond);
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  async create(instant: ISchema | any): Promise<InstanceType<ISchema>> {
-    return new Promise<InstanceType<ISchema>>(async (resolve, reject) => {
-      try {
-        const result = await this.model.create(instant);
-
-        resolve(result);
-      } catch (err) {
-        if (err.name === 'MongoError' && err.code === 11000) {
-          // return reject(createHttpError(409, 'Duplicate key'));
-          return reject(err);
-        }
-
-        reject(err);
-      }
-    });
-  }
-
-  async update(instant: ISchema): Promise<InstanceType<ISchema>> {
-    const id = instant.id;
-
-    return this.updateOne(id, instant);
-  }
-
-  async updateOne(id: any | string, body: any): Promise<InstanceType<ISchema>> {
-    return new Promise<InstanceType<ISchema>>(async (resolve, reject) => {
-      const updateData = _.omit(body, ['id']);
-      let cond: any = id;
-
-      if (_.isString(id) || ObjectId.isValid(id)) {
-        cond = { _id: id };
-      }
-
-      return this.model.findOneAndUpdate(cond,
-        {
-          $inc: { __v: 1 },
-          $set: updateData,
-        }
-        , {
-          new: true,
-          select: {},
-        })
-        .then((result: InstanceType<ISchema>) => {
-          resolve(result);
-        })
-        .catch((err: any) => {
-          reject(err);
+        const result = await this.model.findAll({
+          where: cond,
         });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
-  async delete(id: any): Promise<InstanceType<ISchema>> {
-    return new Promise<InstanceType<ISchema>>(async (resolve, reject) => {
-      return this.model.findByIdAndRemove({ _id: id })
-        .then((result: InstanceType<ISchema>) => {
-          resolve(result);
-        })
-        .catch((err: any) => {
-          reject(err);
-        });
+  findByPk(id) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findByPk(id);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
     });
   }
-*/
+
+  findOne(cond) {
+    cond = cond || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findOne({
+          where: cond,
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  findAndCountAll(cond, offset, limit) {
+    cond = cond || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findAndCountAll({
+          where: cond,
+          offset,
+          limit,
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  count(cond) {
+    cond = cond || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.count({
+          where: cond,
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  findOrCreate(cond, defaultData) {
+    cond = cond || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findOrCreate({
+          where: cond,
+          defaults: defaultData,
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  create(instance) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.create(instance);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  updateWhere(cond, data) {
+    cond = cond || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.update(data, {
+          where: cond,
+          returning: true
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  async update(instance) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.update(instance);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+
+  deleteWhere(cond, defaultData) {
+    cond = cond || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.destroy({
+          where: cond,
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  delete(instance) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await instance.destroy();
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  deleteByPk(id) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const instance = await this.findByPk(id);
+
+        return instance ? this.delete(instance) : null;
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+  }
 
 }
 

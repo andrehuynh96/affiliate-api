@@ -27,5 +27,6 @@ module.exports = {
     "no-console": 0,
     'prefer-const': 2,
     'no-unused-vars': 0,
+    'no-async-promise-executor': 0,
   }
 };
