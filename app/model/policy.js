@@ -1,11 +1,10 @@
-
 module.exports = (sequelize, DataTypes) => {
   const Policy = sequelize.define('policies', {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
-      defaultValue: DataTypes.UUIDV4(),
+      autoIncrement: true,
     },
     name: {
       type: DataTypes.STRING(256),

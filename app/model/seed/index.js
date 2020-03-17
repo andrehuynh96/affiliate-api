@@ -1,7 +1,7 @@
 const config = require('app/config');
 
 const seedData = async () => {
-  if (config.enableSeed) {
+  if (config.db.enableSeed) {
     try {
       await require('./organization')();
       await require('./affiliate-type')();

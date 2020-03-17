@@ -8,8 +8,12 @@ module.exports = {
     mocha: true
   },
   parserOptions: {
+    ecmaVersion: 8,
     sourceType: "module",
-    ecmaVersion: 8
+    ecmaFeatures: {
+      modules: true,
+      experimentalObjectRestSpread: true,
+    }
   },
   rules: {
     "object-curly-spacing": [2, "always"],

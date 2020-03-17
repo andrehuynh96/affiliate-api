@@ -4,17 +4,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       allowNull: false,
+      autoIncrement: true,
     },
     policy_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
     },
-    // affiliate_type_id: {
-    //   type: DataTypes.INTEGER,
-    //   primaryKey: true,
-    //   allowNull: false,
-    // },
   }, {
     underscored: true,
     timestamps: true,

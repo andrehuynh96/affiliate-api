@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const AffiliateCode = sequelize.define('affiliate_codes', {
     code: {
-      type: DataTypes.STRING(64),
+      type: DataTypes.STRING(32),
       primaryKey: true,
       allowNull: false,
     },

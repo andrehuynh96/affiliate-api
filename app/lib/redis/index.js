@@ -8,7 +8,7 @@ let client = null;
 const cache = {
   client: () => {
     if (!client) {
-      client = cache.init();
+      cache.init();
     }
     return client;
   },
@@ -18,12 +18,12 @@ const cache = {
       host: config.redis.host,
       port: config.redis.port
     });
-    if (config.redis.usingPass == "1") {
+    if (config.redis.usingPass == '1') {
       client.auth(config.redis.pass);
     }
 
-    client.on("connect", function () {
-      console.log("Redis cache connected sucessfully");
+    client.on('connect', function () {
+      console.log('Redis cache connected sucessfully');
       if (callBack) {
         callBack();
         callBack = null;
@@ -49,6 +49,6 @@ const cache = {
       client.quit();
     }
   }
-}
+};
 
 module.exports = cache;

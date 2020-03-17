@@ -23,7 +23,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: true,
     },
-
   }, {
     underscored: true,
     timestamps: true,
@@ -32,7 +31,6 @@ module.exports = (sequelize, DataTypes) => {
   AffiliateType.associate = (models) => {
     // associations can be defined here
     AffiliateType.belongsTo(models.organizations);
-
     // AffiliateType.hasMany(models.user_roles, { foreignKey: 'user_id' })
   };
 

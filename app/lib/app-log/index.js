@@ -1,4 +1,4 @@
-const logger = require("app/lib/logger");
+const logger = require('app/lib/logger');
 
 const appLog = {
   push: (action, params) => {

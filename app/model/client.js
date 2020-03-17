@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       primaryKey: true,
       allowNull: false,
+      autoIncrement: true,
     },
     user_id: {
       type: DataTypes.STRING(64),
@@ -14,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     referrer_client_id: {
-      type: DataTypes.STRING(64),
+      type: DataTypes.BIGINT,
       allowNull: true,
     },
     level: {
@@ -22,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     parentPath: {
-      type: DataTypes.STRING(1000),
+      type: DataTypes.STRING(10000),
       allowNull: true,
     },
     root_client_id: {

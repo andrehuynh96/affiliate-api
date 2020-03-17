@@ -1,6 +1,18 @@
+const utils = require('app/lib/utils');
+
 const logFolder = process.env.LOG_FOLDER || './public/logs';
 
 const config = {
+  node: process.env.NODE_ENV,
+  envName: process.env.NODE_ENV,
+  isProduction: process.env.PRODUCTION === 'true',
+  isTest: process.env.NODE_ENV === 'test',
+  isDevelopment: process.env.NODE_ENV === 'development',
+  app: {
+    name: utils.getOsEnv('APP_NAME'),
+    appHostName: utils.getOsEnv('APP_HOST_NAME'),
+    port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
+  },
   logger: {
     console: {
       enable: true,
@@ -27,7 +39,8 @@ const config = {
         dialect: 'postgres',
         logging: false
       }
-    }
+    },
+    enableSeed: process.env.ENABLE_SEED === '1',
   },
   redis: {
     host: process.env.REDIS_HOST,
@@ -36,18 +49,7 @@ const config = {
     usingPass: process.env.REDIS_USING_PASS || 0,
     pass: process.env.REDIS_PASS,
   },
-  smtp: {
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE
-      ? process.env.SMTP_SECURE.toLowerCase() === 'true'
-      : false,
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    mailSendAs: process.env.MAIL_SEND_AS,
-  },
   rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
-  enableSeed: process.env.ENABLE_SEED == '1',
 };
 
 module.exports = config;
