@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     default_policy_id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   }, {
@@ -29,9 +29,11 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AffiliateType.associate = (models) => {
-    // associations can be defined here
     AffiliateType.belongsTo(models.organizations);
-    // AffiliateType.hasMany(models.user_roles, { foreignKey: 'user_id' })
+    AffiliateType.belongsTo(models.policies, {
+      as: 'policy',
+      foreignKey: 'default_policy_id',
+    });
   };
 
   return AffiliateType;

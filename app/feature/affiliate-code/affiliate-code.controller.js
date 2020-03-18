@@ -1,11 +1,14 @@
-/* eslint-disable prefer-const */
 const typedi = require('typedi');
-const AffiliateCodeService = require('../../services/affiliate-code-service');
-const ClientService = require('../../services/client-service');
+const {
+  AffiliateCodeService,
+  AffiliateTypeService,
+  ClientService,
+  PolicyService,
+} = require('../../services');
 
 const Container = typedi.Container;
 
-module.exports = {
+const controller = {
   create: async (req, res, next) => {
     try {
       const { body, affiliateTypeId } = req;
@@ -15,7 +18,7 @@ module.exports = {
       const code = affiliateCodeService.generateCode();
 
       let level = 1;
-      let parentPath = '';
+      let parentPath = 'root';
       let rootClientId = null;
       let affiliateCodeInstance = null;
 
@@ -34,8 +37,25 @@ module.exports = {
           return res.notFound(res.__('NOT_FOUND_REFERRER_USER'), 'NOT_FOUND_REFERRER_USER');
         }
 
+        if (referrerClient.affiliate_type_id !== affiliateTypeId) {
+          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+        }
+
         rootClientId = referrerClient.id;
+        // Check max level that policy can set for users
+        const policy = await controller.getPolicyByAffiliateTypeId(affiliateTypeId, rootClientId);
+        if (!policy) {
+          return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+        }
+
         level = referrerClient.level + 1;
+        const maxLevels = policy.max_levels;
+        if (maxLevels && level > maxLevels) {
+          const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+
+          return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
+        }
+
         parentPath = referrerClient.parentPath ? `${referrerClient.parentPath}.${referrerClient.id}` : referrerClient.id.toString();
       }
 
@@ -60,4 +80,20 @@ module.exports = {
     }
   },
 
+  async getPolicyByAffiliateTypeId(affiliateTypeId, rootClientId) {
+    // First, we find policy witch apply for root user
+    const policyService = Container.get(PolicyService);
+    let policy = await policyService.findByClientId(rootClientId);
+
+    if (!policy) {
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+      policy = affiliateType.policy;
+    }
+
+    return policy;
+  }
+
 };
+
+module.exports = controller;

@@ -19,12 +19,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'owner',
       foreignKey: 'client_id',
     });
-
-    // AffiliateCode.hasOne(models.clients, {
-    //   as: 'user',
-    //   foreignKey: 'client_id',
-    //   targetKey: 'id'
-    // });
   };
 
   return AffiliateCode;

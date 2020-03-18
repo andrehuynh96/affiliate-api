@@ -17,9 +17,11 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ClientPolicy.associate = async (models) => {
-    // associations can be defined here
     ClientPolicy.belongsTo(models.clients);
-    ClientPolicy.belongsTo(models.policies);
+    ClientPolicy.belongsTo(models.policies, {
+      as: 'policy',
+      foreignKey: 'policy_id',
+    });
 
     // await sequelize.query(
     //   `
