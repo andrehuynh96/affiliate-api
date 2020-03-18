@@ -7,8 +7,8 @@ module.exports = function (schema) {
     if (result.error) {
       logger.error(result.error);
       return res.badRequest('Missing parameters');
-    } else {
-      next();
     }
+
+    next();
   };
 };
