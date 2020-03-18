@@ -15,8 +15,16 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AffiliateCode.associate = (models) => {
-    // associations can be defined here
-    AffiliateCode.belongsTo(models.clients);
+    AffiliateCode.belongsTo(models.clients, {
+      as: 'owner',
+      foreignKey: 'client_id',
+    });
+
+    // AffiliateCode.hasOne(models.clients, {
+    //   as: 'user',
+    //   foreignKey: 'client_id',
+    //   targetKey: 'id'
+    // });
   };
 
   return AffiliateCode;

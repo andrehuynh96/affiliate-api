@@ -17,14 +17,12 @@ module.exports = async (req, res, next) => {
     return res.unauthorized();
   }
 
-  console.log(app.secret_key);
   const isValidApp = app.actived_flg && app.secret_key === secretKey;
   if (!isValidApp) {
     return res.unauthorized();
   }
 
-  res._app = app;
-  res.affiliateTypeId = app.affiliate_type_id;
+  req.affiliateTypeId = app.affiliate_type_id;
 
   next();
 };

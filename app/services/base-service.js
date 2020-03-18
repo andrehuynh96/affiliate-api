@@ -100,10 +100,10 @@ class BaseService {
     });
   }
 
-  create(instance) {
+  create(data) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.create(instance);
+        const result = await this.model.create(data);
 
         resolve(result);
       } catch (err) {

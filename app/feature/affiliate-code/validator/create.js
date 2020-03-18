@@ -1,12 +1,9 @@
 const Joi = require('joi');
 
 const schema = Joi.object().keys({
-  email: Joi.string()
-    .email({ minDomainAtoms: 2 })
-    .required(),
-  name: Joi.string().required(),
-  partner_type: Joi.string().valid('CHILD', 'AFFILIATE').required(),
-  created_by: Joi.number().integer().required()
+  user_id: Joi.string().max(64).required(),
+  // referrer_user_id: Joi.string().optional().allow('').max(64),
+  affiliate_code: Joi.string().optional().allow('').max(64),
 });
 
 module.exports = schema;

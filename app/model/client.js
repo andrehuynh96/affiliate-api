@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    parentPath: {
+    parent_path: {
       type: DataTypes.STRING(10000),
       allowNull: true,
     },
@@ -41,8 +41,13 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Client.associate = (models) => {
-    // associations can be defined here
     Client.belongsTo(models.affiliate_types);
+
+    Client.hasMany(models.affiliate_codes, {
+      as: 'affiliateCodes',
+      foreignKey: 'client_id',
+      sourceKey: 'id',
+    });
   };
 
   return Client;

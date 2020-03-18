@@ -8,6 +8,7 @@ const path = require('path');
 const config = require('app/config');
 const i18n = require('i18n');
 const rateLimit = require('express-rate-limit');
+const logger = require('app/lib/logger');
 
 i18n.configure({
   locales: ['en', 'vi', 'ja', 'zh', 'ru', 'ko', 'pt'],
@@ -74,12 +75,6 @@ router.use('/api', require('app/feature'));
 
 router.use(function (req, res) {
   res.notFound('Not Found');
-});
-
-// eslint-disable-next-line no-unused-vars
-router.use((err, req, res, next) => {
-  console.log(err);
-  res.serverInternalError(err.message);
 });
 
 module.exports = router;

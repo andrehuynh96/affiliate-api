@@ -3,18 +3,15 @@ const BaseService = require('./base-service');
 const AppModel = require('app/model').apps;
 
 const Service = typedi.Service;
-// const Container = typedi.Container;
 
 class _AppService extends BaseService {
-
   constructor() {
     super(AppModel, 'App');
   }
 
 }
 
-const AppService = Service([
-], () => {
+const AppService = Service([], () => {
   const service = new _AppService();
 
   return service;
