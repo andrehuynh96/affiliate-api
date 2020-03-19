@@ -64,12 +64,6 @@ module.exports = (sequelize, DataTypes) => {
       as: 'policy',
       foreignKey: 'policy_id',
     });
-    // Client.belongsToMany(models.policies, {
-    //   as: 'polices',
-    //   through: 'client_policies',
-    //   foreignKey: 'client_id'
-    // });
-
   };
 
   return Client;

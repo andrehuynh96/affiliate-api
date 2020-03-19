@@ -76,7 +76,7 @@ const controller = {
       };
       const client = await clientService.create(data);
 
-      return res.ok(client);
+      return res.ok(client.affiliateCodes[0]);
     }
     catch (err) {
       next(err);
