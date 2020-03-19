@@ -5,6 +5,7 @@ const {
   ClientService,
   PolicyService,
 } = require('../../services');
+const { policyHelper } = require('../../lib/helpers');
 
 const Container = typedi.Container;
 
@@ -19,6 +20,7 @@ const controller = {
 
       let level = 1;
       let parentPath = 'root';
+      let referrer_client_id = null;
       let rootClientId = null;
       let affiliateCodeInstance = null;
 
@@ -30,8 +32,8 @@ const controller = {
           return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
 
-        const referrer_user_id = affiliateCodeInstance.client_id;
-        const referrerClient = await clientService.findByPk(referrer_user_id);
+        referrer_client_id = affiliateCodeInstance.client_id;
+        const referrerClient = await clientService.findByPk(referrer_client_id);
 
         if (!referrerClient) {
           return res.notFound(res.__('NOT_FOUND_REFERRER_USER'), 'NOT_FOUND_REFERRER_USER');
@@ -41,9 +43,9 @@ const controller = {
           return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
 
-        rootClientId = referrerClient.id;
+        rootClientId = referrerClient.root_client_id || referrerClient.id;
         // Check max level that policy can set for users
-        const policy = await controller.getPolicyByAffiliateTypeId(affiliateTypeId, rootClientId);
+        const { policy } = await policyHelper.getPolicy({ affiliateTypeId, clientService, client: referrerClient });
         if (!policy) {
           return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
         }
@@ -56,12 +58,13 @@ const controller = {
           return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
         }
 
-        parentPath = referrerClient.parentPath ? `${referrerClient.parentPath}.${referrerClient.id}` : referrerClient.id.toString();
+        parentPath = `${referrerClient.parent_path}.${referrerClient.id}`;
       }
 
       const data = {
         user_id,
         affiliate_type_id: affiliateTypeId,
+        referrer_client_id: referrer_client_id,
         level,
         parent_path: parentPath,
         root_client_id: rootClientId,
@@ -79,20 +82,6 @@ const controller = {
       next(err);
     }
   },
-
-  async getPolicyByAffiliateTypeId(affiliateTypeId, rootClientId) {
-    // First, we find policy witch apply for root user
-    const policyService = Container.get(PolicyService);
-    let policy = await policyService.findByClientId(rootClientId);
-
-    if (!policy) {
-      const affiliateTypeService = Container.get(AffiliateTypeService);
-      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
-      policy = affiliateType.policy;
-    }
-
-    return policy;
-  }
 
 };
 

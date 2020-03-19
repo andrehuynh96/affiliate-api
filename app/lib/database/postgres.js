@@ -1,14 +1,15 @@
 const config = require('app/config');
 const Sequelize = require('sequelize');
 
-const options = Object.assign({}, config.db.postpres.options, {
-  logging: console.log,
+const postpresOptions = config.db.postpres;
+const options = Object.assign({}, postpresOptions.options, {
+  logging: postpresOptions.options.logging ? console.log : false,
 });
 
 const sequelize = new Sequelize(
-  config.db.postpres.database,
-  config.db.postpres.username,
-  config.db.postpres.password,
+  postpresOptions.database,
+  postpresOptions.username,
+  postpresOptions.password,
   options,
 );
 module.exports = {

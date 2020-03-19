@@ -35,9 +35,20 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       default: true
     },
+    policy_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     underscored: true,
     timestamps: true,
+    indexes: [
+      {
+        name: 'user_key',
+        unique: true,
+        fields: ['user_id', 'affiliate_type_id']
+      },
+    ]
   });
 
   Client.associate = (models) => {
@@ -48,6 +59,17 @@ module.exports = (sequelize, DataTypes) => {
       foreignKey: 'client_id',
       sourceKey: 'id',
     });
+
+    Client.belongsTo(models.policies, {
+      as: 'policy',
+      foreignKey: 'policy_id',
+    });
+    // Client.belongsToMany(models.policies, {
+    //   as: 'polices',
+    //   through: 'client_policies',
+    //   foreignKey: 'client_id'
+    // });
+
   };
 
   return Client;

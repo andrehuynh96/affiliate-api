@@ -37,7 +37,7 @@ const config = {
         host: process.env.POSTPRES_DB_HOST,
         port: process.env.POSTPRES_DB_PORT,
         dialect: 'postgres',
-        logging: false
+        logging: process.env.POSTPRES_DEBUG === 'true',
       }
     },
     enableSeed: process.env.ENABLE_SEED === '1',
