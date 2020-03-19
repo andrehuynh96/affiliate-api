@@ -12,13 +12,13 @@ module.exports = async (req, res, next) => {
 
   // Validate app
   const appService = Container.get(AppService);
-  const app = await appService.findOne({ api_key: apiKey });
-  if (!app) {
-    return res.unauthorized();
-  }
+  const app = await appService.findOne({
+    api_key: apiKey,
+    secret_key: secretKey,
+    actived_flg: true,
+  });
 
-  const isValidApp = app.actived_flg && app.secret_key === secretKey;
-  if (!isValidApp) {
+  if (!app) {
     return res.unauthorized();
   }
 

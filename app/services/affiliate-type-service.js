@@ -33,8 +33,7 @@ class _AffiliateTypeService extends BaseService {
 
 }
 
-const AffiliateTypeService = Service([
-], () => {
+const AffiliateTypeService = Service([], () => {
   const service = new _AffiliateTypeService();
 
   return service;

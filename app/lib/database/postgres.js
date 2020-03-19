@@ -12,6 +12,7 @@ const sequelize = new Sequelize(
   postpresOptions.password,
   options,
 );
+
 module.exports = {
   init: async callback => {
     try {

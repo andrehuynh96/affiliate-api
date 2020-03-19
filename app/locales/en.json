@@ -10,5 +10,6 @@
   "NOT_FOUND_PARTNER": "NOT_FOUND_PARTNER",
   "NOT_FOUND_REFERRER_USER": "Not found referrer user.",
   "NOT_FOUND_AFFILIATE_CODE": "NOT_FOUND_AFFILIATE_CODE",
-  "POLICY_LEVEL_IS_EXCEED": "Policy can support %s levels"
+  "POLICY_LEVEL_IS_EXCEED": "Policy can support %s levels",
+  "CALCULATE_REWARDS_NOT_FOUND_USER_ID_LIST" : "Users who have Id in the list [%s] are not in affiliate system. Please register them."
 }

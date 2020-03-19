@@ -4,6 +4,7 @@ const AffiliateTypeService = require('./affiliate-type-service');
 const AppService = require('./app-service');
 const ClientService = require('./client-service');
 const PolicyService = require('./policy-service');
+const AffiliateRequestService = require('./affiliate-request-service');
 
 module.exports = {
   AffiliateCodeService,
@@ -11,4 +12,5 @@ module.exports = {
   AppService,
   ClientService,
   PolicyService,
+  AffiliateRequestService,
 };
