@@ -1,15 +1,19 @@
-const config = require("app/config");
+const config = require('app/config');
 
-if (config.enableSeed) {
-  try {
-    require("./cosmos-config");
-    require("./iris-config");
-    require("./partner");
-    require("./partner-api-key");
-    require("./partner-tx-meno");
-    require("./staking-platform");
+const seedData = async () => {
+  if (config.db.enableSeed) {
+    try {
+      await require('./organization')();
+      await require('./policy')();
+      await require('./affiliate-type')();
+      await require('./app')();
+
+      console.log('Seed data completed.');
+    }
+    catch (err) {
+      console.log(err);
+    }
   }
-  catch (err) {
-    console.log(err)
-  }
-}
+};
+
+seedData();

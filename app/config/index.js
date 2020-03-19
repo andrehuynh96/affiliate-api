@@ -1,10 +1,18 @@
-/*eslint no-process-env: "off"*/
-require('dotenv').config();
-const fs = require("fs");
-const path = require('path');
+const utils = require('app/lib/utils');
+
 const logFolder = process.env.LOG_FOLDER || './public/logs';
 
 const config = {
+  node: process.env.NODE_ENV,
+  envName: process.env.NODE_ENV,
+  isProduction: process.env.PRODUCTION === 'true',
+  isTest: process.env.NODE_ENV === 'test',
+  isDevelopment: process.env.NODE_ENV === 'development',
+  app: {
+    name: utils.getOsEnv('APP_NAME'),
+    appHostName: utils.getOsEnv('APP_HOST_NAME'),
+    port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
+  },
   logger: {
     console: {
       enable: true,
@@ -29,9 +37,10 @@ const config = {
         host: process.env.POSTPRES_DB_HOST,
         port: process.env.POSTPRES_DB_PORT,
         dialect: 'postgres',
-        logging: false
+        logging: process.env.POSTPRES_DEBUG === 'true',
       }
-    }
+    },
+    enableSeed: process.env.ENABLE_SEED === '1',
   },
   redis: {
     host: process.env.REDIS_HOST,
@@ -40,30 +49,7 @@ const config = {
     usingPass: process.env.REDIS_USING_PASS || 0,
     pass: process.env.REDIS_PASS,
   },
-  smtp: {
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE
-      ? process.env.SMTP_SECURE.toLowerCase() === 'true'
-      : false,
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-    mailSendAs: process.env.MAIL_SEND_AS,
-  },
   rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
-  jwt: {
-    options: {
-      issuer: process.env.SIGN_I || "infinito",
-      subject: process.env.SIGN_S || "info@infinito.io",
-      audience: process.env.SIGN_A || "https://www.infinito.io/",
-      expiresIn: process.env.EXPIRESIN ? parseInt(process.env.EXPIRESIN) : 84600,
-      algorithm: "RS256" // RSASSA [ "RS256", "RS384", "RS512" ]
-    },
-    private: fs.readFileSync(path.resolve(__dirname, "../../key/private.key"), "utf8"),
-    public: fs.readFileSync(path.resolve(__dirname, "../../key/public.key"), "utf8")
-  },
-  platform: process.env.PLATFORM ? process.env.PLATFORM.split(",") : ["ATOM"],
-  enableSeed: process.env.ENABLE_SEED == "1"
 };
 
 module.exports = config;

@@ -1,1 +1,1 @@
-module.exports = require("./log4js");
+module.exports = require('./log4js');

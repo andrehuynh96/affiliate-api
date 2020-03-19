@@ -1,4 +1,3 @@
-
 function infBaseResponse(req, res, next) {
   return function infBaseResponse(req, res, next) {
     // TODO: include extended data like paging, rate limit, ...
@@ -11,11 +10,11 @@ function infBaseResponse(req, res, next) {
     function failure(message, statusCode, code, data) {
       var resData = {
         message: message,
-        error: "error",
+        error: 'error',
         code: code
       };
       if (data) {
-        resData = { ...resData, ...data };
+        resData = Object.assign(resData, data);
       }
       res.status(statusCode).send(resData);
     }
@@ -27,31 +26,31 @@ function infBaseResponse(req, res, next) {
       success(data, 200);
     };
 
-    res.badRequest = (message = "Bad Request", code = "", data = {}) => {
+    res.badRequest = (message = 'Bad Request', code = '', data = {}) => {
       failure(message, 400, code, data);
     };
 
-    res.notFound = (message = "Not Found", code = "", data = {}) => {
+    res.notFound = (message = 'Not Found', code = '', data = {}) => {
       failure(message, 404, code, data);
     };
 
-    res.serverInternalError = (message = "Server Internal Error", code = "", data = {}) => {
-      if (message == "Server Internal Error") {
+    res.serverInternalError = (message = 'Server Internal Error', code = '', data = {}) => {
+      if (message == 'Server Internal Error') {
         message = res.__('SERVER_ERROR');
-        code = "SERVER_ERROR";
+        code = 'SERVER_ERROR';
       }
 
       failure(message, 500, code, data);
     };
 
-    res.forbidden = (message = "Forbidden", code = "", data = {}) => {
+    res.forbidden = (message = 'Forbidden', code = '', data = {}) => {
       failure(message, 403, code, data);
     };
 
-    res.unauthorized = (message = "Unauthorized", code = "", data = {}) => {
-      if (message == "Unauthorized") {
+    res.unauthorized = (message = 'Unauthorized', code = '', data = {}) => {
+      if (message == 'Unauthorized') {
         message = res.__('UNAUTHORIZED');
-        code = "UNAUTHORIZED";
+        code = 'UNAUTHORIZED';
       }
       failure(message, 401, code, data);
     };

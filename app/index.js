@@ -8,6 +8,7 @@ const path = require('path');
 const config = require('app/config');
 const i18n = require('i18n');
 const rateLimit = require('express-rate-limit');
+const logger = require('app/lib/logger');
 
 i18n.configure({
   locales: ['en', 'vi', 'ja', 'zh', 'ru', 'ko', 'pt'],
@@ -62,23 +63,18 @@ router.use(
 );
 
 router.get('/', function (req, res) {
-  let result = {
+  const result = {
     message: 'Hello',
   };
   res.json(result);
 });
 router.get('/health', (req, res) => res.send('OK!'));
 require('app/config/swagger')(router, '/affiliate-api');
-router.use("/.well-known", express.static(path.join(__dirname, "public")));
+router.use('/.well-known', express.static(path.join(__dirname, 'public')));
 router.use('/api', require('app/feature'));
 
 router.use(function (req, res) {
   res.notFound('Not Found');
-});
-
-router.use((err, req, res, next) => {
-  console.log(err);
-  res.serverInternalError(err.message);
 });
 
 module.exports = router;
