@@ -29,10 +29,10 @@ const controller = {
 
       const affiliateRequestService = Container.get(AffiliateRequestService);
       const hasDuplicate = await affiliateRequestService.hasDuplicate(currency_symbol, fromDate, toDate);
-      if (hasDuplicate) {
-        const errorMessage = res.__('CALCULATE_REWARDS_DUPLICATE_DATA', currency_symbol);
-        return res.badRequest(errorMessage, 'CALCULATE_REWARDS_DUPLICATE_DATA', { fields: ['from_date', 'to_date'] });
-      }
+      // if (hasDuplicate) {
+      //   const errorMessage = res.__('CALCULATE_REWARDS_DUPLICATE_DATA', currency_symbol);
+      //   return res.badRequest(errorMessage, 'CALCULATE_REWARDS_DUPLICATE_DATA', { fields: ['from_date', 'to_date'] });
+      // }
 
       // Validate user_id in details list
       const clientService = Container.get(ClientService);
@@ -72,6 +72,17 @@ const controller = {
         details: requestDetailsLists,
       };
       const affiliateRequest = await affiliateRequestService.create(data);
+
+      // Add to queue job
+      const calculateRewardsJob = Container.get('calculateRewardsJob');
+      const job = await calculateRewardsJob.addJob(affiliateRequest);
+
+      affiliateRequest.job_id = job.id + '';
+      await affiliateRequestService.updateWhere({
+        id: affiliateRequest.id
+      }, {
+        job_id: affiliateRequest.job_id,
+      });
 
       return res.ok(affiliateRequest);
     }

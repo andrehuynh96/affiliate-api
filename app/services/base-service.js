@@ -132,7 +132,7 @@ class BaseService {
   async update(instance) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.update(instance);
+        const result = await instance.update();
 
         resolve(result);
       } catch (err) {

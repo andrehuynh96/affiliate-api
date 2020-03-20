@@ -12,6 +12,7 @@ const config = {
     name: utils.getOsEnv('APP_NAME'),
     appHostName: utils.getOsEnv('APP_HOST_NAME'),
     port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
+    rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
   },
   logger: {
     console: {
@@ -49,7 +50,13 @@ const config = {
     usingPass: process.env.REDIS_USING_PASS || 0,
     pass: process.env.REDIS_PASS,
   },
-  rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
+  bull: {
+    host: utils.getOsEnv('BULL_REDIS_HOST'),
+    port: utils.toNumber(utils.getOsEnv('BULL_REDIS_PORT')),
+    password: utils.getOsEnv('BULL_REDIS_PASSWORD'),
+    db: utils.toNumber(utils.getOsEnv('BULL_REDIS_DB')),
+  },
+
 };
 
 module.exports = config;

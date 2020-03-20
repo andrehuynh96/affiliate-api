@@ -44,7 +44,7 @@ if (config.corsDomain) {
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: config.rateLimit,
+  max: config.app.rateLimit,
 });
 router.use(limiter);
 
