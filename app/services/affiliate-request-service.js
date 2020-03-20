@@ -1,9 +1,11 @@
 const typedi = require('typedi');
 const _ = require('lodash');
+const Sequelize = require('sequelize');
 const { forEach } = require('p-iteration');
 const BaseService = require('./base-service');
 const db = require('app/model');
 
+const Op = Sequelize.Op;
 const Service = typedi.Service;
 const sequelize = db.sequelize;
 const AffiliateRequest = db.affiliate_requests;
@@ -52,6 +54,27 @@ class _AffiliateRequestService extends BaseService {
     });
   }
 
+  hasDuplicate(currencySymbol, fromDate, toDate) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          [Op.and]: [
+            { currency_symbol: currencySymbol, },
+            {
+              to_date: {
+                [Op.gte]: fromDate,
+              },
+            },
+          ]
+        };
+        const result = await this.count(cond);
+
+        resolve(result > 0);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
 
 }
 

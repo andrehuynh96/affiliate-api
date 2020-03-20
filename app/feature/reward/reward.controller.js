@@ -1,5 +1,6 @@
 const typedi = require('typedi');
 const _ = require('lodash');
+const moment = require('moment');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
@@ -16,13 +17,30 @@ const controller = {
     try {
       const { body, affiliateTypeId } = req;
       const { currency_symbol, from_date, to_date, details } = body;
-      const clientService = Container.get(ClientService);
+      // Validate from date and to date
+
+      console.info(from_date, to_date);
+      const fromDate = moment(from_date);
+      const toDate = moment(to_date);
+      if (fromDate.diff(toDate) >= 0) {
+        const errorMessage = res.__('CALCULATE_REWARDS_FROM_DATE_IS_INVALID', 'from_date');
+        return res.badRequest(errorMessage, 'CALCULATE_REWARDS_FROM_DATE_IS_INVALID', { fields: ['from_date'] });
+      }
+
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const hasDuplicate = await affiliateRequestService.hasDuplicate(currency_symbol, fromDate, toDate);
+      if (hasDuplicate) {
+        const errorMessage = res.__('CALCULATE_REWARDS_DUPLICATE_DATA', currency_symbol);
+        return res.badRequest(errorMessage, 'CALCULATE_REWARDS_DUPLICATE_DATA', { fields: ['from_date', 'to_date'] });
+      }
 
       // Validate user_id in details list
+      const clientService = Container.get(ClientService);
       const userIdList = _.uniq(details.map(item => item.user_id));
       const clients = await clientService.findByIdList(userIdList, affiliateTypeId);
       const notFoundUserIdList = [];
       const clientDic = {};
+
       userIdList.forEach(userId => {
         const client = clients.find(client => client.user_id === userId);
 
@@ -38,7 +56,6 @@ const controller = {
         return res.badRequest(errorMessage, 'CALCULATE_REWARDS_NOT_FOUND_USER_ID_LIST', { fields: ['details'] });
       }
 
-      const affiliateRequestService = Container.get(AffiliateRequestService);
       const requestDetailsLists = details.map((item) => {
         return {
           client_id: clientDic[item.user_id].id,
@@ -49,8 +66,8 @@ const controller = {
       const data = {
         status: AffiliateRequestStatus.PENDING,
         currency_symbol,
-        from_date,
-        to_date,
+        from_date: fromDate,
+        to_date: toDate,
         affiliate_type_id: affiliateTypeId,
         details: requestDetailsLists,
       };
