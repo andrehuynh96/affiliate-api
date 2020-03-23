@@ -8,7 +8,6 @@ const {
 const Container = typedi.Container;
 
 const policyHelper = {
-
   // Get policy witch apply for clients that same root client
   async getPolicy({ affiliateTypeId, clientService, client }) {
     // First, we find policy witch apply for root user
@@ -32,6 +31,21 @@ const policyHelper = {
       policy,
       rootClient
     };
+  },
+
+  async getPolicyForRootClient({ affiliateTypeId, userPolicyId, policyService }) {
+    let policy = null;
+    if (userPolicyId) {
+      policy = await policyService.findByPk(userPolicyId);
+
+      return policy;
+    }
+
+    const affiliateTypeService = Container.get(AffiliateTypeService);
+    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+    policy = affiliateType.policy;
+
+    return policy;
   }
 
 };

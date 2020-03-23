@@ -3,15 +3,18 @@ const { forEach, forEachSeries } = require('p-iteration');
 const typedi = require('typedi');
 const Queue = require('bull');
 const { v4 } = require('uuid');
+const Decimal = require('decimal.js');
 const Sequelize = require('sequelize');
 const config = require('../config');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
   ClientService,
+  PolicyService,
 } = require('../services');
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('../model/value-object/affiliate-request-details-status');
+const policyHelper = require('../lib/helpers/policy-helper');
 
 const Op = Sequelize.Op;
 const { Container, Service } = typedi;
@@ -24,6 +27,7 @@ class CalculateRewardsProcessor {
     this.redisCacherService = Container.get('redisCacherService');
     this.affiliateRequestService = Container.get(AffiliateRequestService);
     this.clientService = Container.get(ClientService);
+    this.policyService = Container.get(PolicyService);
 
     this.job = job;
     this.data = job.data;
@@ -101,18 +105,52 @@ class CalculateRewardsProcessor {
   }
 
   async processAffiliateRequestDetails(affiliateRequestDetails) {
-    const { logger, affiliateRequestService, redisCacherService } = this;
+    const { logger, affiliateRequestService, clientService, redisCacherService, policyService } = this;
     const { id, client_id, affiliate_request_id, amount } = affiliateRequestDetails;
 
     logger.debug(`Processing request details with id: ${id}, clientId: ${client_id}.`);
     await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.PROCESSING);
 
-    const key = client_id;
-    const client = await redisCacherService.get(key);
-    // await redisCacherService.set(key, { a: 1 });
+    const client = await clientService.findById(client_id);
+    const referrerList = await clientService.getReferrerList(client);
+    logger.debug('Referrer list: ', referrerList.map(item => item.id));
 
+    const rootClient = referrerList.find((item) => item.level === 1);
+    if (!rootClient) {
+      throw new Error('Can not find root client for client who has id: ', client_id);
+    }
 
-    await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED);
+    const policy = await policyHelper.getPolicyForRootClient({
+      affiliateTypeId: rootClient.affiliate_type_id,
+      userPolicyId: rootClient.policy_id,
+      policyService,
+    });
+    const { max_levels, rates } = policy;
+
+    const rewardList = [];
+    _.zip(referrerList, rates).forEach((arrays) => {
+      const referrer = arrays[0];
+      const rate = arrays[1];
+
+      if (referrer && rate) {
+        // console.info(referrer, rate);
+        // console.info(amount, rate);
+        rewardList.push({
+          client_id: referrer.id,
+          affiliate_request_id,
+          amount: Decimal(amount).times(rate / 100).toDecimalPlaces(8).toNumber(),
+        });
+      }
+    });
+
+    await this.saveRewards(rewardList);
+
+    throw new Error('AAA');
+    // await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED);
+  }
+
+  async saveRewards(rewardList) {
+    this.logger.debug('Referrer list: ', rewardList);
   }
 
   jobResult() {

@@ -114,7 +114,6 @@ class _RedisCacherService extends BaseCacherService {
 	 */
   get(key) {
     this.logger.debug(`GET ${key}`);
-
     return this.client.getBuffer(this.prefix + key).then((data) => {
       if (data) {
         this.logger.debug(`FOUND ${key}`);
@@ -145,8 +144,9 @@ class _RedisCacherService extends BaseCacherService {
     data = this.serializer.serialize(data);
     this.logger.debug(`SET ${key}`);
 
-    if (ttl == null)
+    if (ttl == null) {
       ttl = this.opts.ttl;
+    }
 
     let p;
     if (ttl) {
