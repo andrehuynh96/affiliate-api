@@ -10,6 +10,7 @@ const {
   AffiliateRequestService,
   ClientService,
 } = require('../services');
+const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 // import { LockService } from '../lib/services/lock-service';
 // import { Lock } from 'redlock';
 
@@ -20,30 +21,32 @@ class CalculateRewardsProcessor {
 
   constructor(job) {
     this.logger = Container.get('logger');
-    // this.affiliateRequestService = affiliateRequestService;
-    // this.clientService = clientService;
-    // this.lockService = Container.get(LockService);
-    // this.jobInfoService = Container.get(JobInfoService);
+    this.affiliateRequestService = Container.get(AffiliateRequestService);
+    this.clientService = Container.get(ClientService);
 
     this.job = job;
     this.data = job.data;
     this.id = v4();
   }
 
-  process() {
+  async process() {
     const { logger, job } = this;
     const jobName = job.name;
     // let lock: Lock;
-    logger.log(`CalculateRewardsProcessor ${jobName} is processing. Data: %o`);
+    logger.debug(`CalculateRewardsProcessor ${jobName} is processing. Data: %o`);
 
     // // only monitor new blocks of active blockchain
-    // const jobId = this.data.id;
-    // const jobInfo = await this.jobInfoService.findOne({ id: jobId, isActive: true });
-    // if (!jobInfo) {
-    //   logger.warn('Job %s is not active', jobName);
+    const affiliateRequestId = this.data.id;
+    const affiliateRequest = await this.affiliateRequestService.findOne({
+      id: affiliateRequestId,
+      status: AffiliateRequestStatus.PENDING,
+    });
 
-    //   return this.jobResult();
-    // }
+    if (!affiliateRequest) {
+      logger.warn('Affiliate request %s is not active', jobName);
+
+      return this.jobResult();
+    }
 
     // // Prevent job which has same name run pararell
     // const ressourceId = _.kebabCase(job.name);
@@ -85,7 +88,7 @@ class CalculateRewardsProcessor {
     //   throw Error('Job failed!');
     // }
 
-    // logger.info('Job %s completed', jobName);
+    logger.info('Affiliate request %s completed', jobName);
     // jobInfo.status = JobStatus.Completed;
     // jobInfo.finishedAt = new Date();
     // jobInfo.exitCode = statusCode;
@@ -93,6 +96,11 @@ class CalculateRewardsProcessor {
     // const updateObj = _.pick(jobInfo, ['status', 'finishedAt', 'exitCode', 'processId']);
 
     // await this.jobInfoService.updateOne(jobInfo.id, updateObj);
+    await this.affiliateRequestService.updateWhere({
+      id: affiliateRequestId,
+    }, {
+      status: AffiliateRequestStatus.COMPLETED,
+    });
 
     return this.jobResult();
   }

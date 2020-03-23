@@ -1,6 +1,7 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const moment = require('moment');
+const v4 = require('uuid/v4');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
@@ -56,14 +57,17 @@ const controller = {
         return res.badRequest(errorMessage, 'CALCULATE_REWARDS_NOT_FOUND_USER_ID_LIST', { fields: ['details'] });
       }
 
+      const affiliateRequestId = v4();
       const requestDetailsLists = details.map((item) => {
         return {
+          affiliate_request_id: affiliateRequestId,
           client_id: clientDic[item.user_id].id,
           amount: item.amount,
           status: AffiliateRequestDetailsStatus.PENDING,
         };
       });
       const data = {
+        id: affiliateRequestId,
         status: AffiliateRequestStatus.PENDING,
         currency_symbol,
         from_date: fromDate,
