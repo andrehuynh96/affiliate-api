@@ -141,7 +141,6 @@ class BaseService {
     });
   }
 
-
   deleteWhere(cond, defaultData) {
     cond = cond || {};
 

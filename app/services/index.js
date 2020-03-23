@@ -5,6 +5,7 @@ const AppService = require('./app-service');
 const ClientService = require('./client-service');
 const PolicyService = require('./policy-service');
 const AffiliateRequestService = require('./affiliate-request-service');
+const RedisCacherService = require('./redis-cacher-service');
 
 module.exports = {
   AffiliateCodeService,
@@ -13,4 +14,5 @@ module.exports = {
   ClientService,
   PolicyService,
   AffiliateRequestService,
+  RedisCacherService,
 };

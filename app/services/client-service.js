@@ -6,12 +6,15 @@ const AffiliateCode = require('app/model').affiliate_codes;
 const Policy = require('app/model').policies;
 
 const Op = Sequelize.Op;
-const Service = typedi.Service;
+const { Container, Service } = typedi;
 
 class _ClientService extends BaseService {
 
   constructor() {
     super(Client, 'Client');
+
+    this.logger = Container.get('logger');
+    this.redisCacherService = Container.get('redisCacherService');
   }
 
   create(data) {
@@ -74,6 +77,8 @@ class _ClientService extends BaseService {
       }
     });
   }
+
+
 
 }
 

@@ -15,12 +15,13 @@ const config = {
     rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
   },
   logger: {
+    defaultLevel: process.env.LOG_DEFAULT_LEVEL || 'debug',
     console: {
       enable: true,
-      level: 'debug',
+      level: process.env.LOG_CONSOLE_LEVEL || 'debug',
     },
-    defaultLevel: 'debug',
     file: {
+      level: process.env.LOG_CONSOLE_LEVEL || 'info',
       compress: false,
       app: `${logFolder}/app.log`,
       error: `${logFolder}/error.log`,
@@ -47,8 +48,8 @@ const config = {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     prefix: process.env.REDIS_PREFIX || 'affiliate:api:cache',
-    usingPass: process.env.REDIS_USING_PASS || 0,
     pass: process.env.REDIS_PASS,
+    db: utils.toNumber(utils.getOsEnvOptional('REDIS_CACHE_DB') || '1'),
   },
   bull: {
     host: utils.getOsEnv('BULL_REDIS_HOST'),

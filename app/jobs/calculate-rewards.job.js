@@ -17,11 +17,8 @@ const NUM_OF_CURRENT_JOBS = 50;
 
 class _CalculateRewardsJob {
 
-  constructor(affiliateRequestService, clientService) {
+  constructor() {
     this.logger = Container.get('logger');
-    this.affiliateRequestService = affiliateRequestService;
-    this.clientService = clientService;
-    // this.jobInfoService = Container.get(JobInfoService);
 
     this.queueName = 'calculate-rewards';
     this.opts = {
@@ -53,8 +50,6 @@ class _CalculateRewardsJob {
   }
 
   async init() {
-    this.logger.debug('INIT');
-
     this.queue.on('active', (job, jobPromise) => {
       _.set(this.activeJobPromises, job.id + '', jobPromise);
     });
@@ -77,7 +72,6 @@ class _CalculateRewardsJob {
   }
 
   async start() {
-    this.logger.debug('START');
     this.queue.process('*', NUM_OF_CURRENT_JOBS, processJob);
 
     await this.restartFailedJobs();
@@ -147,10 +141,8 @@ class _CalculateRewardsJob {
 }
 
 const CalculateRewardsJob = Service([
-  AffiliateRequestService,
-  ClientService
 ], (affiliateRequestService, clientService) => {
-  const service = new _CalculateRewardsJob(affiliateRequestService, clientService);
+  const service = new _CalculateRewardsJob();
 
   return service;
 });

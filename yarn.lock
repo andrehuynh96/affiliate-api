@@ -381,7 +381,7 @@ bluebird@3.5.1:
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.1.tgz#d9551f9de98f1fcda1e683d17ee91a0602ee2eb9"
   integrity sha512-MKiLiV+I1AA596t9w1sQJ8jkiSr5+ZKi0WKrYGUn6d1Fx+Ij4tIj+m2WMQSGczs5jZVxV339chE8iwk6F64wjA==
 
-bluebird@^3.1.1, bluebird@^3.5.0:
+bluebird@^3.1.1, bluebird@^3.3.3, bluebird@^3.5.0:
   version "3.7.2"
   resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.7.2.tgz#9f229c15be272454ffa973ace0dbee79a1b0c36f"
   integrity sha512-XpNj6GDQzdfW+r2Wnn7xiSAd7TM3jzkxGXBGTtWKuSXv1xUV+azxAm8jdWZN06QTQk+2N2XB9jRDkvbmQmcRtg==
@@ -2064,7 +2064,7 @@ inquirer@^7.0.0:
     strip-ansi "^6.0.0"
     through "^2.3.6"
 
-ioredis@^4.14.1:
+ioredis@^4.14.1, ioredis@^4.16.0:
   version "4.16.0"
   resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-4.16.0.tgz#44d51288e20da14e5b6f687b2db0312e69106556"
   integrity sha512-tlalhtuvnxXJNtrPjec1nGicuOCpi9ErYV/fRfwaWSzktX9ESrzHlcFwj1pVAL326E8dmt7h9pPQZyyVPPksRA==
@@ -2588,7 +2588,7 @@ log-symbols@2.2.0:
   dependencies:
     chalk "^2.0.1"
 
-log4js@^6.0.0:
+log4js@6.1.2:
   version "6.1.2"
   resolved "https://registry.yarnpkg.com/log4js/-/log4js-6.1.2.tgz#04688e1f4b8080c127b7dccb0db1c759cbb25dc4"
   integrity sha512-knS4Y30pC1e0n7rfx3VxcLOdBCsEo0o6/C7PVTGxdVK+5b1TYOSGQPn9FDcrhkoQBV29qwmA2mtkznPAQKnxQg==
@@ -3623,6 +3623,13 @@ redis@^2.8.0:
     double-ended-queue "^2.1.0-0"
     redis-commands "^1.2.0"
     redis-parser "^2.6.0"
+
+redlock@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/redlock/-/redlock-4.1.0.tgz#2c8d6a348d1b8a10af61574fa3664eced003babc"
+  integrity sha512-6EdtGpk5aoZZJtclZGHAd77OJmBtMekD0t8fWUbBsm53pqHwLP+EqAEn3+a6lG+VZzClwjkLbePxpNaP1deGXw==
+  dependencies:
+    bluebird "^3.3.3"
 
 referrer-policy@1.2.0:
   version "1.2.0"

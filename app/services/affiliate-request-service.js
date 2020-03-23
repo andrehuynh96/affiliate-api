@@ -76,7 +76,55 @@ class _AffiliateRequestService extends BaseService {
     });
   }
 
+  getDetails(affiliateRequestId, affiliateRequestDetailsStatusList) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          where: {
+            affiliate_request_id: affiliateRequestId,
+          },
+          order: [
+            ['created_at', 'ASC'],
+          ],
+        };
+
+        if (affiliateRequestDetailsStatusList) {
+          cond.where.status = {
+            [Op.in]: affiliateRequestDetailsStatusList
+          };
+        }
+
+        const result = await AffiliateRequestDetails.findAll(cond);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  setRequestDetailsStatus(id, status) {
+    return new Promise(async (resolve, reject) => {
+      try {
+
+        const result = await AffiliateRequestDetails.update({
+          status,
+        }, {
+          where: {
+            id,
+          },
+          returning: true
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
 }
+
 
 const AffiliateRequestService = Service([], () => {
   const service = new _AffiliateRequestService();

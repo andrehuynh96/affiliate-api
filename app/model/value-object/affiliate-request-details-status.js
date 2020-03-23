@@ -1,6 +1,6 @@
 const AffiliateRequestDetailsStatus = {
   PENDING: 'PENDING',
-  IN_PROCESSING: 'IN_PROCESSING',
+  PROCESSING: 'PROCESSING',
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
 };

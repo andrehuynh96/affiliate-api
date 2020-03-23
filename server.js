@@ -7,12 +7,21 @@ const database = require('app/lib/database');
 const logger = require('app/lib/logger');
 const redis = require('app/lib/redis');
 const config = require('app/config');
-const startJobs = require('app//jobs');
+const startJobs = require('app/jobs');
+
+const {
+  RedisCacherService,
+} = require('./app/services');
 
 const { Container, Service } = typedi;
 
 const setupDI = () => {
   Container.set('logger', logger);
+
+  const redisCacherService = Container.get(RedisCacherService);
+  redisCacherService.init();
+
+  Container.set('redisCacherService', redisCacherService);
 };
 
 setupDI();
