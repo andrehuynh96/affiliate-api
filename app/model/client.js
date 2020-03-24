@@ -64,6 +64,11 @@ module.exports = (sequelize, DataTypes) => {
       as: 'policy',
       foreignKey: 'policy_id',
     });
+
+    Client.belongsTo(models.membership_types, {
+      as: 'membership',
+      foreignKey: 'membership_type_id',
+    });
   };
 
   return Client;

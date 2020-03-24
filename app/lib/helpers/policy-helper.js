@@ -45,7 +45,7 @@ const policyHelper = {
     const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
     policy = affiliateType.policy;
 
-    return policy;
+    return policy.get({ plain: true });
   }
 
 };

@@ -1,5 +1,6 @@
+
 module.exports = (sequelize, DataTypes) => {
-  const Policy = sequelize.define('policies', {
+  const MembershipType = sequelize.define('membership_types', {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -14,22 +15,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(1000),
       allowNull: true,
     },
-    max_levels: {
+    rate: {
+      type: DataTypes.DECIMAL,
+      allowNull: false,
+    },
+    policy_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    rates: {
-      type: DataTypes.ARRAY(DataTypes.DECIMAL),
-      allowNull: true,
-    },
-    type: {
-      type: DataTypes.STRING(256),
-      allowNull: false
+      allowNull: false,
     },
   }, {
     underscored: true,
     timestamps: true,
   });
 
-  return Policy;
+  MembershipType.associate = (models) => {
+    MembershipType.belongsTo(models.policies);
+  };
+
+  return MembershipType;
 };

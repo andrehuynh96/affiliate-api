@@ -19,9 +19,9 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(1000),
       allowNull: true,
     },
-    default_policy_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
+    category: {
+      type: DataTypes.STRING(100),
+      allowNull: false,
     },
   }, {
     underscored: true,
@@ -30,9 +30,11 @@ module.exports = (sequelize, DataTypes) => {
 
   AffiliateType.associate = (models) => {
     AffiliateType.belongsTo(models.organizations);
-    AffiliateType.belongsTo(models.policies, {
+
+    AffiliateType.belongsToMany(models.policies, {
       as: 'policy',
-      foreignKey: 'default_policy_id',
+      through: 'affiliate_type_details',
+      foreignKey: 'affiliate_type_id',
     });
   };
 

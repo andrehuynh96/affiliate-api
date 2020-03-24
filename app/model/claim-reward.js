@@ -24,7 +24,6 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ClaimReward.associate = async (models) => {
-    // associations can be defined here
     ClaimReward.belongsTo(models.clients);
   };
 

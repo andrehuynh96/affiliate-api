@@ -126,14 +126,14 @@ class CalculateRewardsProcessor {
       policyService,
     });
     const { max_levels, rates } = policy;
-
+    console.log(rates);
     const rewardList = [];
+
     _.zip(referrerList, rates).forEach((arrays) => {
-      const referrer = arrays[0];
-      const rate = arrays[1];
+      const [referrer, rate] = arrays;
 
       if (referrer && rate) {
-        // console.info(referrer, rate);
+        console.info(referrer, rate);
         // console.info(amount, rate);
         rewardList.push({
           client_id: referrer.id,

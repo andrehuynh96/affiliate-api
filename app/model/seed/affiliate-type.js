@@ -1,4 +1,5 @@
 const Model = require('app/model').affiliate_types;
+const AffiliateCategory = require('app/model/value-object/affiliate-category');
 
 module.exports = async () => {
   const count = await Model.count();
@@ -7,15 +8,15 @@ module.exports = async () => {
     await Model.bulkCreate([
       {
         id: 1,
-        name: 'Membership',
+        name: 'Membership System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
-        default_policy_id: 1,
+        category: AffiliateCategory.MembershipSystem,
       },
       {
         id: 2,
-        name: 'Affiliate',
+        name: 'Affiliate System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
-        default_policy_id: 2,
+        category: AffiliateCategory.AffiliateSystem,
       },
     ], {
       returning: true

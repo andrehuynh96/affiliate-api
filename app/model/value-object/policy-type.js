@@ -1,0 +1,7 @@
+const PolicyType = {
+  MEMBERSHIP: 'MEMBERSHIP',
+  MEMBERSHIP_AFFILIATE: 'MEMBERSHIP_AFFILIATE',
+  AFFILIATE: 'AFFILIATE',
+};
+
+module.exports = PolicyType;
