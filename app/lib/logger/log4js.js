@@ -20,7 +20,7 @@ log4js.configure({
       daysToKeep: 90
     },
     CONSOLE: {
-      type: 'console',
+      type: 'stdout',
       layout: logLayout,
       level: config.logger.console.level,
     },

@@ -63,7 +63,6 @@ class _ClientService extends BaseService {
     });
   }
 
-
 }
 
 const ClientService = Service([], () => {

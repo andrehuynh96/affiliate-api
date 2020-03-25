@@ -86,7 +86,7 @@ const controller = {
       const data = {
         client_id: clientId,
         affiliate_type_id: affiliateTypeId,
-        referrer_client_id: referrer_client_affiliate_id,
+        referrer_client_affiliate_id: referrer_client_affiliate_id,
         level,
         parent_path: parentPath,
         root_client_affiliate_id: rootClientAffiliateId,

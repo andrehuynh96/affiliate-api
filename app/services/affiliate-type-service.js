@@ -11,7 +11,9 @@ class _AffiliateTypeService extends BaseService {
     super(AffiliateType, 'AffiliateType');
   }
 
-  findByPk(id, { isIncludePolicies }) {
+  findByPk(id, opts) {
+    const { isIncludePolicies } = opts || {};
+
     if (!isIncludePolicies) {
       return super.findByPk(id);
     }

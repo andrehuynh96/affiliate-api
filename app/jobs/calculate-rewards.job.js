@@ -3,11 +3,6 @@ const { forEach, forEachSeries } = require('p-iteration');
 const typedi = require('typedi');
 const Queue = require('bull');
 const config = require('../config');
-const {
-  AffiliateCodeService,
-  AffiliateRequestService,
-  ClientAffiliateService,
-} = require('../services');
 const AffiliateCode = require('../model').affiliate_codes;
 const processJob = require('./calculate-rewards.processor');
 
@@ -140,8 +135,7 @@ class _CalculateRewardsJob {
 
 }
 
-const CalculateRewardsJob = Service([
-], (affiliateRequestService, ClientAffiliateService) => {
+const CalculateRewardsJob = Service([], () => {
   const service = new _CalculateRewardsJob();
 
   return service;

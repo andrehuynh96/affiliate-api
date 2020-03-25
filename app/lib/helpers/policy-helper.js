@@ -11,10 +11,15 @@ const Container = typedi.Container;
 const policyHelper = {
   // Get policy witch apply for clients that same root client
   async getPolicies({ affiliateTypeId, clientAffiliateService, clientAffiliate }) {
-    // First, we find policy witch apply for root user
     const rootClientAffiliateId = clientAffiliate.root_client_affiliate_id || clientAffiliate.id;
-    let policies = null;
+
+    return policyHelper.getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService });
+  },
+
+  async getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService }) {
     let rootClientAffiliate = null;
+    let policies = null;
+    // First, we find policy witch apply for root user
 
     // Below level 1
     if (rootClientAffiliateId) {
@@ -32,23 +37,6 @@ const policyHelper = {
       policies,
       rootClient: rootClientAffiliate
     };
-  },
-
-  async getPolicyForRootClient({ affiliateTypeId, userPolicyId, policyService }) {
-    let policy = null;
-    if (userPolicyId) {
-      policy = await policyService.findByPk(userPolicyId);
-
-      return policy;
-    }
-
-    const affiliateTypeService = Container.get(AffiliateTypeService);
-    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
-    const policies = affiliateType.polices;
-
-    console.info(policies);
-
-    return policy;
   }
 
 };

@@ -38,7 +38,9 @@ class _ClientAffiliateService extends BaseService {
     });
   }
 
-  findByPk(id, { isIncludePolicies }) {
+  findByPk(id, opts) {
+    const { isIncludePolicies } = opts || {};
+
     return new Promise(async (resolve, reject) => {
       try {
         const options = {
@@ -54,9 +56,6 @@ class _ClientAffiliateService extends BaseService {
 
         const result = await this.model.findByPk(id, options);
 
-        // console.log(result.get({
-        //   plain: true
-        // }));
         resolve(result);
       } catch (err) {
         reject(err);
@@ -84,11 +83,11 @@ class _ClientAffiliateService extends BaseService {
   }
 
   async getReferrerList(client) {
-    if (!client.referrer_client_id) {
+    if (!client.referrer_client_affiliate_id) {
       return [];
     }
 
-    const { id, parent_path, root_client_id } = client;
+    const { id, parent_path, root_client_affiliate_id } = client;
     const stakerId = id;
 
     const key = this.redisCacherService.getCacheKey('referrer-list', { stakerId });
@@ -98,15 +97,15 @@ class _ClientAffiliateService extends BaseService {
     }
 
     const query = `
-      SELECT id, user_id, affiliate_type_id, referrer_client_id, "level", parent_path, root_client_id,policy_id, actived_flg, created_at, updated_at
-      FROM public.clients
-      where (
+      SELECT id, client_id, affiliate_type_id, referrer_client_affiliate_id, "level", parent_path, root_client_affiliate_id, actived_flg, created_at, updated_at
+      FROM public.client_affiliates
+      WHERE (
         (
-          parent_path @> :parent_path and root_client_id = :root_client_id
+          parent_path @> :parent_path and root_client_affiliate_id = :root_client_affiliate_id
         )
         OR
         (
-          id = :root_client_id
+          id = :root_client_affiliate_id
         )
       )
       ORDER BY "level" DESC
@@ -114,7 +113,7 @@ class _ClientAffiliateService extends BaseService {
     const clientResult = await db.query(query,
       {
         replacements: {
-          root_client_id,
+          root_client_affiliate_id,
           parent_path,
         },
       },
@@ -124,21 +123,21 @@ class _ClientAffiliateService extends BaseService {
         type: db.QueryTypes.SELECT,
       });
 
-    const clientList = clientResult[0];
-    const cacheClients = _.reduce(clientList, (val, item) => {
+    const clientAffiliateList = clientResult[0];
+    const cacheClients = _.reduce(clientAffiliateList, (val, item) => {
       val[item.id] = item;
 
       return val;
     }, {});
 
     // Find refferer
-    clientList.forEach((item) => {
-      item.reffererInfo = item.referrer_client_id ? cacheClients[item.referrer_client_id] : null;
+    clientAffiliateList.forEach((item) => {
+      item.reffererInfo = item.referrer_client_affiliate_id ? cacheClients[item.referrer_client_affiliate_id] : null;
     });
 
     // Get referrer list
     referrerList = [];
-    let refferer = cacheClients[client.referrer_client_id];
+    let refferer = cacheClients[client.referrer_client_affiliate_id];
 
     while (refferer) {
       referrerList.push(refferer);
@@ -152,7 +151,7 @@ class _ClientAffiliateService extends BaseService {
         affiliate_type_id: item.affiliate_type_id,
         level: item.level,
         root_client_id: item.root_client_id,
-        referrer_client_id: item.referrer_client_id,
+        referrer_client_affiliate_id: item.referrer_client_affiliate_id,
         policy_id: item.policy_id,
         actived_flg: item.actived_flg,
       };

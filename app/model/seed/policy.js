@@ -30,7 +30,7 @@ module.exports = async () => {
       name: 'AffiliateSystem - Membership Affiliate Policy',
       proportion_share: 20,
       max_levels: 4,
-      rates: [10, 8, 6, 4, 2],
+      rates: [50, 30, 15, 5],
     }));
 
     models.push(new AffiliatePolicy({
@@ -38,7 +38,7 @@ module.exports = async () => {
       name: 'AffiliateSystem - Affiliate Policy',
       max_levels: null,
       proportion_share: 20,
-      rates: [10, 8, 6, 4, 2],
+      rates: [50, 30, 15, 5],
     }));
 
     models.push(new AffiliatePolicy({
@@ -46,7 +46,7 @@ module.exports = async () => {
       name: 'MembershipSystem - Affiliate Policy',
       max_levels: 5,
       rates: [50, 30, 15, 5],
-      proportion_share: 20,
+      proportion_share: 30,
     }));
 
     await Model.bulkCreate(models, {
