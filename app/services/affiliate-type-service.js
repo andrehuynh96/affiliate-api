@@ -17,9 +17,9 @@ class _AffiliateTypeService extends BaseService {
         const result = await this.model.findByPk(id, {
           include: [
             {
+              // association: Policy,
               model: Policy,
-              as: 'policy',
-              foreignKey: 'default_policy_id',
+              as: 'policies',
             },
           ]
         });

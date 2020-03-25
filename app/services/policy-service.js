@@ -10,6 +10,28 @@ class _PolicyService extends BaseService {
     super(Policy, 'Policy');
   }
 
+  // getPoliciesByAffiliateTypeId(affiliateTypeId) {
+  //   return new Promise(async (resolve, reject) => {
+  //     try {
+
+  //       const result = await this.model.findAll(id, {
+  //         // include: [
+  //         //   {
+  //         //     model: Policy,
+  //         //     as: 'policy',
+  //         //     foreignKey: 'default_policy_id',
+  //         //   },
+  //         // ]
+  //       });
+
+  //       resolve(result);
+  //     } catch (err) {
+  //       reject(err);
+  //     }
+  //   });
+  // }
+
+
 }
 
 const PolicyService = Service([], () => {

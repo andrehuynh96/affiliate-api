@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
     },
-    client_id: {
+    client_affiliate_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
@@ -31,8 +31,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AffiliateRequestDetails.associate = (models) => {
-    // associations can be defined here
-    AffiliateRequestDetails.belongsTo(models.clients);
+    AffiliateRequestDetails.belongsTo(models.client_affiliates);
     AffiliateRequestDetails.belongsTo(models.affiliate_requests);
   };
 

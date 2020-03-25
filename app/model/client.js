@@ -6,37 +6,16 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
     },
-    user_id: {
-      type: DataTypes.STRING(64),
+    ext_client_id: {
+      type: DataTypes.STRING(250),
       allowNull: false,
     },
-    affiliate_type_id: {
+    organization_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    referrer_client_id: {
-      type: DataTypes.BIGINT,
-      allowNull: true,
-    },
-    level: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    parent_path: {
+    membership_type: {
       type: DataTypes.STRING(10000),
-      allowNull: true,
-    },
-    root_client_id: {
-      type: DataTypes.BIGINT,
-      allowNull: true,
-    },
-    actived_flg: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      default: true
-    },
-    policy_id: {
-      type: DataTypes.INTEGER,
       allowNull: true,
     },
   }, {
@@ -44,31 +23,20 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true,
     indexes: [
       {
-        name: 'user_key',
+        name: 'ext_client_key',
         unique: true,
-        fields: ['user_id', 'affiliate_type_id']
+        fields: ['ext_client_id', 'organization_id']
       },
     ]
   });
 
   Client.associate = (models) => {
-    Client.belongsTo(models.affiliate_types);
+    Client.belongsTo(models.organizations);
 
-    Client.hasMany(models.affiliate_codes, {
-      as: 'affiliateCodes',
-      foreignKey: 'client_id',
-      sourceKey: 'id',
+    Client.hasMany(models.client_affiliates, {
+      as: 'clientAffiliates',
     });
 
-    Client.belongsTo(models.policies, {
-      as: 'policy',
-      foreignKey: 'policy_id',
-    });
-
-    Client.belongsTo(models.membership_types, {
-      as: 'membership',
-      foreignKey: 'membership_type_id',
-    });
   };
 
   return Client;

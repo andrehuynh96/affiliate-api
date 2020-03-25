@@ -19,10 +19,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(1000),
       allowNull: true,
     },
-    category: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
   }, {
     underscored: true,
     timestamps: true,
@@ -32,10 +28,16 @@ module.exports = (sequelize, DataTypes) => {
     AffiliateType.belongsTo(models.organizations);
 
     AffiliateType.belongsToMany(models.policies, {
-      as: 'policy',
-      through: 'affiliate_type_details',
+      as: 'DefaultPolicies',
+      through: 'default_policies',
       foreignKey: 'affiliate_type_id',
     });
+
+    // AffiliateType.hasMany(models.policies, {
+    //   as: 'policies',
+    //   // through: 'affiliate_type_details',
+    //   // foreignKey: 'affiliate_type_id',
+    // });
   };
 
   return AffiliateType;

@@ -15,9 +15,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AffiliateCode.associate = (models) => {
-    AffiliateCode.belongsTo(models.clients, {
-      as: 'owner',
-      foreignKey: 'client_id',
+    AffiliateCode.belongsTo(models.client_affiliates, {
+      as: 'Owner',
+      foreignKey: 'client_affiliate_id',
     });
   };
 

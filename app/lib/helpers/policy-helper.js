@@ -43,9 +43,12 @@ const policyHelper = {
 
     const affiliateTypeService = Container.get(AffiliateTypeService);
     const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
-    policy = affiliateType.policy;
+    const policies = affiliateType.polices;
 
-    return policy.get({ plain: true });
+    console.info(policies);
+
+    // return policy.get({ plain: true });
+    return policy;
   }
 
 };
