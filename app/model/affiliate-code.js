@@ -5,7 +5,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
       allowNull: false,
     },
-    client_id: {
+    client_affiliate_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },

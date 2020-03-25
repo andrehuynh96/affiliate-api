@@ -9,7 +9,7 @@ const config = require('../config');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
-  ClientService,
+  ClientAffiliateService,
   PolicyService,
 } = require('../services');
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
@@ -26,7 +26,7 @@ class CalculateRewardsProcessor {
     this.logger = Container.get('logger');
     this.redisCacherService = Container.get('redisCacherService');
     this.affiliateRequestService = Container.get(AffiliateRequestService);
-    this.clientService = Container.get(ClientService);
+    this.ClientAffiliateService = Container.get(ClientAffiliateService);
     this.policyService = Container.get(PolicyService);
 
     this.job = job;
@@ -105,14 +105,14 @@ class CalculateRewardsProcessor {
   }
 
   async processAffiliateRequestDetails(affiliateRequestDetails) {
-    const { logger, affiliateRequestService, clientService, redisCacherService, policyService } = this;
+    const { logger, affiliateRequestService, ClientAffiliateService, redisCacherService, policyService } = this;
     const { id, client_id, affiliate_request_id, amount } = affiliateRequestDetails;
 
     logger.debug(`Processing request details with id: ${id}, clientId: ${client_id}.`);
     await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.PROCESSING);
 
-    const client = await clientService.findById(client_id);
-    const referrerList = await clientService.getReferrerList(client);
+    const client = await ClientAffiliateService.findById(client_id);
+    const referrerList = await ClientAffiliateService.getReferrerList(client);
     logger.debug('Referrer list: ', referrerList.map(item => item.id));
 
     const rootClient = referrerList.find((item) => item.level === 1);

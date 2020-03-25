@@ -50,7 +50,7 @@ module.exports = (sequelize, DataTypes) => {
   ClientAffiliate.associate = (models) => {
     ClientAffiliate.belongsTo(models.affiliate_types);
     ClientAffiliate.hasMany(models.affiliate_codes, {
-      as: 'AffiliateCodes',
+      as: 'affiliateCodes',
       foreignKey: 'client_affiliate_id',
       sourceKey: 'id',
     });

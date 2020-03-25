@@ -6,7 +6,7 @@ const config = require('../config');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
-  ClientService,
+  ClientAffiliateService,
 } = require('../services');
 const AffiliateCode = require('../model').affiliate_codes;
 const processJob = require('./calculate-rewards.processor');
@@ -141,7 +141,7 @@ class _CalculateRewardsJob {
 }
 
 const CalculateRewardsJob = Service([
-], (affiliateRequestService, clientService) => {
+], (affiliateRequestService, ClientAffiliateService) => {
   const service = new _CalculateRewardsJob();
 
   return service;

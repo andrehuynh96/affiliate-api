@@ -11,11 +11,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     organization_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
     },
     membership_type: {
-      type: DataTypes.STRING(10000),
+      type: DataTypes.STRING(50),
       allowNull: true,
     },
   }, {

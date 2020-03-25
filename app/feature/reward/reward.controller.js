@@ -5,7 +5,7 @@ const v4 = require('uuid/v4');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
-  ClientService,
+  ClientAffiliateService,
 } = require('../../services');
 const { policyHelper } = require('../../lib/helpers');
 const AffiliateRequestStatus = require('../../model/value-object/affiliate-request-status');
@@ -36,9 +36,9 @@ const controller = {
       // }
 
       // Validate user_id in details list
-      const clientService = Container.get(ClientService);
+      const ClientAffiliateService = Container.get(ClientAffiliateService);
       const userIdList = _.uniq(details.map(item => item.user_id));
-      const clients = await clientService.findByIdList(userIdList, affiliateTypeId);
+      const clients = await ClientAffiliateService.findByIdList(userIdList, affiliateTypeId);
       const notFoundUserIdList = [];
       const clientDic = {};
 

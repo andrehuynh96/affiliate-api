@@ -14,6 +14,11 @@ module.exports = async () => {
         id: 2,
         name: 'Affiliate System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
+        DefaultPolicies: [
+          { policy_id: 1 },
+          { policy_id: 2 },
+          { policy_id: 3 }
+        ]
       },
     ], {
       returning: true
