@@ -48,7 +48,6 @@ const policyHelper = {
 
     console.info(policies);
 
-    // return policy.get({ plain: true });
     return policy;
   }
 

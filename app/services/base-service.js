@@ -93,7 +93,7 @@ class BaseService {
           defaults: defaultData,
         });
 
-        resolve(result);
+        resolve(result[0]);
       } catch (err) {
         reject(err);
       }

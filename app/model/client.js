@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     Client.belongsTo(models.organizations);
 
     Client.hasMany(models.client_affiliates, {
-      as: 'clientAffiliates',
+      as: 'ClientAffiliates',
     });
 
   };

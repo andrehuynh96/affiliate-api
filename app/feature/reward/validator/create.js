@@ -5,7 +5,7 @@ const schema = Joi.object().keys({
   from_date: Joi.date().iso().required(),
   to_date: Joi.date().iso().required(),
   details: Joi.array().items(Joi.object({
-    user_id: Joi.string().max(64).required(),
+    ext_client_id: Joi.string().max(250).required(),
     amount: Joi.number().greater(0).required(),
   }))
 });

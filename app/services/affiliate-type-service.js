@@ -11,18 +11,25 @@ class _AffiliateTypeService extends BaseService {
     super(AffiliateType, 'AffiliateType');
   }
 
-  findByPk(id) {
+  findByPk(id, { isIncludePolicies }) {
+    if (!isIncludePolicies) {
+      return super.findByPk(id);
+    }
+
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.findByPk(id, {
-          include: [
-            {
-              // association: Policy,
-              model: Policy,
-              as: 'policies',
-            },
-          ]
-        });
+        const options = {
+          include: [],
+        };
+
+        if (isIncludePolicies) {
+          options.include.push({
+            model: Policy,
+            as: 'DefaultPolicies',
+          });
+        }
+
+        const result = await this.model.findByPk(id, options);
 
         resolve(result);
       } catch (err) {

@@ -5,6 +5,7 @@ const v4 = require('uuid/v4');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
+  ClientService,
   ClientAffiliateService,
 } = require('../../services');
 const { policyHelper } = require('../../lib/helpers');
@@ -30,25 +31,26 @@ const controller = {
 
       const affiliateRequestService = Container.get(AffiliateRequestService);
       const hasDuplicate = await affiliateRequestService.hasDuplicate(currency_symbol, fromDate, toDate);
-      // if (hasDuplicate) {
-      //   const errorMessage = res.__('CALCULATE_REWARDS_DUPLICATE_DATA', currency_symbol);
-      //   return res.badRequest(errorMessage, 'CALCULATE_REWARDS_DUPLICATE_DATA', { fields: ['from_date', 'to_date'] });
-      // }
+      if (hasDuplicate) {
+        const errorMessage = res.__('CALCULATE_REWARDS_DUPLICATE_DATA', currency_symbol);
+        return res.badRequest(errorMessage, 'CALCULATE_REWARDS_DUPLICATE_DATA', { fields: ['from_date', 'to_date'] });
+      }
 
-      // Validate user_id in details list
-      const ClientAffiliateService = Container.get(ClientAffiliateService);
-      const userIdList = _.uniq(details.map(item => item.user_id));
-      const clients = await ClientAffiliateService.findByIdList(userIdList, affiliateTypeId);
+      // Validate ext_client_id in details list
+      const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const extClientIdList = _.uniq(details.map(item => {
+        item.ext_client_id = _.trim(item.ext_client_id).toLowerCase();
+
+        return item.ext_client_id;
+      }));
+
+      const extClientIdMapping = await clientService.getExtClientIdMapping(extClientIdList, affiliateTypeId);
       const notFoundUserIdList = [];
-      const clientDic = {};
 
-      userIdList.forEach(userId => {
-        const client = clients.find(client => client.user_id === userId);
-
-        if (!client) {
-          notFoundUserIdList.push(userId);
-        } else {
-          clientDic[userId] = client;
+      extClientIdList.forEach(id => {
+        if (!extClientIdMapping[id]) {
+          notFoundUserIdList.push(id);
         }
       });
 
@@ -61,7 +63,7 @@ const controller = {
       const requestDetailsLists = details.map((item) => {
         return {
           affiliate_request_id: affiliateRequestId,
-          client_id: clientDic[item.user_id].id,
+          client_affiliate_id: extClientIdMapping[item.ext_client_id],
           amount: item.amount,
           status: AffiliateRequestDetailsStatus.PENDING,
         };
