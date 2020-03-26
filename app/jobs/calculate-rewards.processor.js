@@ -30,6 +30,7 @@ class PolicyData {
     affiliateRequestDetails,
     referrerList,
     policy,
+    affiliateTypeId,
   }) {
 
     this.stakerId = stakerId;
@@ -37,6 +38,7 @@ class PolicyData {
     this.affiliateRequestDetails = affiliateRequestDetails;
     this.referrerList = referrerList;
     this.policy = policy;
+    this.affiliateTypeId = affiliateTypeId;
     this.rewards = [];
   }
 }
@@ -121,13 +123,15 @@ class CalculateRewardsProcessor {
     this.logger.info(`There are ${affiliateRequestDetailsList.length} request details that is not completed.`);
 
     await forEachSeries(affiliateRequestDetailsList, async (affiliateRequestDetails) => {
-      await this.processAffiliateRequestDetails(affiliateRequestDetails);
+      await this.processAffiliateRequestDetails(affiliateRequest, affiliateRequestDetails);
     });
   }
 
-  async processAffiliateRequestDetails(affiliateRequestDetails) {
+  async processAffiliateRequestDetails(affiliateRequest, affiliateRequestDetails) {
     const { logger, affiliateRequestService, clientAffiliateService, redisCacherService, policyService } = this;
+    const { affiliate_type_id } = affiliateRequest;
     const { id, client_affiliate_id, affiliate_request_id, amount } = affiliateRequestDetails;
+
     const stakerId = client_affiliate_id;
 
     logger.debug(`Processing request details with id: ${id}, stakerId: ${stakerId}.`);
@@ -155,6 +159,7 @@ class CalculateRewardsProcessor {
         affiliateRequestDetails,
         referrerList,
         policy,
+        affiliateTypeId: affiliate_type_id,
       });
 
       return policyData;
@@ -172,13 +177,11 @@ class CalculateRewardsProcessor {
 
     await forEachSeries(policyDataList, async (policyData) => {
       if (policyData.policy.type === PolicyType.MEMBERSHIP) {
-        const result = await this.processMembershipPolicy(policyData);
-
-        allRewardList = allRewardList.concat(result);
+        allRewardList = allRewardList.concat(await this.processMembershipPolicy(policyData));
+      } else if (policyData.policy.type === PolicyType.MEMBERSHIP_AFFILIATE) {
+        allRewardList = allRewardList.concat(await this.processMembershipAffiliatePolicy(policyData));
       } else if (policyData.policy.type === PolicyType.AFFILIATE) {
-        // const result = await this.processAffliatePolicy(policyData);
-
-        // allRewardList = allRewardList.concat(result);
+        allRewardList = allRewardList.concat(await this.processAffliatePolicy(policyData));
       }
     });
 
@@ -186,23 +189,69 @@ class CalculateRewardsProcessor {
   }
 
   async processMembershipPolicy(policyData) {
-    const { stakerId, amount, affiliateRequestDetails, referrerList, policy } = policyData;
+    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
-
-    const { max_levels, rates, proportion_share, membership_rate } = policy;
-    const shareAmount = Decimal(amount).times(proportion_share / 100);
+    const { max_levels, proportion_share, membership_rate } = policy;
     const rewardList = [];
 
     // Get rate for memberhip clients
     const { clientService } = this;
-    const client = clientService.findByPk(stakerId);
-    const rate = 0;
+    const membershipType = await clientService.getMembershipType(stakerId, affiliateTypeId);
+    this.logger.debug(`MembershipType: ${membershipType ? membershipType : 'NA'} .`);
+    if (!membershipType) {
+      return rewardList;
+    }
+
+    const rate = membership_rate[membershipType.toUpperCase()];
+    if (_.isUndefined(rate)) {
+      this.logger.warn('Can not get rate for membership: ', membershipType);
+      return rewardList;
+    }
+
+    const shareAmount = Decimal(amount).times(proportion_share / 100);
 
     rewardList.push({
       client_id: stakerId,
       affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
       affiliate_request_details_id: affiliateRequestDetails.id,
       policy_id: policy.id,
+      policy_type: PolicyType.MEMBERSHIP,
+      amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
+    });
+
+    this.logger.debug('Output: ', rewardList);
+
+    return rewardList;
+  }
+
+  async processMembershipAffiliatePolicy(policyData) {
+    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId } = policyData;
+    this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
+    const { max_levels, proportion_share, membership_rate } = policy;
+    const rewardList = [];
+
+    // Get rate for memberhip clients
+    const { clientService } = this;
+    const membershipType = await clientService.getMembershipType(stakerId, affiliateTypeId);
+    this.logger.debug(`MembershipType: ${membershipType ? membershipType : 'NA'} .`);
+    if (!membershipType) {
+      return rewardList;
+    }
+
+    const rate = membership_rate[membershipType.toUpperCase()];
+    if (_.isUndefined(rate)) {
+      this.logger.warn('Can not get rate for membership: ', membershipType);
+      return rewardList;
+    }
+
+    const shareAmount = Decimal(amount).times(proportion_share / 100);
+
+    rewardList.push({
+      client_id: stakerId,
+      affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
+      affiliate_request_details_id: affiliateRequestDetails.id,
+      policy_id: policy.id,
+      policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
       amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
     });
 
@@ -228,6 +277,7 @@ class CalculateRewardsProcessor {
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
           affiliate_request_details_id: affiliateRequestDetails.id,
           policy_id: policy.id,
+          policy_type: PolicyType.AFFILIATE,
           amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
         });
       }

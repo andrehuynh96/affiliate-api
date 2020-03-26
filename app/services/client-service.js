@@ -63,6 +63,33 @@ class _ClientService extends BaseService {
     });
   }
 
+  async getMembershipType(clientAffiliateId, affiliateTypeId) {
+    const key = this.redisCacherService.getCacheKey('membership-type', { clientAffiliateId });
+    let result = await this.redisCacherService.get(key);
+    if (!_.isNull(result) && !_.isUndefined(result)) {
+      return result;
+    }
+
+    const client = await this.model.findOne({
+      include: [{
+        as: 'ClientAffiliates',
+        model: ClientAffiliate,
+        where: {
+          id: clientAffiliateId,
+          affiliate_type_id: affiliateTypeId,
+        }
+      }]
+    });
+
+    result = client.membership_type || '';
+
+    const ttlInSeconds = 60;
+    await this.redisCacherService.set(key, result, ttlInSeconds);
+
+    return result;
+  }
+
+
 }
 
 const ClientService = Service([], () => {
