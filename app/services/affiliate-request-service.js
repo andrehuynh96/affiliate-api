@@ -54,12 +54,15 @@ class _AffiliateRequestService extends BaseService {
     });
   }
 
-  hasDuplicate(currencySymbol, fromDate, toDate) {
+  hasDuplicate(currencySymbol, affiliateTypeId, fromDate, toDate) {
     return new Promise(async (resolve, reject) => {
       try {
         const cond = {
           [Op.and]: [
-            { currency_symbol: currencySymbol, },
+            {
+              currency_symbol: currencySymbol,
+              affiliate_type_id: affiliateTypeId,
+            },
             {
               to_date: {
                 [Op.gte]: fromDate,

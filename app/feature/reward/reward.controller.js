@@ -30,7 +30,7 @@ const controller = {
       }
 
       const affiliateRequestService = Container.get(AffiliateRequestService);
-      const hasDuplicate = await affiliateRequestService.hasDuplicate(currency_symbol, fromDate, toDate);
+      const hasDuplicate = await affiliateRequestService.hasDuplicate(currency_symbol, affiliateTypeId, fromDate, toDate);
       if (hasDuplicate) {
         const errorMessage = res.__('CALCULATE_REWARDS_DUPLICATE_DATA', currency_symbol);
         return res.badRequest(errorMessage, 'CALCULATE_REWARDS_DUPLICATE_DATA', { fields: ['from_date', 'to_date'] });

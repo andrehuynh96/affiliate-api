@@ -6,7 +6,7 @@ const { Container } = typedi;
 module.exports = async (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
   const secretKey = req.headers['x-secret-key'];
-  const affiliateTypeId = req.headers['x-affiliate_type_id'];
+  const affiliateTypeId = req.headers['x-affiliate-type-id'];
 
   if (!apiKey || !secretKey) {
     return res.unauthorized();
