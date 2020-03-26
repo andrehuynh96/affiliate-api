@@ -93,7 +93,7 @@ class BaseService {
           defaults: defaultData,
         });
 
-        resolve(result);
+        resolve(result[0]);
       } catch (err) {
         reject(err);
       }
@@ -132,7 +132,7 @@ class BaseService {
   async update(instance) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.update(instance);
+        const result = await instance.update();
 
         resolve(result);
       } catch (err) {
@@ -140,7 +140,6 @@ class BaseService {
       }
     });
   }
-
 
   deleteWhere(cond, defaultData) {
     cond = cond || {};

@@ -10,10 +10,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    affiliate_type_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
     name: {
       type: DataTypes.STRING(256),
       allowNull: false
@@ -45,10 +41,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   App.associate = (models) => {
-    // associations can be defined here
     App.belongsTo(models.organizations);
-    App.belongsTo(models.affiliate_types);
-
   };
 
   return App;

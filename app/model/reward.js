@@ -6,11 +6,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
     },
-    client_id: {
+    client_affiliate_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
-    affiliate_request_id: {
+    affiliate_request_detail_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
@@ -18,15 +18,26 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL,
       allowNull: false,
     },
+    policy_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   }, {
     underscored: true,
     timestamps: true,
+    indexes: [
+      {
+        name: 'reward_client_per_policy_key',
+        unique: true,
+        fields: ['client_affiliate_id', 'policy_id', 'affiliate_request_detail_id']
+      },
+    ]
   });
 
   Reward.associate = async (models) => {
-    // associations can be defined here
-    Reward.belongsTo(models.clients);
-    Reward.belongsTo(models.affiliate_requests);
+    Reward.belongsTo(models.client_affiliates);
+    Reward.belongsTo(models.affiliate_request_details);
+    Reward.belongsTo(models.policies);
   };
 
   return Reward;

@@ -1,27 +1,40 @@
+const _ = require('lodash');
 const typedi = require('typedi');
+const Sequelize = require('sequelize');
 const BaseService = require('./base-service');
 const Client = require('app/model').clients;
-const AffiliateCode = require('app/model').affiliate_codes;
+const ClientAffiliate = require('app/model').client_affiliates;
 const Policy = require('app/model').policies;
+const db = require('app/model').sequelize;
 
-const Service = typedi.Service;
+const Op = Sequelize.Op;
+const { Container, Service } = typedi;
 
 class _ClientService extends BaseService {
 
   constructor() {
     super(Client, 'Client');
+
+    this.logger = Container.get('logger');
+    this.redisCacherService = Container.get('redisCacherService');
   }
 
-  create(data) {
+  findByIdList(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.create(data, {
-          include: [
-            {
-              model: AffiliateCode,
-              as: 'affiliateCodes'
-            },
-          ]
+        const result = await this.model.findAll({
+          where: {
+            ext_client_id: {
+              [Op.in]: extClientIdList
+            }
+          },
+          include: [{
+            as: 'ClientAffiliates',
+            model: ClientAffiliate,
+            where: {
+              affiliate_type_id: affiliateTypeId,
+            }
+          }]
         });
 
         resolve(result);
@@ -31,33 +44,55 @@ class _ClientService extends BaseService {
     });
   }
 
-  findById(id) {
+  getExtClientIdMapping(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.findByPk(id, {
-          include: [
-            {
-              model: Policy,
-              as: 'policy',
-              foreignKey: 'policy_id',
-            },
-          ]
+        const result = await this.findByIdList(extClientIdList, affiliateTypeId);
+        const mapping = {};
+
+        result.forEach((client) => {
+          const clientAffiliate = client.ClientAffiliates[0];
+
+          mapping[client.ext_client_id] = clientAffiliate ? clientAffiliate.id : null;
         });
 
-        // console.log(result.get({
-        //   plain: true
-        // }));
-        resolve(result);
+        resolve(mapping);
       } catch (err) {
         reject(err);
       }
     });
   }
+
+  async getMembershipType(clientAffiliateId, affiliateTypeId) {
+    const key = this.redisCacherService.getCacheKey('membership-type', { clientAffiliateId });
+    let result = await this.redisCacherService.get(key);
+    if (!_.isNull(result) && !_.isUndefined(result)) {
+      return result;
+    }
+
+    const client = await this.model.findOne({
+      include: [{
+        as: 'ClientAffiliates',
+        model: ClientAffiliate,
+        where: {
+          id: clientAffiliateId,
+          affiliate_type_id: affiliateTypeId,
+        }
+      }]
+    });
+
+    result = client.membership_type || '';
+
+    const ttlInSeconds = 60;
+    await this.redisCacherService.set(key, result, ttlInSeconds);
+
+    return result;
+  }
+
 
 }
 
-const ClientService = Service([
-], () => {
+const ClientService = Service([], () => {
   const service = new _ClientService();
 
   return service;

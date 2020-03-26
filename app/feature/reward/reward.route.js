@@ -1,14 +1,14 @@
 const express = require('express');
-const controller = require('./affiliate-code.controller');
+const controller = require('./reward.controller');
 const { create } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/app-auth.middleware');
 const route = express.Router();
 
-route.post('/affiliate-codes',
+route.post('/rewards',
   validator(create),
   appAuth,
-  controller.create
+  controller.calculateRewards
 );
 
 module.exports = route;
@@ -16,7 +16,7 @@ module.exports = route;
 /** *******************************************************************/
 /**
  * @swagger
- * /api/v1/affiliate-codes:
+ * /api/v1/rewards:
  *   post:
  *     summary: Generate a affiliate code
  *     tags:

@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       autoIncrement: true,
     },
-    client_id: {
+    client_affiliate_id: {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
@@ -24,8 +24,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ClaimReward.associate = async (models) => {
-    // associations can be defined here
-    ClaimReward.belongsTo(models.clients);
+    ClaimReward.belongsTo(models.client_affiliates);
   };
 
   return ClaimReward;

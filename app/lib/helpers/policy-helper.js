@@ -1,36 +1,41 @@
 const typedi = require('typedi');
+const _ = require('lodash');
 const {
   AffiliateCodeService,
   AffiliateTypeService,
-  ClientService,
+  ClientAffiliateService,
   PolicyService,
 } = require('../../services');
 const Container = typedi.Container;
 
 const policyHelper = {
-
   // Get policy witch apply for clients that same root client
-  async getPolicy({ affiliateTypeId, clientService, client }) {
+  async getPolicies({ affiliateTypeId, clientAffiliateService, clientAffiliate }) {
+    const rootClientAffiliateId = clientAffiliate.root_client_affiliate_id || clientAffiliate.id;
+
+    return policyHelper.getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService });
+  },
+
+  async getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService }) {
+    let rootClientAffiliate = null;
+    let policies = null;
     // First, we find policy witch apply for root user
-    const rootClientId = client.root_client_id;
-    let policy = null;
-    let rootClient = null;
 
     // Below level 1
-    if (rootClientId) {
-      rootClient = await clientService.findById(rootClientId);
-      policy = (rootClient && rootClient.policy) ? rootClient.policy : null;
+    if (rootClientAffiliateId) {
+      rootClientAffiliate = await clientAffiliateService.findByPk(rootClientAffiliateId, { isIncludePolicies: true });
+      policies = rootClientAffiliate.ClientPolicies;
     }
 
-    if (!policy) {
+    if (!_.some(policies)) {
       const affiliateTypeService = Container.get(AffiliateTypeService);
-      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
-      policy = affiliateType.policy;
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId, { isIncludePolicies: true });
+      policies = await affiliateType.DefaultPolicies;
     }
 
     return {
-      policy,
-      rootClient
+      policies,
+      rootClient: rootClientAffiliate
     };
   }
 

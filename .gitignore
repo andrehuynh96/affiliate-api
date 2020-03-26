@@ -87,5 +87,6 @@ typings/
 .dynamodb/
 
 # Plantuml output folder
+zTODO
 out
 *.code-workspace

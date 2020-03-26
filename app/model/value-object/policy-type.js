@@ -1,0 +1,8 @@
+const PolicyType = {
+  UNKNOWN: 'UNKNOWN',
+  MEMBERSHIP: 'MEMBERSHIP',
+  MEMBERSHIP_AFFILIATE: 'MEMBERSHIP_AFFILIATE',
+  AFFILIATE: 'AFFILIATE',
+};
+
+module.exports = PolicyType;

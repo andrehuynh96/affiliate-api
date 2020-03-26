@@ -12,14 +12,16 @@ const config = {
     name: utils.getOsEnv('APP_NAME'),
     appHostName: utils.getOsEnv('APP_HOST_NAME'),
     port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
+    rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
   },
   logger: {
+    defaultLevel: process.env.LOG_DEFAULT_LEVEL || 'debug',
     console: {
       enable: true,
-      level: 'debug',
+      level: process.env.LOG_CONSOLE_LEVEL || 'debug',
     },
-    defaultLevel: 'debug',
     file: {
+      level: process.env.LOG_CONSOLE_LEVEL || 'info',
       compress: false,
       app: `${logFolder}/app.log`,
       error: `${logFolder}/error.log`,
@@ -46,10 +48,16 @@ const config = {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
     prefix: process.env.REDIS_PREFIX || 'affiliate:api:cache',
-    usingPass: process.env.REDIS_USING_PASS || 0,
     pass: process.env.REDIS_PASS,
+    db: utils.toNumber(utils.getOsEnvOptional('REDIS_CACHE_DB') || '1'),
   },
-  rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
+  bull: {
+    host: utils.getOsEnv('BULL_REDIS_HOST'),
+    port: utils.toNumber(utils.getOsEnv('BULL_REDIS_PORT')),
+    password: utils.getOsEnv('BULL_REDIS_PASSWORD'),
+    db: utils.toNumber(utils.getOsEnv('BULL_REDIS_DB')),
+  },
+
 };
 
 module.exports = config;
