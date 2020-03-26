@@ -12,7 +12,7 @@ class _AffiliateCodeService extends BaseService {
   }
 
   generateCode() {
-    return shortid.generate().replace('_', '1').replace('-', '2');
+    return shortid.generate().replace(/_/g, '1').replace(/\\-/g, '2');
   }
 
 }

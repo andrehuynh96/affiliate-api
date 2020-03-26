@@ -9,6 +9,7 @@ const {
 } = require('../../services');
 const { policyHelper } = require('../../lib/helpers');
 const PolicyType = require('../../model/value-object/policy-type');
+const MembershipType = require('../../model/value-object/membership-type');
 
 const Container = typedi.Container;
 
@@ -20,15 +21,21 @@ const controller = {
       let { ext_client_id } = body;
       ext_client_id = _.trim(ext_client_id).toLowerCase();
 
+      // Validate membership type
+      const isValidMembershipType = membership_type ? !!MembershipType[membership_type] : true;
+      if (!isValidMembershipType) {
+        return res.badRequest(res.__('REGISTER_CLIENT_INVALID_MEMBERSHIP_TYPE'), 'REGISTER_CLIENT_INVALID_MEMBERSHIP_TYPE', { fields: ['membership_type'] });
+      }
+
       const affiliateCodeService = Container.get(AffiliateCodeService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
       const clientService = Container.get(ClientService);
-
       let level = 1;
       let parentPath = 'root';
       let referrer_client_affiliate_id = null;
       let rootClientAffiliateId = null;
       let affiliateCodeInstance = null;
+      let affiliatePolicy = null;
 
       // Has refferer
       if (affiliate_code) {
@@ -56,13 +63,14 @@ const controller = {
           return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
         }
 
-        const affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
+        affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
         if (!affiliatePolicy) {
           return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
         }
 
         level = referrerClient.level + 1;
         const maxLevels = affiliatePolicy.max_levels;
+
         if (maxLevels && level > maxLevels) {
           const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
@@ -80,7 +88,25 @@ const controller = {
         organization_id: organizationId,
         membership_type,
       });
+
       const clientId = client.id;
+      // Check duplicate client
+      const existClientAffiliate = await clientAffiliateService.findOne({
+        client_id: clientId,
+        affiliate_type_id: affiliateTypeId,
+      });
+      if (existClientAffiliate) {
+        return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
+      }
+
+      // Update membership
+      if (membership_type && client.membership_type !== membership_type) {
+        await clientService.updateWhere({
+          id: client.id
+        }, {
+          membership_type
+        });
+      }
 
       const code = affiliateCodeService.generateCode();
       const data = {
