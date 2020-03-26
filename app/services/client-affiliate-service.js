@@ -163,7 +163,6 @@ class _ClientAffiliateService extends BaseService {
     return result;
   }
 
-
 }
 
 const ClientAffiliateService = Service([], () => {

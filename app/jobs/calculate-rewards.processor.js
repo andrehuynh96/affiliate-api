@@ -12,6 +12,7 @@ const {
   ClientService,
   ClientAffiliateService,
   PolicyService,
+  RewardService,
 } = require('../services');
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('../model/value-object/affiliate-request-details-status');
@@ -52,6 +53,7 @@ class CalculateRewardsProcessor {
     this.clientService = Container.get(ClientService);
     this.clientAffiliateService = Container.get(ClientAffiliateService);
     this.policyService = Container.get(PolicyService);
+    this.rewardService = Container.get(RewardService);
 
     this.job = job;
     this.data = job.data;
@@ -106,6 +108,8 @@ class CalculateRewardsProcessor {
       id: affiliateRequestId,
     }, {
       status: AffiliateRequestStatus.COMPLETED,
+      job_id: null,
+      error_message: null,
     });
 
     return this.jobResult();
@@ -167,9 +171,8 @@ class CalculateRewardsProcessor {
 
     const allRewardList = await this.calculateRewards(policyDataList);
     await this.saveRewards(allRewardList);
-
-    throw new Error('AAA');
-    // await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED);
+    // throw new Error('AAA');
+    await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED);
   }
 
   async calculateRewards(policyDataList) {
@@ -211,9 +214,9 @@ class CalculateRewardsProcessor {
     const shareAmount = Decimal(amount).times(proportion_share / 100);
 
     rewardList.push({
-      client_id: stakerId,
+      client_affiliate_id: stakerId,
       affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
-      affiliate_request_details_id: affiliateRequestDetails.id,
+      affiliate_request_detail_id: affiliateRequestDetails.id,
       policy_id: policy.id,
       policy_type: PolicyType.MEMBERSHIP,
       amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
@@ -227,32 +230,31 @@ class CalculateRewardsProcessor {
   async processMembershipAffiliatePolicy(policyData) {
     const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
-    const { max_levels, proportion_share, membership_rate } = policy;
-    const rewardList = [];
-
-    // Get rate for memberhip clients
-    const { clientService } = this;
-    const membershipType = await clientService.getMembershipType(stakerId, affiliateTypeId);
-    this.logger.debug(`MembershipType: ${membershipType ? membershipType : 'NA'} .`);
-    if (!membershipType) {
-      return rewardList;
-    }
-
-    const rate = membership_rate[membershipType.toUpperCase()];
-    if (_.isUndefined(rate)) {
-      this.logger.warn('Can not get rate for membership: ', membershipType);
-      return rewardList;
-    }
-
+    const { max_levels, rates, proportion_share } = policy;
     const shareAmount = Decimal(amount).times(proportion_share / 100);
+    const rewardList = [];
+    const { clientService } = this;
 
-    rewardList.push({
-      client_id: stakerId,
-      affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
-      affiliate_request_details_id: affiliateRequestDetails.id,
-      policy_id: policy.id,
-      policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
-      amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
+    await forEach(_.zip(referrerList, rates), async (arrays) => {
+      const [referrer, rate] = arrays;
+
+      if (referrer && rate) {
+        const client_affliate_id = referrer.id;
+        // Get rate for membership client
+        const membershipType = await clientService.getMembershipType(client_affliate_id, affiliateTypeId);
+        if (!membershipType) {
+          return;
+        }
+
+        rewardList.push({
+          client_affiliate_id: client_affliate_id,
+          affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
+          affiliate_request_detail_id: affiliateRequestDetails.id,
+          policy_id: policy.id,
+          policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
+          amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
+        });
+      }
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -273,9 +275,9 @@ class CalculateRewardsProcessor {
 
       if (referrer && rate) {
         rewardList.push({
-          client_id: referrer.id,
+          client_affiliate_id: referrer.id,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
-          affiliate_request_details_id: affiliateRequestDetails.id,
+          affiliate_request_detail_id: affiliateRequestDetails.id,
           policy_id: policy.id,
           policy_type: PolicyType.AFFILIATE,
           amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
@@ -288,7 +290,8 @@ class CalculateRewardsProcessor {
   }
 
   async saveRewards(rewardList) {
-    // this.logger.debug('Save rewards into database.', rewardList);
+    const { rewardService } = this;
+    await rewardService.bulkCreate(rewardList);
   }
 
   jobResult() {
