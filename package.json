@@ -17,6 +17,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "cross-env ENV_NAME=dev nodemon",
+    "start": "node index.js",
     "eslint": "eslint .",
     "eslint:check": "eslint --print-config .eslintrc.js | eslint-config-prettier-check",
     "eslint:fix": "eslint --fix .",
