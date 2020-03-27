@@ -22,14 +22,22 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    currency_symbol: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    },
   }, {
     underscored: true,
     timestamps: true,
     indexes: [
       {
-        name: 'reward_client_per_policy_key',
+        name: 'rewards_reward_client_per_policy_key',
         unique: true,
         fields: ['client_affiliate_id', 'policy_id', 'affiliate_request_detail_id']
+      },
+      {
+        name: 'rewards_amount_reward',
+        fields: ['client_affiliate_id', 'currency_symbol', 'amount']
       },
     ]
   });

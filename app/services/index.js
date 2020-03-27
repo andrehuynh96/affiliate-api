@@ -8,6 +8,8 @@ const PolicyService = require('./policy-service');
 const AffiliateRequestService = require('./affiliate-request-service');
 const RedisCacherService = require('./redis-cacher-service');
 const RewardService = require('./reward-service');
+const ClaimRewardService = require('./claim-reward-service');
+const LockService = require('./lock-service');
 
 module.exports = {
   AffiliateCodeService,
@@ -18,5 +20,7 @@ module.exports = {
   PolicyService,
   AffiliateRequestService,
   RedisCacherService,
+  LockService,
   RewardService,
+  ClaimRewardService,
 };

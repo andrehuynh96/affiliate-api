@@ -55,10 +55,6 @@ database.init(async err => {
   });
 
   process.on('SIGINT', () => {
-    if (redis) {
-      redis.quit();
-    }
-
     process.exit(0);
   });
 

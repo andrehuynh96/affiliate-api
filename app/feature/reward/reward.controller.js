@@ -21,7 +21,6 @@ const controller = {
       const { currency_symbol, from_date, to_date, details } = body;
       // Validate from date and to date
 
-      console.info(from_date, to_date);
       const fromDate = moment(from_date);
       const toDate = moment(to_date);
       if (fromDate.diff(toDate) >= 0) {

@@ -1,10 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
   const ClaimReward = sequelize.define('claim_rewards', {
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.UUID,
       primaryKey: true,
       allowNull: false,
-      autoIncrement: true,
+      defaultValue: DataTypes.UUIDV4(),
     },
     client_affiliate_id: {
       type: DataTypes.BIGINT,
@@ -18,9 +18,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DECIMAL,
       allowNull: false,
     },
+    status: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+    }
   }, {
     underscored: true,
     timestamps: true,
+    indexes: [
+      {
+        name: 'client_affiliates_amount_reward',
+        fields: ['client_affiliate_id', 'currency_symbol', 'amount', 'status']
+      },
+    ]
   });
 
   ClaimReward.associate = async (models) => {

@@ -44,6 +44,25 @@ class _RewardService extends BaseService {
     });
   }
 
+  getTotalAmount(affiliateClientId, currencySymbol) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          where: {
+            client_affiliate_id: affiliateClientId,
+            currency_symbol: currencySymbol,
+          }
+        };
+        const total = await this.model.sum('amount', cond);
+
+        resolve(total);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+  }
+
 }
 
 
