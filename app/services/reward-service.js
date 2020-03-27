@@ -17,27 +17,18 @@ class _RewardService extends BaseService {
     super(Reward, 'Reward');
   }
 
-  bulkCreate(items) {
+  bulkCreate(items, transaction) {
     return new Promise(async (resolve, reject) => {
       try {
+        const chunks = _.chunk(items, NUM_OF_ITEMS_IN_A_BATCH);
 
-        sequelize.transaction(async (t) => {
-          const chunks = _.chunk(items, NUM_OF_ITEMS_IN_A_BATCH);
-
-          await forEach(chunks, async (chunk) => {
-            await Reward.bulkCreate(chunk, {
-              transaction: t,
-            });
+        await forEach(chunks, async (chunk) => {
+          await Reward.bulkCreate(chunk, {
+            transaction: transaction,
           });
-
-          return chunks;
-        }).then(result => {
-          // Transaction has been committed
-          resolve(result);
-        }).catch(err => {
-          // Transaction has been rolled back
-          reject(err);
         });
+
+        resolve(chunks);
       } catch (err) {
         reject(err);
       }

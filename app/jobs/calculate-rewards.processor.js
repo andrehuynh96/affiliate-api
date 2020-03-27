@@ -5,6 +5,7 @@ const Queue = require('bull');
 const { v4 } = require('uuid');
 const Decimal = require('decimal.js');
 const Sequelize = require('sequelize');
+const db = require('app/model');
 const config = require('../config');
 const {
   AffiliateCodeService,
@@ -20,6 +21,7 @@ const PolicyType = require('../model/value-object/policy-type');
 const policyHelper = require('../lib/helpers/policy-helper');
 
 const Op = Sequelize.Op;
+const sequelize = db.sequelize;
 const { Container, Service } = typedi;
 const { QueueOptions, Job } = Queue;
 
@@ -172,10 +174,18 @@ class CalculateRewardsProcessor {
       return policyData;
     });
 
-    const allRewardList = await this.calculateRewards(policyDataList);
-    await this.saveRewards(allRewardList);
-    // throw new Error('AAA');
-    await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED);
+    const transaction = await db.sequelize.transaction();
+    try {
+      const allRewardList = await this.calculateRewards(policyDataList);
+      await this.saveRewards(allRewardList, transaction);
+      await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED, transaction);
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      logger.error(err);
+      throw err;
+    }
   }
 
   async calculateRewards(policyDataList) {
@@ -295,9 +305,9 @@ class CalculateRewardsProcessor {
     return rewardList;
   }
 
-  async saveRewards(rewardList) {
+  async saveRewards(rewardList, transaction) {
     const { rewardService } = this;
-    await rewardService.bulkCreate(rewardList);
+    await rewardService.bulkCreate(rewardList, transaction);
   }
 
   jobResult() {

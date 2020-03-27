@@ -15,7 +15,6 @@ class _LockService {
 
   constructor(opts) {
     this.opts = opts;
-
     this.logger = Container.get('logger');
 
     this._createRedisConnection();
