@@ -143,6 +143,7 @@ class BaseService {
     });
   }
 
+  // Hard delete
   deleteWhere(cond, defaultData) {
     cond = cond || {};
 
@@ -171,6 +172,7 @@ class BaseService {
     });
   }
 
+  // Hard delete
   deleteByPk(id) {
     return new Promise(async (resolve, reject) => {
       try {

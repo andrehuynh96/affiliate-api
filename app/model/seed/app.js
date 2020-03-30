@@ -12,6 +12,7 @@ module.exports = async () => {
         api_key: 'DEV-487e21ca-9c95-46c0-9c24-bd86a8b38e4b',
         secret_key: 'dee2cdcc-49be-4455-9ca0-56393aee14d6',
         actived_flg: true,
+        deleted_flg: false,
       },
     ], {
       returning: true

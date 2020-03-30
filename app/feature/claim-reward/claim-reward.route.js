@@ -82,7 +82,7 @@ const route = express.Router();
 
 route.post('/claim-rewards',
   validator(create),
-  appAuth,
+  appAuth(),
   controller.calculateRewards,
 );
 
@@ -189,7 +189,7 @@ route.post('/claim-rewards',
 
 route.get('/claim-rewards',
   validator(search, 'query'),
-  appAuth,
+  appAuth(),
   controller.search,
 );
 

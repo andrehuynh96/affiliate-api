@@ -19,6 +19,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(1000),
       allowNull: true,
     },
+    deleted_flg: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      default: false,
+    },
   }, {
     underscored: true,
     timestamps: true,

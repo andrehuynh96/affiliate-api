@@ -55,7 +55,7 @@ module.exports = router;
  *         example:
  *           message: Unauthorized
  *           error: error
- *           code: USER_NOT_FOUND
+ *           code: UNAUTHORIZED
  */
 
 /**
@@ -68,7 +68,7 @@ module.exports = router;
  *         example:
  *           message: Forbidden
  *           error: error
- *           code: USER_NOT_FOUND
+ *           code: FORBIDDEN
  */
 
 /**
@@ -81,7 +81,7 @@ module.exports = router;
  *         example:
  *           message: Not Found
  *           error: error
- *           code: USER_NOT_FOUND
+ *           code: NOT_FOUND
  */
 
 /**
@@ -94,6 +94,6 @@ module.exports = router;
  *         example:
  *           message: Server Internal Error
  *           error: error
- *           code: USER_NOT_FOUND
+ *           code: SERVER_INTERNAL_ERROR
  */
 

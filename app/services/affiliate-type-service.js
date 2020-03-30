@@ -12,11 +12,8 @@ class _AffiliateTypeService extends BaseService {
   }
 
   findByPk(id, opts) {
-    const { isIncludePolicies } = opts || {};
-
-    if (!isIncludePolicies) {
-      return super.findByPk(id);
-    }
+    opts = opts || {};
+    const { isIncludePolicies } = opts;
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -31,7 +28,12 @@ class _AffiliateTypeService extends BaseService {
           });
         }
 
-        const result = await this.model.findByPk(id, options);
+        const result = await this.model.findOne({
+          where: {
+            id: id,
+            deleted_flg: false,
+          }
+        }, options);
 
         resolve(result);
       } catch (err) {
