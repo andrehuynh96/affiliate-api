@@ -94,7 +94,7 @@ const route = express.Router();
 
 route.post('/clients',
   validator(create),
-  appAuth,
+  appAuth(),
   controller.create
 );
 

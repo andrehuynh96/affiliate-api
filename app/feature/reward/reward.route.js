@@ -119,7 +119,7 @@ const route = express.Router();
 
 route.post('/rewards',
   validator(create),
-  appAuth,
+  appAuth(),
   controller.calculateRewards
 );
 
