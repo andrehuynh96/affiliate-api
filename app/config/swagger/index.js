@@ -4,7 +4,7 @@ const path = require('path');
 
 module.exports = function (app, prefix) {
   prefix = prefix || '';
-  var options = {
+  const swaggerOptions = {
     swaggerDefinition: {
       info: {
         title: 'Affiliate API',
@@ -19,26 +19,39 @@ module.exports = function (app, prefix) {
     apis: [path.resolve(__dirname, '../../feature/**/*.js')],
   };
 
-  var swaggerSpec = swaggerJSDoc(options);
+  const swaggerSpec = swaggerJSDoc(swaggerOptions);
+  swaggerSpec.securityDefinitions = {
+    apiKey: {
+      type: 'apiKey',
+      in: 'header',
+      name: 'x-api-key',
+    },
+    secretKey: {
+      type: 'secretKey',
+      in: 'header',
+      name: 'x-secret-key',
+    },
+    affiliateTypeId: {
+      type: 'affiliateTypeId',
+      in: 'header',
+      name: 'x-affiliate-type-id',
+    },
+  };
+  swaggerSpec.security = [
+    {
+      apiKey: [],
+      secretKey: [],
+      affiliateTypeId: [],
+    },
+  ];
+
   app.get(prefix + '/api-docs.json', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
-    (swaggerSpec.securityDefinitions = {
-      bearerAuth: {
-        type: 'apiKey',
-        in: 'header',
-        name: 'Authorization',
-      },
-    }),
-      (swaggerSpec.security = [
-        {
-          bearerAuth: [],
-        },
-      ]);
 
     res.send(swaggerSpec);
   });
 
-  options = {
+  const swaggerUIOptions = {
     swaggerUrl: prefix + '/api-docs.json',
     showExplorer: true,
   };
@@ -46,6 +59,6 @@ module.exports = function (app, prefix) {
   app.use(
     prefix + '/api-docs',
     swaggerUi.serve,
-    swaggerUi.setup(null, options)
+    swaggerUi.setup(null, swaggerUIOptions)
   );
 };

@@ -79,7 +79,7 @@ const controller = {
 
       await controller.unLock(lock, lockService, logger);
 
-      return res.ok(claimReward);
+      return res.ok(mapper(claimReward));
     }
     catch (err) {
       await controller.unLock(lock, lockService, logger);
