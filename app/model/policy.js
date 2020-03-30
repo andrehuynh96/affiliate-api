@@ -34,6 +34,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       allowNull: true,
     },
+    deleted_flg: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      default: false,
+    },
   }, {
     underscored: true,
     timestamps: true,

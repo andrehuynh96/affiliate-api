@@ -17,9 +17,9 @@ const controller = {
       const name = _.trim(body.name);
 
       const organizationService = Container.get(OrganizationService);
-
       const data = {
         name,
+        deleted_flg: false,
       };
       const organization = await organizationService.create(data);
 
@@ -70,7 +70,9 @@ const controller = {
       const keyword = _.trim(query.keyword);
       logger.info('Organization::search');
 
-      const condition = {};
+      const condition = {
+        deleted_flg: false,
+      };
       if (keyword) {
         condition.name = {
           [Op.substring]: keyword,

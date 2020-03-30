@@ -55,14 +55,17 @@ const route = express.Router();
  *         description: Baq request
  *         schema:
  *           $ref: '#/definitions/400'
+ *
  *       401:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/401'
+ *
  *       404:
  *         description: Not found
  *         schema:
  *           $ref: '#/definitions/404'
+ *
  *       500:
  *         description: Error
  *         schema:
@@ -119,14 +122,30 @@ route.post('/organizations',
  *         description: Baq request
  *         schema:
  *           $ref: '#/definitions/400'
+ *
  *       401:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/401'
+ *
  *       404:
  *         description: Not found
  *         schema:
- *           $ref: '#/definitions/404'
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *           example:
+ *             message: Organization is not found.
+ *             error: error
+ *             code: ORGANIZATION_IS_NOT_FOUND
+ *             fields: ['organizationId']
+ *
  *       500:
  *         description: Error
  *         schema:
@@ -218,14 +237,17 @@ route.get('/organizations/:organizationId',
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/400'
+ *
  *       401:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/401'
+ *
  *       404:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/404'
+ *
  *       500:
  *         description: Error
  *         schema:
@@ -293,14 +315,30 @@ route.get('/organizations',
  *         description: Baq request
  *         schema:
  *           $ref: '#/definitions/400'
+ *
  *       401:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/401'
+ *
  *       404:
  *         description: Not found
  *         schema:
- *           $ref: '#/definitions/404'
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *           example:
+ *             message: Organization is not found.
+ *             error: error
+ *             code: ORGANIZATION_IS_NOT_FOUND
+ *             fields: ['organizationId']
+ *
  *       500:
  *         description: Error
  *         schema:
@@ -355,14 +393,30 @@ route.put('/organizations/:organizationId',
  *         description: Baq request
  *         schema:
  *           $ref: '#/definitions/400'
+ *
  *       401:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/401'
+ *
  *       404:
  *         description: Not found
  *         schema:
- *           $ref: '#/definitions/404'
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *           example:
+ *             message: Organization is not found.
+ *             error: error
+ *             code: ORGANIZATION_IS_NOT_FOUND
+ *             fields: ['organizationId']
+ *
  *       500:
  *         description: Error
  *         schema:
