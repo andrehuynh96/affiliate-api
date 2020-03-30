@@ -16,6 +16,25 @@ class _OrganizationService extends BaseService {
     super(Organization, 'Organization');
   }
 
+  findByPk(id) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          where: {
+            id: id,
+            deleted_flg: false,
+          }
+        };
+        const result = await this.model.findOne(cond);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+
 }
 
 const OrganizationService = Service([], () => {

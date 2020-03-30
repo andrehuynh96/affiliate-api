@@ -22,6 +22,7 @@ module.exports = function (options) {
       api_key: apiKey,
       secret_key: secretKey,
       actived_flg: true,
+      deleted_flg: false,
     });
 
     if (!app) {
@@ -34,7 +35,7 @@ module.exports = function (options) {
 
     // Validate affiliateTypeId
     const affiliateTypeService = Container.get(AffiliateTypeService);
-    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId, false);
+    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId, { isIncludePolicies: false });
     if (!affiliateType) {
       return res.unauthorized();
     }
