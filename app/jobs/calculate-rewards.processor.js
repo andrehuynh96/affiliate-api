@@ -5,6 +5,7 @@ const Queue = require('bull');
 const { v4 } = require('uuid');
 const Decimal = require('decimal.js');
 const Sequelize = require('sequelize');
+const db = require('app/model');
 const config = require('../config');
 const {
   AffiliateCodeService,
@@ -20,6 +21,7 @@ const PolicyType = require('../model/value-object/policy-type');
 const policyHelper = require('../lib/helpers/policy-helper');
 
 const Op = Sequelize.Op;
+const sequelize = db.sequelize;
 const { Container, Service } = typedi;
 const { QueueOptions, Job } = Queue;
 
@@ -32,6 +34,7 @@ class PolicyData {
     referrerList,
     policy,
     affiliateTypeId,
+    currencySymbol,
   }) {
 
     this.stakerId = stakerId;
@@ -40,6 +43,7 @@ class PolicyData {
     this.referrerList = referrerList;
     this.policy = policy;
     this.affiliateTypeId = affiliateTypeId;
+    this.currencySymbol = currencySymbol;
     this.rewards = [];
   }
 }
@@ -164,15 +168,24 @@ class CalculateRewardsProcessor {
         referrerList,
         policy,
         affiliateTypeId: affiliate_type_id,
+        currencySymbol: affiliateRequest.currency_symbol,
       });
 
       return policyData;
     });
 
-    const allRewardList = await this.calculateRewards(policyDataList);
-    await this.saveRewards(allRewardList);
-    // throw new Error('AAA');
-    await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED);
+    const transaction = await db.sequelize.transaction();
+    try {
+      const allRewardList = await this.calculateRewards(policyDataList);
+      await this.saveRewards(allRewardList, transaction);
+      await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED, transaction);
+
+      await transaction.commit();
+    } catch (err) {
+      await transaction.rollback();
+      logger.error(err);
+      throw err;
+    }
   }
 
   async calculateRewards(policyDataList) {
@@ -192,7 +205,7 @@ class CalculateRewardsProcessor {
   }
 
   async processMembershipPolicy(policyData) {
-    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId } = policyData;
+    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId, currencySymbol } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
     const { max_levels, proportion_share, membership_rate } = policy;
     const rewardList = [];
@@ -219,6 +232,7 @@ class CalculateRewardsProcessor {
       affiliate_request_detail_id: affiliateRequestDetails.id,
       policy_id: policy.id,
       policy_type: PolicyType.MEMBERSHIP,
+      currency_symbol: currencySymbol,
       amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
     });
 
@@ -228,7 +242,7 @@ class CalculateRewardsProcessor {
   }
 
   async processMembershipAffiliatePolicy(policyData) {
-    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId } = policyData;
+    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId, currencySymbol } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
     const { max_levels, rates, proportion_share } = policy;
     const shareAmount = Decimal(amount).times(proportion_share / 100);
@@ -252,6 +266,7 @@ class CalculateRewardsProcessor {
           affiliate_request_detail_id: affiliateRequestDetails.id,
           policy_id: policy.id,
           policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
+          currency_symbol: currencySymbol,
           amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
         });
       }
@@ -263,7 +278,7 @@ class CalculateRewardsProcessor {
   }
 
   async processAffliatePolicy(policyData) {
-    const { stakerId, amount, affiliateRequestDetails, referrerList, policy } = policyData;
+    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, currencySymbol } = policyData;
     this.logger.debug(`Processing affliate policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
 
     const { max_levels, rates, proportion_share } = policy;
@@ -280,6 +295,7 @@ class CalculateRewardsProcessor {
           affiliate_request_detail_id: affiliateRequestDetails.id,
           policy_id: policy.id,
           policy_type: PolicyType.AFFILIATE,
+          currency_symbol: currencySymbol,
           amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
         });
       }
@@ -289,9 +305,9 @@ class CalculateRewardsProcessor {
     return rewardList;
   }
 
-  async saveRewards(rewardList) {
+  async saveRewards(rewardList, transaction) {
     const { rewardService } = this;
-    await rewardService.bulkCreate(rewardList);
+    await rewardService.bulkCreate(rewardList, transaction);
   }
 
   jobResult() {

@@ -12,7 +12,8 @@ const config = {
     name: utils.getOsEnv('APP_NAME'),
     appHostName: utils.getOsEnv('APP_HOST_NAME'),
     port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
-    rateLimit: process.env.RATE_LIMIT ? parseInt(process.env.RATE_LIMIT) : 100,
+    rateLimit: utils.toNumber(process.env.RATE_LIMIT || 100),
+    pageSize: utils.toNumber(process.env.APP_PAGE_SIZE || 10),
   },
   logger: {
     defaultLevel: process.env.LOG_DEFAULT_LEVEL || 'debug',

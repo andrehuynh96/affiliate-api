@@ -5,22 +5,13 @@ const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/app-auth.middleware');
 const route = express.Router();
 
-route.post('/clients',
-  validator(create),
-  appAuth,
-  controller.create
-);
-
-module.exports = route;
-
-/** *******************************************************************/
 /**
  * @swagger
  * /api/v1/clients:
  *   post:
  *     summary: Generate a affiliate code
  *     tags:
- *       - AffiliateCode
+ *       - Client
  *     description: Register a user and generate a affiliate code
  *     parameters:
  *       - in: header
@@ -33,17 +24,23 @@ module.exports = route;
  *         type: string
  *         required: true
  *         description: App secret key
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
  *       - in: body
  *         name: data
  *         description:
  *         schema:
  *            type: object
  *            required:
- *            - user_id
+ *            - ext_client_id
+ *            - affiliate_code
  *            example:
  *               {
-                        "user_id":"1003",
-                        "affiliate_code": "EbFWOuig2"
+                    "ext_client_id":"binh.nt@blockchainlabs.asia",
+                    "affiliate_code": ""
                   }
  *     produces:
  *       - application/json
@@ -60,24 +57,46 @@ module.exports = route;
                       "createdAt": "2020-03-19T05:45:36.129Z"
                     }
  *             }
+ *
  *       400:
- *         description: Error
+ *         description: Baq request
  *         schema:
- *           $ref: '#/definitions/400'
- *
- *
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *           example:
+ *             message: Duplicate ext_client_id
+ *             error: error
+ *             code: REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID
+ *             fields: ['client_id']
  *
  *       401:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/401'
+ *
  *       404:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/404'
+ *
  *       500:
  *         description: Error
  *         schema:
  *           $ref: '#/definitions/500'
  */
+
+route.post('/clients',
+  validator(create),
+  appAuth,
+  controller.create
+);
+
+module.exports = route;
 

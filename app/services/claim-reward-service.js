@@ -8,31 +8,12 @@ const db = require('app/model');
 const Op = Sequelize.Op;
 const Service = typedi.Service;
 const sequelize = db.sequelize;
-const Reward = db.rewards;
-const NUM_OF_ITEMS_IN_A_BATCH = 100;
+const ClaimReward = db.claim_rewards;
 
-class _RewardService extends BaseService {
+class _ClaimRewardService extends BaseService {
 
   constructor() {
-    super(Reward, 'Reward');
-  }
-
-  bulkCreate(items, transaction) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const chunks = _.chunk(items, NUM_OF_ITEMS_IN_A_BATCH);
-
-        await forEach(chunks, async (chunk) => {
-          await Reward.bulkCreate(chunk, {
-            transaction: transaction,
-          });
-        });
-
-        resolve(chunks);
-      } catch (err) {
-        reject(err);
-      }
-    });
+    super(ClaimReward, 'ClaimReward');
   }
 
   getTotalAmount(affiliateClientId, currencySymbol) {
@@ -51,16 +32,15 @@ class _RewardService extends BaseService {
         reject(err);
       }
     });
-
   }
 
 }
 
 
-const RewardService = Service([], () => {
-  const service = new _RewardService();
+const ClaimRewardService = Service([], () => {
+  const service = new _ClaimRewardService();
 
   return service;
 });
 
-module.exports = RewardService;
+module.exports = ClaimRewardService;

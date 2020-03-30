@@ -1,12 +1,10 @@
 const _ = require('lodash');
 const typedi = require('typedi');
 const Redis = require('ioredis');
-const Redlock = require('redlock');
 const BaseCacherService = require('./base-cacher-service');
 const config = require('../config');
 
 const { Container, Service } = typedi;
-
 
 class JSONSerializer {
 	/**
@@ -66,20 +64,6 @@ class _RedisCacherService extends BaseCacherService {
     this.client.on('error', (err) => {
       this.logger.error(err);
     });
-
-    const redlockClients = (this.opts.redlock ? this.opts.redlock.clients : null) || [this.client];
-    this.redlock = new Redlock(
-      redlockClients,
-      _.omit(this.opts.redlock, ['clients'])
-    );
-
-    // Non-blocking redlock client, used for tryLock()
-    this.redlockNonBlocking = new Redlock(
-      redlockClients,
-      {
-        retryCount: 0
-      }
-    );
 
 
     if (this.opts.monitor) {
