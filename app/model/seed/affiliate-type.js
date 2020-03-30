@@ -6,12 +6,12 @@ module.exports = async () => {
   if (count === 0) {
     await Model.bulkCreate([
       {
-        id: 1,
+        // id: 1,
         name: 'Membership System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
       },
       {
-        id: 2,
+        // id: 2,
         name: 'Affiliate System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
         DefaultPolicies: [

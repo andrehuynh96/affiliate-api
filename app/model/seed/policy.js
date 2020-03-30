@@ -14,7 +14,7 @@ module.exports = async () => {
     const models = [];
 
     models.push(new MembershipPolicy({
-      id: 1,
+      // id: 1,
       name: 'AffiliateSystem - Membership Policy',
       proportion_share: 10,
       max_levels: 4,
@@ -26,7 +26,7 @@ module.exports = async () => {
     }));
 
     models.push(new MembershipAffiliatePolicy({
-      id: 2,
+      // id: 2,
       name: 'AffiliateSystem - Membership Affiliate Policy',
       proportion_share: 20,
       max_levels: 4,
@@ -34,7 +34,7 @@ module.exports = async () => {
     }));
 
     models.push(new AffiliatePolicy({
-      id: 3,
+      // id: 3,
       name: 'AffiliateSystem - Affiliate Policy',
       max_levels: null,
       proportion_share: 20,
@@ -42,7 +42,7 @@ module.exports = async () => {
     }));
 
     models.push(new AffiliatePolicy({
-      id: 4,
+      // id: 4,
       name: 'MembershipSystem - Affiliate Policy',
       max_levels: 5,
       rates: [50, 30, 15, 5],
@@ -52,8 +52,6 @@ module.exports = async () => {
     await Model.bulkCreate(models, {
       returning: true
     });
-
-
 
   }
 };

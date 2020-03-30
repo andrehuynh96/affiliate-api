@@ -6,5 +6,6 @@ router.use(require('./reward/reward.route'));
 router.use(require('./claim-reward/claim-reward.route'));
 router.use(require('./organization/organization.route'));
 router.use(require('./app/app.route'));
+router.use(require('./affiliate-type/affiliate-type.route'));
 
 module.exports = router;

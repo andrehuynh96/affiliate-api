@@ -39,7 +39,8 @@ class _ClientAffiliateService extends BaseService {
   }
 
   findByPk(id, opts) {
-    const { isIncludePolicies } = opts || {};
+    opts = opts || {};
+    const { isIncludePolicies } = opts;
 
     return new Promise(async (resolve, reject) => {
       try {
