@@ -9,11 +9,13 @@ module.exports = async () => {
         // id: 1,
         name: 'Membership System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
+        deleted_flg : false,
       },
       {
         // id: 2,
         name: 'Affiliate System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
+        deleted_flg : false,
         DefaultPolicies: [
           { policy_id: 1 },
           { policy_id: 2 },

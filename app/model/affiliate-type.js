@@ -37,12 +37,6 @@ module.exports = (sequelize, DataTypes) => {
       through: 'default_policies',
       foreignKey: 'affiliate_type_id',
     });
-
-    // AffiliateType.hasMany(models.policies, {
-    //   as: 'policies',
-    //   // through: 'affiliate_type_details',
-    //   // foreignKey: 'affiliate_type_id',
-    // });
   };
 
   return AffiliateType;
