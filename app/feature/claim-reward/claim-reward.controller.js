@@ -1,13 +1,15 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const Decimal = require('decimal.js');
+const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
+const mapper = require('app/response-schema/reward.response-schema');
+const config = require('app/config');
 const {
   ClaimRewardService,
   RewardService,
   ClientService,
   LockService,
-} = require('../../services');
-const ClaimRewardStatus = require('../../model/value-object/claim-reward-status');
+} = require('app/services');
 
 const Container = typedi.Container;
 
@@ -82,6 +84,48 @@ const controller = {
     catch (err) {
       await controller.unLock(lock, lockService, logger);
 
+      next(err);
+    }
+  },
+
+  search: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { query, affiliateTypeId } = req;
+      const { currency_symbol, offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+
+      // Validate ext_client_id
+      const clientService = Container.get(ClientService);
+      const extClientIdList = [extClientId];
+      const extClientIdMapping = await clientService.getExtClientIdMapping(extClientIdList, affiliateTypeId);
+      const clientAffiliateId = extClientIdMapping[extClientId];
+
+      if (!clientAffiliateId) {
+        const errorMessage = res.__('CLAIM_REWARDS_NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'CLAIM_REWARDS_NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const condition = {
+        currency_symbol,
+        client_affiliate_id: clientAffiliateId,
+      };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const claimRewardService = Container.get(ClaimRewardService);
+      const { count: total, rows: items } = await claimRewardService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      return res.ok({
+        items: mapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('get claim reward list fail: ', err);
       next(err);
     }
   },

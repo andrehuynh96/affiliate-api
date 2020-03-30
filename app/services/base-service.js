@@ -49,15 +49,17 @@ class BaseService {
     });
   }
 
-  findAndCountAll(cond, offset, limit) {
-    cond = cond || {};
+  findAndCountAll({ condition, offset, limit, order }) {
+    condition = condition || {};
+    order = order || [];
 
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.findAndCountAll({
-          where: cond,
+          where: condition,
           offset,
           limit,
+          order,
         });
 
         resolve(result);

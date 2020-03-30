@@ -1,6 +1,6 @@
 const express = require('express');
 const controller = require('./claim-reward.controller');
-const { create } = require('./validator');
+const { create, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/app-auth.middleware');
 const route = express.Router();
@@ -8,7 +8,13 @@ const route = express.Router();
 route.post('/claim-rewards',
   validator(create),
   appAuth,
-  controller.calculateRewards
+  controller.calculateRewards,
+);
+
+route.get('/claim-rewards',
+  validator(search, 'query'),
+  appAuth,
+  controller.search,
 );
 
 module.exports = route;

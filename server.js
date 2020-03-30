@@ -7,11 +7,8 @@ const database = require('app/lib/database');
 const logger = require('app/lib/logger');
 const redis = require('app/lib/redis');
 const config = require('app/config');
+const { RedisCacherService } = require('./app/services');
 const startJobs = require('app/jobs');
-
-const {
-  RedisCacherService,
-} = require('./app/services');
 
 const { Container, Service } = typedi;
 

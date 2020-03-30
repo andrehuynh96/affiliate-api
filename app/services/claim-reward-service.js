@@ -32,7 +32,6 @@ class _ClaimRewardService extends BaseService {
         reject(err);
       }
     });
-
   }
 
 }
