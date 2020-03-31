@@ -12,7 +12,8 @@ class _AffiliateCodeService extends BaseService {
   }
 
   generateCode() {
-    return shortid.generate().replace(/_/g, '1').replace(/\\-/g, '2');
+    // eslint-disable-next-line no-useless-escape
+    return shortid.generate().replace(/_/g, '1').replace(/\-/g, '2');
   }
 
 }

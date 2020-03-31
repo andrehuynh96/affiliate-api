@@ -66,9 +66,9 @@ class _AffiliateRequestService extends BaseService {
             },
             {
               [Op.or]: [
-                {
-                  from_date: { [Op.lte]: toDate, },
-                },
+                // {
+                //   from_date: { [Op.lte]: toDate, },
+                // },
                 {
                   to_date: { [Op.gte]: fromDate, },
                 },
