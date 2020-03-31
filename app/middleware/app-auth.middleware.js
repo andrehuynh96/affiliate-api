@@ -35,7 +35,7 @@ module.exports = function (options) {
 
     // Validate affiliateTypeId
     const affiliateTypeService = Container.get(AffiliateTypeService);
-    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId, { isIncludePolicies: false });
+    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
     if (!affiliateType) {
       return res.unauthorized();
     }
