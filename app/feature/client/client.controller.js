@@ -1,5 +1,7 @@
 const typedi = require('typedi');
 const _ = require('lodash');
+const Sequelize = require('sequelize');
+const db = require('app/model');
 const {
   AffiliateCodeService,
   AffiliateTypeService,
@@ -10,8 +12,11 @@ const {
 const { policyHelper } = require('../../lib/helpers');
 const PolicyType = require('../../model/value-object/policy-type');
 const MembershipType = require('../../model/value-object/membership-type');
+const mapper = require('app/response-schema/policy.response-schema');
 
-const Container = typedi.Container;
+const Op = Sequelize.Op;
+const sequelize = db.sequelize;
+const { Container, Service } = typedi;
 
 const controller = {
   create: async (req, res, next) => {
@@ -127,6 +132,67 @@ const controller = {
       return res.ok(clientAffiliate.affiliateCodes[0]);
     }
     catch (err) {
+      next(err);
+    }
+  },
+
+  setPolicies: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::setPolicies');
+      const { body, affiliateTypeId, organizationId } = req;
+      const { affiliate_code, membership_type } = body;
+      const extClientId = _.trim(body.ext_client_id).toLowerCase();
+      const { policies } = body;
+
+      // Validate policies
+      const policyService = Container.get(PolicyService);
+      const policyIdList = _.uniq(policies);
+      const { notFoundPolicyIdList, policyList } = await policyHelper.validatePolicyIdList(policyIdList, policyService);
+
+      if (notFoundPolicyIdList.length > 0) {
+        const errorMessage = res.__('CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', notFoundPolicyIdList.join(', '));
+        return res.badRequest(errorMessage, 'CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', { fields: ['policies'] });
+      }
+
+      // Validate ext_client_id
+      const clientService = Container.get(ClientService);
+      const extClientIdList = [extClientId];
+      const extClientIdMapping = await clientService.getExtClientIdMapping(extClientIdList, affiliateTypeId);
+      const clientAffiliateId = extClientIdMapping[extClientId];
+
+      if (!clientAffiliateId) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByPk(clientAffiliateId);
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const transaction = await db.sequelize.transaction();
+      try {
+        const existPolicies = await clientAffiliate.getClientPolicies();
+        await clientAffiliate.removeClientPolicies(existPolicies);
+        await clientAffiliate.addClientPolicies(policyList);
+
+        await transaction.commit();
+      } catch (err) {
+        await transaction.rollback();
+        logger.error(err);
+        throw err;
+      }
+
+      // return res.ok(mapper(policyList));
+      return res.ok({ isSuccess: true });
+    }
+    catch (err) {
+      logger.error(err);
+
       next(err);
     }
   },

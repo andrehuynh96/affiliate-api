@@ -5,6 +5,7 @@ const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/app-auth.middleware');
 const route = express.Router();
 
+/* #region User claims reward */
 /**
  * @swagger
  * /api/v1/claim-rewards:
@@ -85,7 +86,9 @@ route.post('/claim-rewards',
   appAuth(),
   controller.calculateRewards,
 );
+/* #endregion */
 
+/* #region View claim reward history */
 /**
  * @swagger
  * /api/v1/claim-rewards:
@@ -192,6 +195,7 @@ route.get('/claim-rewards',
   appAuth(),
   controller.search,
 );
+/* #endregion */
 
 module.exports = route;
 
