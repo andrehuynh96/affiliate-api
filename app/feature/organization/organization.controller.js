@@ -49,7 +49,7 @@ const controller = {
       const organization = await organizationService.findOne(cond);
 
       if (!organization) {
-        return res.notFound(res.__('ORGANIZATION_NOT_FOUND'), 'ORGANIZATION_NOT_FOUND');
+        return res.notFound(res.__('ORGANIZATION_IS_NOT_FOUND'), 'ORGANIZATION_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(organization));
@@ -118,7 +118,7 @@ const controller = {
       const [numOfItems, items] = await organizationService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('ORGANIZATION_NOT_FOUND'), 'ORGANIZATION_NOT_FOUND');
+        return res.notFound(res.__('ORGANIZATION_IS_NOT_FOUND'), 'ORGANIZATION_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(items[0]));
@@ -149,7 +149,7 @@ const controller = {
       const [numOfItems, items] = await organizationService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('ORGANIZATION_NOT_FOUND'), 'ORGANIZATION_NOT_FOUND');
+        return res.notFound(res.__('ORGANIZATION_IS_NOT_FOUND'), 'ORGANIZATION_IS_NOT_FOUND');
       }
 
       return res.ok({ deleted: true });

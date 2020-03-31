@@ -1,18 +1,18 @@
 const express = require('express');
-const controller = require('./affiliate-type.controller');
-const { create, update, organizationId, affiliateTypeId, search } = require('./validator');
+const controller = require('./policy.controller');
+const { create, update, policyIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/app-auth.middleware');
 const route = express.Router();
 
-/* #region Create a new affiliate type */
+/* #region Create a new policy */
 /**
  * @swagger
- * /api/v1/organizations/:organizationId/affiliate-types:
+ * /api/v1/policies:
  *   post:
- *     summary: Create a new affiliate type
+ *     summary: Create a new policy
  *     tags:
- *       - AffiliateType
+ *       - Policy
  *     description:
  *     parameters:
  *       - in: header
@@ -25,10 +25,6 @@ const route = express.Router();
  *         type: string
  *         required: true
  *         description: App secret key
- *       - in: params
- *         name: organizationId
- *         required: true
- *         description: Organization Id
  *       - in: body
  *         name: data
  *         description:
@@ -38,8 +34,16 @@ const route = express.Router();
  *            - name
  *            example:
  *              {
-                  "name": "Affiliate System #01",
-                  "description": ""
+                  "name": "AffiliateSystem - Membership Policy #01",
+                  "description": "",
+                  "type": "MEMBERSHIP_AFFILIATE",
+                  "proportion_share": 11.11,
+                  "rates": [
+                      50.11,
+                      30,
+                      11,
+                      9
+                  ]
                 }
  *     produces:
  *       - application/json
@@ -50,12 +54,19 @@ const route = express.Router();
  *           application/json:
  *             {
  *                 "data":{
-                      "id": 9,
-                      "name": "Affiliate System #01",
-                      "organization_id": "69366383-b9c2-497c-1111-391b017772ba",
+                      "id": 71,
+                      "name": "AffiliateSystem - Membership Policy #01",
                       "description": "",
-                      "created_at": "2020-03-30T08:52:40.765Z",
-                      "updated_at": "2020-03-30T08:52:40.765Z"
+                      "type": "MEMBERSHIP_AFFILIATE",
+                      "proportion_share": "11.11000",
+                      "rates": [
+                          "50.11",
+                          "30",
+                          "11",
+                          "9"
+                      ],
+                      "created_at": "2020-03-31T04:29:32.564Z",
+                      "updated_at": "2020-03-31T04:29:32.564Z"
                     }
  *             }
  *       400:
@@ -79,22 +90,20 @@ const route = express.Router();
  *           $ref: '#/definitions/500'
  */
 
-route.post('/organizations/:organizationId/affiliate-types',
-  validator(organizationId, 'params'),
-  validator(create),
+route.post('/policies',
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.create,
 );
 /* #endregion */
 
-/* #region Get affiliate type details */
+/* #region Get policy details */
 /**
  * @swagger
- * /api/v1/organizations/:organizationId/affiliate-types/:affiliateTypeId:
+ * /api/v1/policies/:policyId:
  *   get:
- *     summary: Get affiliate type  details
+ *     summary: Get policy details
  *     tags:
- *       - AffiliateType
+ *       - Policy
  *     description:
  *     parameters:
  *       - in: header
@@ -107,15 +116,10 @@ route.post('/organizations/:organizationId/affiliate-types',
  *         type: string
  *         required: true
  *         description: App secret key
- *       - in: params
- *         name: organizationId
+  *       - in: params
+ *         name: policyId
  *         required: true
- *         description: Organization Id
- *       - in: params
- *         name: affiliateTypeId
- *         required: true
- *         description: Affiliate type id
- *
+ *         description: Policy Id
  *     produces:
  *       - application/json
  *     responses:
@@ -125,14 +129,19 @@ route.post('/organizations/:organizationId/affiliate-types',
  *           application/json:
  *             {
  *                 "data":{
-                      "id": "23d59b67-1791-4b78-9902-8e17cdc4135c",
-                      "name": "App #01",
-                      "organization_id": "69366383-b9c2-497c-1111-391b017772ba",
-                      "api_key": "8e24942c-9b1f-43da-8e94-e1c3a75143d1",
-                      "secret_key": "fb9cca666ca24e6bbf37ca43b9e6e52702aecaf1ea5e4aa8aa4f4e1d3e6acdb9",
-                      "actived_flg": true,
-                      "created_at": "2020-03-30T08:02:32.109Z",
-                      "updated_at": "2020-03-30T08:02:32.109Z"
+                      "id": 1,
+                      "name": "AffiliateSystem - Membership Policy",
+                      "description": "",
+                      "type": "MEMBERSHIP",
+                      "proportion_share": 10,
+                      "max_levels": 4,
+                      "membership_rate": {
+                          "SILVER": 2,
+                          "GOLD": 5,
+                          "DIAMOND": 10
+                      },
+                      "created_at": "2020-03-25T03:59:59.881Z",
+                      "updated_at": "2020-03-25T03:59:59.881Z"
                     }
  *             }
  *       400:
@@ -158,10 +167,10 @@ route.post('/organizations/:organizationId/affiliate-types',
  *             fields:
  *              type: object
  *           example:
- *             message: Affiliate type is not found.
+ *             message: Policy is not found.
  *             error: error
- *             code: AFFILIATE_TYPE_IS_NOT_FOUND
- *             fields: ['affiliateTypeId']
+ *             code: POLICY_IS_NOT_FOUND
+ *             fields: ['policyId']
  *
  *       500:
  *         description: Error
@@ -169,21 +178,21 @@ route.post('/organizations/:organizationId/affiliate-types',
  *           $ref: '#/definitions/500'
  */
 
-route.get('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
-  validator(affiliateTypeId, 'params'),
+route.get('/policies/:policyId',
+  validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.getById,
 );
 /* #endregion */
 
-/* #region Search affiliate types */
+/* #region Search policies */
 /**
  * @swagger
- * /api/v1/organizations/:organizationId/affiliate-types:
+ * /api/v1/policies:
  *   get:
- *     summary: Search affiliate types
+ *     summary: Search policies
  *     tags:
- *       - AffiliateType
+ *       - Policy
  *     description:
  *     parameters:
  *       - in: header
@@ -196,10 +205,6 @@ route.get('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *         type: string
  *         required: true
  *         description: App secret key
-  *       - in: params
- *         name: organizationId
- *         required: true
- *         description: Organization Id
  *       - name: keyword
  *         in: query
  *         type: string
@@ -225,23 +230,72 @@ route.get('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *                {
                     items: [
                         {
-                            "id": 1,
-                            "organization_id": "69366383-b9c2-497c-1111-391b017772ba",
-                            "name": "Membership System",
-                            "created_at": "2020-03-25T03:59:59.889Z",
-                            "updated_at": "2020-03-25T03:59:59.889Z"
-                        },
-                        {
-                            "id": 2,
-                            "organization_id": "69366383-b9c2-497c-1111-391b017772ba",
-                            "name": "Affiliate System",
-                            "created_at": "2020-03-25T03:59:59.889Z",
-                            "updated_at": "2020-03-25T03:59:59.889Z"
-                        }
+                          "id": 2,
+                          "name": "AffiliateSystem - Membership Affiliate Policy",
+                          "description": "",
+                          "type": "MEMBERSHIP_AFFILIATE",
+                          "proportion_share": "20.00000",
+                          "max_levels": 4,
+                          "rates": [
+                              "50",
+                              "30",
+                              "15",
+                              "5"
+                          ],
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-25T03:59:59.881Z"
+                      },
+                      {
+                          "id": 1,
+                          "name": "AffiliateSystem - Membership Policy",
+                          "description": "",
+                          "type": "MEMBERSHIP",
+                          "proportion_share": "10.00000",
+                          "max_levels": 4,
+                          "membership_rate": {
+                              "SILVER": 2,
+                              "GOLD": 5,
+                              "DIAMOND": 10
+                          },
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-25T03:59:59.881Z"
+                      },
+                      {
+                          "id": 4,
+                          "name": "MembershipSystem - Affiliate Policy",
+                          "description": "",
+                          "type": "AFFILIATE",
+                          "proportion_share": "20.00000",
+                          "max_levels": 5,
+                          "rates": [
+                              "50",
+                              "30",
+                              "15",
+                              "5"
+                          ],
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-25T03:59:59.881Z"
+                      },
+                      {
+                          "id": 3,
+                          "name": "AffiliateSystem - Membership Policy #01",
+                          "description": "",
+                          "type": "AFFILIATE",
+                          "proportion_share": "10.11100",
+                          "max_levels": 4,
+                          "rates": [
+                              "50",
+                              "35",
+                              "10",
+                              "5"
+                          ],
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-31T04:37:04.801Z"
+                      }
                     ],
                     "offset": 0,
                     "limit": 10,
-                    "total": 2
+                    "total": 3
                   }
                 }
  *       400:
@@ -265,22 +319,21 @@ route.get('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *           $ref: '#/definitions/500'
  */
 
-route.get('/organizations/:organizationId/affiliate-types',
-  validator(organizationId, 'params'),
+route.get('/policies',
   validator(search, 'query'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.search,
 );
 /* #endregion */
 
-/* #region Update a app */
+/* #region Update a policy */
 /**
  * @swagger
- * /api/v1/organizations/:organizationId/affiliate-types/:affiliateTypeId:
+ * /api/v1/policies/:policyId:
  *   put:
- *     summary: Update a affiliate type
+ *     summary: Update a policy
  *     tags:
- *       - AffiliateType
+ *       - Policy
  *     description:
  *     parameters:
  *       - in: header
@@ -294,13 +347,9 @@ route.get('/organizations/:organizationId/affiliate-types',
  *         required: true
  *         description: App secret key
   *       - in: params
- *         name: organizationId
+ *         name: policyId
  *         required: true
- *         description: Organization Id
- *       - in: params
- *         name: affiliateTypeId
- *         required: true
- *         description: Affiliate type id
+ *         description: Policy Id
  *       - in: body
  *         name: data
  *         description:
@@ -310,8 +359,16 @@ route.get('/organizations/:organizationId/affiliate-types',
  *            - name
  *            example:
  *              {
-                  "name": "Affiliate System #01 UPDATE",
-                  "description": "Affiliate: user introduces his friend to staking system. When his friend stakes..."
+                  "name": "AffiliateSystem - AFFILIATE Policy #011",
+                  "description": "",
+                  "type": "AFFILIATE",
+                  "proportion_share": 10.123,
+                  "rates": [
+                      50.11,
+                      30,
+                      11,
+                      9
+                  ]
                 }
  *     produces:
  *       - application/json
@@ -322,11 +379,19 @@ route.get('/organizations/:organizationId/affiliate-types',
  *           application/json:
  *             {
  *                 "data":{
-                      "id": 13,
-                      "name": "Affiliate System #01 UPDATE",
-                      "description": "Affiliate: user introduces his friend to staking system. When his friend stakes...",
-                      "created_at": "2020-03-30T08:58:13.740Z",
-                      "updated_at": "2020-03-30T09:06:06.367Z"
+                      "id": 40,
+                      "name": "AffiliateSystem - AFFILIATE Policy #011",
+                      "description": "",
+                      "type": "AFFILIATE",
+                      "proportion_share": "10.12300",
+                      "rates": [
+                          "50.11",
+                          "30",
+                          "11",
+                          "9"
+                      ],
+                      "created_at": "2020-03-31T04:20:53.641Z",
+                      "updated_at": "2020-03-31T04:41:17.687Z"
                     }
  *             }
  *       400:
@@ -352,10 +417,10 @@ route.get('/organizations/:organizationId/affiliate-types',
  *             fields:
  *              type: object
  *           example:
- *             message: Affiliate type is not found.
+ *             message: Policy is not found.
  *             error: error
- *             code: AFFILIATE_TYPE_IS_NOT_FOUND
- *             fields: ['affiliateTypeId']
+ *             code: POLICY_IS_NOT_FOUND
+ *             fields: ['policyId']
  *
  *       500:
  *         description: Error
@@ -363,22 +428,21 @@ route.get('/organizations/:organizationId/affiliate-types',
  *           $ref: '#/definitions/500'
  */
 
-route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
-  validator(affiliateTypeId, 'params'),
-  validator(update),
+route.put('/policies/:policyId',
+  validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.update,
 );
 /* #endregion */
 
-/* #region Delete a affiliate type */
+/* #region Delete a policy */
 /**
  * @swagger
- * /api/v1/organizations/:organizationId/affiliate-types/:affiliateTypeId:
+ * /api/v1/policies/:policyId:
  *   delete:
- *     summary: Delete a affiliate type
+ *     summary: Delete a policy
  *     tags:
- *       - App
+ *       - Policy
  *     description:
  *     parameters:
  *       - in: header
@@ -391,14 +455,10 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *         type: string
  *         required: true
  *         description: App secret key
-  *       - in: params
- *         name: organizationId
- *         required: true
- *         description: Organization Id
  *       - in: params
- *         name: affiliateTypeId
+ *         name: policyId
  *         required: true
- *         description: Affiliate type Id
+ *         description: Policy Id
  *     produces:
  *       - application/json
  *     responses:
@@ -434,10 +494,10 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *             fields:
  *              type: object
  *           example:
- *             message: Affiliate type is not found.
+ *             message: Policy is not found.
  *             error: error
- *             code: AFFILIATE_TYPE_IS_NOT_FOUND
- *             fields: ['affiliateTypeId']
+ *             code: POLICY_IS_NOT_FOUND
+ *             fields: ['policyId']
  *
  *       500:
  *         description: Error
@@ -445,8 +505,8 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *           $ref: '#/definitions/500'
  */
 
-route.delete('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
-  validator(affiliateTypeId, 'params'),
+route.delete('/policies/:policyId',
+  validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.delete,
 );

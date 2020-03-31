@@ -21,7 +21,7 @@ module.exports = async () => {
       membership_rate: {
         'SILVER': 2,
         'GOLD': 5,
-        'DIAMIAD': 10,
+        'DIAMOND': 10,
       }
     }));
 

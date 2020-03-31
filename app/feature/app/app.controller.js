@@ -63,7 +63,7 @@ const controller = {
       const app = await appService.findOne(cond);
 
       if (!app) {
-        return res.notFound(res.__('APP_NOT_FOUND'), 'APP_NOT_FOUND');
+        return res.notFound(res.__('APP_IS_NOT_FOUND'), 'APP_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(app));
@@ -136,7 +136,7 @@ const controller = {
       const [numOfItems, items] = await appService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('APP_NOT_FOUND'), 'APP_NOT_FOUND');
+        return res.notFound(res.__('APP_IS_NOT_FOUND'), 'APP_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(items[0]));
@@ -168,7 +168,7 @@ const controller = {
       const [numOfItems, items] = await appService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('APP_NOT_FOUND'), 'APP_NOT_FOUND');
+        return res.notFound(res.__('APP_IS_NOT_FOUND'), 'APP_IS_NOT_FOUND');
       }
 
       return res.ok({ deleted: true });

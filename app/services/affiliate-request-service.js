@@ -57,6 +57,7 @@ class _AffiliateRequestService extends BaseService {
   hasDuplicate(currencySymbol, affiliateTypeId, fromDate, toDate) {
     return new Promise(async (resolve, reject) => {
       try {
+        // TODO: There a bug here, need a solution to check duplicate data
         const cond = {
           [Op.and]: [
             {
@@ -64,9 +65,14 @@ class _AffiliateRequestService extends BaseService {
               affiliate_type_id: affiliateTypeId,
             },
             {
-              to_date: {
-                [Op.gte]: fromDate,
-              },
+              [Op.or]: [
+                // {
+                //   from_date: { [Op.lte]: toDate, },
+                // },
+                {
+                  to_date: { [Op.gte]: fromDate, },
+                },
+              ]
             },
           ]
         };

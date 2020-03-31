@@ -147,11 +147,12 @@ class CalculateRewardsProcessor {
 
     const clientAffiliate = await clientAffiliateService.findByPk(client_affiliate_id);
     const referrerList = await clientAffiliateService.getReferrerList(clientAffiliate);
-    logger.debug('Referrer list: ', referrerList.map(item => item.id));
 
-    const rootClientAffiliate = referrerList.find((item) => item.level === 1);
+    logger.debug('Referrer list: ', referrerList.map(item => item.id));
+    const rootClientAffiliate = !clientAffiliate.referrer_client_affiliate_id ? clientAffiliate : referrerList.find((item) => item.level === 1);
+
     if (!rootClientAffiliate) {
-      throw new Error('Can not find root client for client who has id: ', client_affiliate_id);
+      throw new Error(`Can not find root client for client who has id: ${client_affiliate_id}`);
     }
 
     const { policies } = await policyHelper.getPolicyForRootClient({

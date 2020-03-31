@@ -24,13 +24,15 @@ const policyHelper = {
     // Below level 1
     if (rootClientAffiliateId) {
       rootClientAffiliate = await clientAffiliateService.findByPk(rootClientAffiliateId, { isIncludePolicies: true });
-      policies = rootClientAffiliate.ClientPolicies;
+      policies = await rootClientAffiliate.ClientPolicies;
+      policies = policies ? policies.filter(x => !x.deleted_flg) : [];
     }
 
     if (!_.some(policies)) {
       const affiliateTypeService = Container.get(AffiliateTypeService);
-      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId, { isIncludePolicies: true });
-      policies = await affiliateType.DefaultPolicies;
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+      policies = await affiliateType.getDefaultPolicies();
+      policies = policies ? policies.filter(x => !x.deleted_flg) : [];
     }
 
     return {
