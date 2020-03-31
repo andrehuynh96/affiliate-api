@@ -229,30 +229,69 @@ route.get('/policies/:policyId',
  *             { data:
  *                {
                     items: [
-                      {
-                          "id": "d6bcb267-f09c-4ead-b3dc-875d32ab8a9d",
-                          "currency_symbol": "ETH",
-                          "amount": "1.1",
-                          "status": "PENDING",
-                          "created_at": "2020-03-30T03:21:09.206Z",
-                          "updated_at": "2020-03-30T03:21:09.206Z"
+                        {
+                          "id": 2,
+                          "name": "AffiliateSystem - Membership Affiliate Policy",
+                          "description": "",
+                          "type": "MEMBERSHIP_AFFILIATE",
+                          "proportion_share": "20.00000",
+                          "max_levels": 4,
+                          "rates": [
+                              "50",
+                              "30",
+                              "15",
+                              "5"
+                          ],
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-25T03:59:59.881Z"
                       },
                       {
-                          "id": "d68728cc-4553-4b95-bf4f-5eb070a1591c",
-                          "currency_symbol": "ETH",
-                          "amount": "1.1",
-                          "status": "PENDING",
-                          "created_at": "2020-03-27T08:36:56.308Z",
-                          "updated_at": "2020-03-27T08:36:56.308Z"
+                          "id": 1,
+                          "name": "AffiliateSystem - Membership Policy",
+                          "description": "",
+                          "type": "MEMBERSHIP",
+                          "proportion_share": "10.00000",
+                          "max_levels": 4,
+                          "membership_rate": {
+                              "SILVER": 2,
+                              "GOLD": 5,
+                              "DIAMOND": 10
+                          },
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-25T03:59:59.881Z"
                       },
                       {
-                          "id": "2af6896f-7388-4aca-b912-7f9f7934514d",
-                          "currency_symbol": "ETH",
-                          "amount": "1.1",
-                          "status": "PENDING",
-                          "created_at": "2020-03-27T08:36:29.641Z",
-                          "updated_at": "2020-03-27T08:36:29.641Z"
+                          "id": 4,
+                          "name": "MembershipSystem - Affiliate Policy",
+                          "description": "",
+                          "type": "AFFILIATE",
+                          "proportion_share": "20.00000",
+                          "max_levels": 5,
+                          "rates": [
+                              "50",
+                              "30",
+                              "15",
+                              "5"
+                          ],
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-25T03:59:59.881Z"
                       },
+                      {
+                          "id": 3,
+                          "name": "AffiliateSystem - Membership Policy #01",
+                          "description": "",
+                          "type": "AFFILIATE",
+                          "proportion_share": "10.11100",
+                          "max_levels": 4,
+                          "rates": [
+                              "50",
+                              "35",
+                              "10",
+                              "5"
+                          ],
+                          "created_at": "2020-03-25T03:59:59.881Z",
+                          "updated_at": "2020-03-31T04:37:04.801Z"
+                      }
                     ],
                     "offset": 0,
                     "limit": 10,
@@ -320,7 +359,16 @@ route.get('/policies',
  *            - name
  *            example:
  *              {
-                  "name": "Org 01"
+                  "name": "AffiliateSystem - AFFILIATE Policy #011",
+                  "description": "",
+                  "type": "AFFILIATE",
+                  "proportion_share": 10.123,
+                  "rates": [
+                      50.11,
+                      30,
+                      11,
+                      9
+                  ]
                 }
  *     produces:
  *       - application/json
@@ -331,10 +379,19 @@ route.get('/policies',
  *           application/json:
  *             {
  *                 "data":{
-                      "id": "50799f56-9ad2-4605-8376-c8e6db186431",
-                      "name": "org 01",
-                      "created_at": "2020-03-30T04:30:15.166Z",
-                      "updated_at": "2020-03-30T04:30:15.166Z"
+                      "id": 40,
+                      "name": "AffiliateSystem - AFFILIATE Policy #011",
+                      "description": "",
+                      "type": "AFFILIATE",
+                      "proportion_share": "10.12300",
+                      "rates": [
+                          "50.11",
+                          "30",
+                          "11",
+                          "9"
+                      ],
+                      "created_at": "2020-03-31T04:20:53.641Z",
+                      "updated_at": "2020-03-31T04:41:17.687Z"
                     }
  *             }
  *       400:

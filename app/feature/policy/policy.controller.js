@@ -63,7 +63,6 @@ const controller = {
       const policyService = Container.get(PolicyService);
       const data = classInstance;
       delete data.id;
-      console.log(data);
 
       const policy = await policyService.create(data);
 
@@ -146,19 +145,54 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      const { body, params } = req;
+      const { params } = req;
       const { policyId } = params;
-      const name = _.trim(body.name);
+      const body = Object.assign({}, req.body);
+      const { type } = body;
+      if (!MembershipType[type]) {
+        return res.badRequest(res.__('UPDATE_POLICY_TYPE_IS_INVALID'), 'UPDATE_POLICY_TYPE_IS_INVALID', { fields: ['type'] });
+      }
+
+      let schema;
+      let classInstance;
+      switch (type) {
+        case MembershipType.MEMBERSHIP:
+          schema = createMembershipPolicySchema;
+          classInstance = new MembershipPolicy(body);
+          break;
+
+        case MembershipType.MEMBERSHIP_AFFILIATE:
+          schema = createMembershipAffiliatePolicySchema;
+          classInstance = new MembershipAffiliatePolicy(body);
+          break;
+
+        case MembershipType.AFFILIATE:
+          schema = createAffiliatePolicySchema;
+          classInstance = new AffiliatePolicy(body);
+          break;
+      }
+
+      // Validate policy
+      const result = joi.validate(body, schema);
+      if (result.error) {
+        const err = {
+          details: result.error.details,
+        };
+
+        return res.badRequest('Bad Request', '', err);
+      }
+
       logger.info('Policy::update');
 
       const policyService = Container.get(PolicyService);
       const cond = {
         id: policyId,
+        type,
         deleted_flg: false,
       };
-      const data = {
-        name,
-      };
+
+      const data = classInstance;
+      delete data.id;
       const [numOfItems, items] = await policyService.updateWhere(cond, data);
 
       if (!numOfItems) {
