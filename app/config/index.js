@@ -1,4 +1,5 @@
 const utils = require('app/lib/utils');
+const pkg = require('../../package.json');
 
 const logFolder = process.env.LOG_FOLDER || './public/logs';
 
@@ -10,6 +11,8 @@ const config = {
   isDevelopment: process.env.NODE_ENV === 'development',
   app: {
     name: utils.getOsEnv('APP_NAME'),
+    version: pkg.version,
+    description: pkg.description,
     appHostName: utils.getOsEnv('APP_HOST_NAME'),
     port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
     rateLimit: utils.toNumber(process.env.RATE_LIMIT || 100),

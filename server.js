@@ -48,7 +48,10 @@ database.init(async err => {
   const server = http.createServer(app);
 
   server.listen(config.app.port, config.app.appHostName, function () {
-    console.log(`Server start successfully on port: ${process.env.APP_PORT}`);
+    console.log('=======================================================');
+    console.log(`App: ${config.app.name}, version: ${config.app.version}.`);
+    console.log('=======================================================');
+    console.log(`Listening at http://${config.app.appHostName}:${config.app.port}\n`);
   });
 
   process.on('SIGINT', () => {

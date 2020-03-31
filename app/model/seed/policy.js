@@ -19,9 +19,10 @@ module.exports = async () => {
       proportion_share: 10,
       max_levels: 4,
       membership_rate: {
-        'SILVER': 2,
-        'GOLD': 5,
-        'DIAMOND': 10,
+        'SILVER': 20,
+        'GOLD': 50,
+        'PLATINUM': 70,
+        'DIAMOND': 100,
       }
     }));
 

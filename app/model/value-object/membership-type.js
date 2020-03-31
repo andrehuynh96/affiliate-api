@@ -1,6 +1,7 @@
 const MembershipType = {
   SILVER: 'SILVER',
   GOLD: 'GOLD',
+  PLATINUM: 'PLATINUM',
   DIAMOND: 'DIAMOND',
 };
 
