@@ -273,7 +273,7 @@ route.get('/organizations/:organizationId/affiliate-types',
 );
 /* #endregion */
 
-/* #region Update a app */
+/* #region Update a affiliate type */
 /**
  * @swagger
  * /api/v1/organizations/:organizationId/affiliate-types/:affiliateTypeId:
@@ -311,7 +311,8 @@ route.get('/organizations/:organizationId/affiliate-types',
  *            example:
  *              {
                   "name": "Affiliate System #01 UPDATE",
-                  "description": "Affiliate: user introduces his friend to staking system. When his friend stakes..."
+                  "description": "Affiliate: user introduces his friend to staking system. When his friend stakes...",
+                  "policies": [1, 2, 3 ]
                 }
  *     produces:
  *       - application/json
@@ -326,7 +327,55 @@ route.get('/organizations/:organizationId/affiliate-types',
                       "name": "Affiliate System #01 UPDATE",
                       "description": "Affiliate: user introduces his friend to staking system. When his friend stakes...",
                       "created_at": "2020-03-30T08:58:13.740Z",
-                      "updated_at": "2020-03-30T09:06:06.367Z"
+                      "updated_at": "2020-03-30T09:06:06.367Z",
+                      "policies": [
+                          {
+                              "id": 1,
+                              "name": "AffiliateSystem - Membership Policy",
+                              "description": "",
+                              "type": "MEMBERSHIP",
+                              "proportion_share": "10",
+                              "max_levels": 4,
+                              "membership_rate": {
+                                  "SILVER": 2,
+                                  "GOLD": 5,
+                                  "DIAMOND": 10
+                              },
+                              "created_at": "2020-03-31T06:29:41.603Z",
+                              "updated_at": "2020-03-31T06:29:41.603Z"
+                          },
+                          {
+                              "id": 2,
+                              "name": "AffiliateSystem - Membership Affiliate Policy",
+                              "description": "",
+                              "type": "MEMBERSHIP_AFFILIATE",
+                              "proportion_share": "20",
+                              "max_levels": 4,
+                              "rates": [
+                                  "50",
+                                  "30",
+                                  "15",
+                                  "5"
+                              ],
+                              "created_at": "2020-03-31T06:29:41.603Z",
+                              "updated_at": "2020-03-31T06:29:41.603Z"
+                          },
+                          {
+                              "id": 3,
+                              "name": "AffiliateSystem - Affiliate Policy",
+                              "description": "",
+                              "type": "AFFILIATE",
+                              "proportion_share": "20",
+                              "rates": [
+                                  "50",
+                                  "30",
+                                  "15",
+                                  "5"
+                              ],
+                              "created_at": "2020-03-31T06:29:41.603Z",
+                              "updated_at": "2020-03-31T06:29:41.603Z"
+                          }
+                      ]
                     }
  *             }
  *       400:
@@ -451,6 +500,7 @@ route.delete('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
   controller.delete,
 );
 /* #endregion */
+
 
 module.exports = route;
 

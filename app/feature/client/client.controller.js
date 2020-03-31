@@ -183,7 +183,8 @@ const controller = {
 
       const transaction = await db.sequelize.transaction();
       try {
-        await clientAffiliate.removeClientPolicies();
+        const existPolicies = await clientAffiliate.getDefaultPolicies();
+        await clientAffiliate.removeClientPolicies(existPolicies);
         await clientAffiliate.addClientPolicies(policyList);
 
         await transaction.commit();
