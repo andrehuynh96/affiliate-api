@@ -1,9 +1,9 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const Sequelize = require('sequelize');
-const mapper = require('app/response-schema/organization.response-schema');
+const mapper = require('app/response-schema/policy.response-schema');
 const config = require('app/config');
-const { OrganizationService } = require('app/services');
+const { PolicyService } = require('app/services');
 
 const Container = typedi.Container;
 const Op = Sequelize.Op;
@@ -16,14 +16,14 @@ const controller = {
       const { body } = req;
       const name = _.trim(body.name);
 
-      const organizationService = Container.get(OrganizationService);
+      const policyService = Container.get(PolicyService);
       const data = {
         name,
         deleted_flg: false,
       };
-      const organization = await organizationService.create(data);
+      const policy = await policyService.create(data);
 
-      return res.ok(mapper(organization));
+      return res.ok(mapper(policy));
     }
     catch (err) {
       logger.error(err);
@@ -37,22 +37,22 @@ const controller = {
 
     try {
       const { body, params } = req;
-      const { organizationId } = params;
+      const { policyId } = params;
       const name = _.trim(body.name);
-      logger.info('Organization::getById', organizationId);
+      logger.info('Policy::getById', policyId);
 
-      const organizationService = Container.get(OrganizationService);
+      const policyService = Container.get(PolicyService);
       const cond = {
-        id: organizationId,
+        id: policyId,
         deleted_flg: false,
       };
-      const organization = await organizationService.findOne(cond);
+      const policy = await policyService.findOne(cond);
 
-      if (!organization) {
-        return res.notFound(res.__('ORGANIZATION_IS_NOT_FOUND'), 'ORGANIZATION_IS_NOT_FOUND');
+      if (!policy) {
+        return res.notFound(res.__('POLICY_IS_NOT_FOUND'), 'POLICY_IS_NOT_FOUND');
       }
 
-      return res.ok(mapper(organization));
+      return res.ok(mapper(policy));
     }
     catch (err) {
       logger.error(err);
@@ -68,7 +68,7 @@ const controller = {
       const { query } = req;
       const { offset, limit } = query;
       const keyword = _.trim(query.keyword);
-      logger.info('Organization::search');
+      logger.info('Policy::search');
 
       const condition = {
         deleted_flg: false,
@@ -82,8 +82,8 @@ const controller = {
       const off = parseInt(offset);
       const lim = parseInt(limit);
       const order = [['created_at', 'DESC']];
-      const organizationService = Container.get(OrganizationService);
-      const { count: total, rows: items } = await organizationService.findAndCountAll({ condition, offset: off, limit: lim, order });
+      const policyService = Container.get(PolicyService);
+      const { count: total, rows: items } = await policyService.findAndCountAll({ condition, offset: off, limit: lim, order });
 
       return res.ok({
         items: mapper(items),
@@ -93,7 +93,7 @@ const controller = {
       });
     }
     catch (err) {
-      logger.error('search organizations fail: ', err);
+      logger.error('search policys fail: ', err);
       next(err);
     }
   },
@@ -103,22 +103,22 @@ const controller = {
 
     try {
       const { body, params } = req;
-      const { organizationId } = params;
+      const { policyId } = params;
       const name = _.trim(body.name);
-      logger.info('Organization::update');
+      logger.info('Policy::update');
 
-      const organizationService = Container.get(OrganizationService);
+      const policyService = Container.get(PolicyService);
       const cond = {
-        id: organizationId,
+        id: policyId,
         deleted_flg: false,
       };
       const data = {
         name,
       };
-      const [numOfItems, items] = await organizationService.updateWhere(cond, data);
+      const [numOfItems, items] = await policyService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('ORGANIZATION_IS_NOT_FOUND'), 'ORGANIZATION_IS_NOT_FOUND');
+        return res.notFound(res.__('POLICY_IS_NOT_FOUND'), 'POLICY_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(items[0]));
@@ -135,21 +135,21 @@ const controller = {
 
     try {
       const { body, params } = req;
-      const { organizationId } = params;
-      logger.info('Organization::delete');
+      const { policyId } = params;
+      logger.info('Policy::delete');
 
-      const organizationService = Container.get(OrganizationService);
+      const policyService = Container.get(PolicyService);
       const cond = {
-        id: organizationId,
+        id: policyId,
         deleted_flg: false,
       };
       const data = {
         deleted_flg: true,
       };
-      const [numOfItems, items] = await organizationService.updateWhere(cond, data);
+      const [numOfItems, items] = await policyService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('ORGANIZATION_IS_NOT_FOUND'), 'ORGANIZATION_IS_NOT_FOUND');
+        return res.notFound(res.__('POLICY_IS_NOT_FOUND'), 'POLICY_IS_NOT_FOUND');
       }
 
       return res.ok({ deleted: true });

@@ -60,7 +60,7 @@ const controller = {
       const affiliateType = await affiliateTypeService.findOne(cond);
 
       if (!affiliateType) {
-        return res.notFound(res.__('AFFILIATE_IS_NOT_FOUND'), 'AFFILIATE_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_TYPE_IS_NOT_FOUND'), 'AFFILIATE_TYPE_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(affiliateType));
@@ -134,7 +134,7 @@ const controller = {
       const [numOfItems, items] = await affiliateTypeService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('AFFILIATE_IS_NOT_FOUND'), 'AFFILIATE_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_TYPE_IS_NOT_FOUND'), 'AFFILIATE_TYPE_IS_NOT_FOUND');
       }
 
       return res.ok(mapper(items[0]));
@@ -166,7 +166,7 @@ const controller = {
       const [numOfItems, items] = await affiliateTypeService.updateWhere(cond, data);
 
       if (!numOfItems) {
-        return res.notFound(res.__('AFFILIATE_IS_NOT_FOUND'), 'AFFILIATE_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_TYPE_IS_NOT_FOUND'), 'AFFILIATE_TYPE_IS_NOT_FOUND');
       }
 
       return res.ok({ deleted: true });
