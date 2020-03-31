@@ -39,7 +39,21 @@ const policyHelper = {
       policies,
       rootClient: rootClientAffiliate
     };
+  },
+
+  async validatePolicyIdList(policyIdList, policyService) {
+    const policyList = await policyService.findByIdList(policyIdList);
+    const notFoundPolicyIdList = [];
+
+    policyIdList.forEach(id => {
+      if (!policyList.find(x => x.id === id)) {
+        notFoundPolicyIdList.push(id);
+      }
+    });
+
+    return { notFoundPolicyIdList, policyList };
   }
+
 
 };
 

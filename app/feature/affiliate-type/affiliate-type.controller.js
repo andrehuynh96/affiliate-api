@@ -6,6 +6,7 @@ const db = require('app/model');
 const affiliateTypeMapper = require('app/response-schema/affiliate-type.response-schema');
 const policyMapper = require('app/response-schema/policy.response-schema');
 const config = require('app/config');
+const policyHelper = require('app/lib/helpers/policy-helper');
 const {
   AffiliateTypeService,
   OrganizationService,
@@ -23,12 +24,22 @@ const controller = {
     try {
       const { body, params } = req;
       const { organizationId } = params;
-      const { name, description } = body;
+      const { name, description, policies } = body;
 
       const organizationService = Container.get(OrganizationService);
       const organization = await organizationService.findByPk(organizationId);
       if (!organization) {
         return res.notFound(res.__('ORGANIZATION_NOT_FOUND'), 'ORGANIZATION_NOT_FOUND');
+      }
+
+      // Validate policies
+      const policyService = Container.get(PolicyService);
+      const policyIdList = _.uniq(policies);
+      const { notFoundPolicyIdList, policyList } = await policyHelper.validatePolicyIdList(policyIdList, policyService);
+
+      if (notFoundPolicyIdList.length > 0) {
+        const errorMessage = res.__('CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', notFoundPolicyIdList.join(', '));
+        return res.badRequest(errorMessage, 'CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', { fields: ['policies'] });
       }
 
       const affiliateTypeService = Container.get(AffiliateTypeService);
@@ -39,9 +50,22 @@ const controller = {
         actived_flg: true,
         deleted_flg: false,
       };
-      const affiliateType = await affiliateTypeService.create(data);
 
-      return res.ok(affiliateTypeMapper(affiliateType));
+      const transaction = await db.sequelize.transaction();
+      try {
+        const affiliateType = await affiliateTypeService.create(data);
+        await affiliateType.addDefaultPolicies(policyList);
+        await transaction.commit();
+
+        const result = affiliateTypeMapper(affiliateType);
+        result.policies = policyMapper(policyList);
+
+        return res.ok(result);
+      } catch (err) {
+        await transaction.rollback();
+        logger.error(err);
+        throw err;
+      }
     }
     catch (err) {
       logger.error(err);
@@ -70,7 +94,11 @@ const controller = {
         return res.notFound(res.__('AFFILIATE_TYPE_IS_NOT_FOUND'), 'AFFILIATE_TYPE_IS_NOT_FOUND');
       }
 
-      return res.ok(affiliateTypeMapper(affiliateType));
+      const existPolicies = await affiliateType.getDefaultPolicies();
+      const result = affiliateTypeMapper(affiliateType);
+      result.policies = policyMapper(existPolicies);
+
+      return res.ok(result);
     }
     catch (err) {
       logger.error(err);
@@ -131,14 +159,7 @@ const controller = {
       // Validate policies
       const policyService = Container.get(PolicyService);
       const policyIdList = _.uniq(policies);
-      const policyList = await policyService.findByIdList(policyIdList);
-      const notFoundPolicyIdList = [];
-
-      policyIdList.forEach(id => {
-        if (!policyList.find(x => x.id === id)) {
-          notFoundPolicyIdList.push(id);
-        }
-      });
+      const { notFoundPolicyIdList, policyList } = await policyHelper.validatePolicyIdList(policyIdList, policyService);
 
       if (notFoundPolicyIdList.length > 0) {
         const errorMessage = res.__('CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', notFoundPolicyIdList.join(', '));

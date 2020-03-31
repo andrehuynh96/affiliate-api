@@ -149,14 +149,7 @@ const controller = {
       // Validate policies
       const policyService = Container.get(PolicyService);
       const policyIdList = _.uniq(policies);
-      const policyList = await policyService.findByIdList(policyIdList);
-      const notFoundPolicyIdList = [];
-
-      policyIdList.forEach(id => {
-        if (!policyList.find(x => x.id === id)) {
-          notFoundPolicyIdList.push(id);
-        }
-      });
+      const { notFoundPolicyIdList, policyList } = await policyHelper.validatePolicyIdList(policyIdList, policyService);
 
       if (notFoundPolicyIdList.length > 0) {
         const errorMessage = res.__('CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', notFoundPolicyIdList.join(', '));
@@ -183,7 +176,7 @@ const controller = {
 
       const transaction = await db.sequelize.transaction();
       try {
-        const existPolicies = await clientAffiliate.getDefaultPolicies();
+        const existPolicies = await clientAffiliate.getClientPolicies();
         await clientAffiliate.removeClientPolicies(existPolicies);
         await clientAffiliate.addClientPolicies(policyList);
 
