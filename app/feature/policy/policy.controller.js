@@ -1,9 +1,21 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const Sequelize = require('sequelize');
+const joi = require('joi');
 const mapper = require('app/response-schema/policy.response-schema');
 const config = require('app/config');
 const { PolicyService } = require('app/services');
+const MembershipType = require('app/model/value-object/policy-type');
+const {
+  createMembershipPolicySchema,
+  createMembershipAffiliatePolicySchema,
+  createAffiliatePolicySchema,
+} = require('app/feature/policy/validator');
+const {
+  MembershipPolicy,
+  MembershipAffiliatePolicy,
+  AffiliatePolicy,
+} = require('app/classes/policies');
 
 const Container = typedi.Container;
 const Op = Sequelize.Op;
@@ -13,14 +25,46 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      const { body } = req;
-      const name = _.trim(body.name);
+      const body = Object.assign({}, req.body);
+      const { type } = body;
+      if (!MembershipType[type]) {
+        return res.badRequest(res.__('CREATE_POLICY_TYPE_IS_INVALID'), 'CREATE_POLICY_TYPE_IS_INVALID', { fields: ['type'] });
+      }
+
+      let schema;
+      let classInstance;
+      switch (type) {
+        case MembershipType.MEMBERSHIP:
+          schema = createMembershipPolicySchema;
+          classInstance = new MembershipPolicy(body);
+          break;
+
+        case MembershipType.MEMBERSHIP_AFFILIATE:
+          schema = createMembershipAffiliatePolicySchema;
+          classInstance = new MembershipAffiliatePolicy(body);
+          break;
+
+        case MembershipType.AFFILIATE:
+          schema = createAffiliatePolicySchema;
+          classInstance = new AffiliatePolicy(body);
+          break;
+      }
+
+      // Validate policy
+      const result = joi.validate(body, schema);
+      if (result.error) {
+        const err = {
+          details: result.error.details,
+        };
+
+        return res.badRequest('Bad Request', '', err);
+      }
 
       const policyService = Container.get(PolicyService);
-      const data = {
-        name,
-        deleted_flg: false,
-      };
+      const data = classInstance;
+      delete data.id;
+      console.log(data);
+
       const policy = await policyService.create(data);
 
       return res.ok(mapper(policy));

@@ -34,7 +34,16 @@ const route = express.Router();
  *            - name
  *            example:
  *              {
-                  "name": "Org 01"
+                  "name": "AffiliateSystem - Membership Policy #01",
+                  "description": "",
+                  "type": "MEMBERSHIP_AFFILIATE",
+                  "proportion_share": 11.11,
+                  "rates": [
+                      50.11,
+                      30,
+                      11,
+                      9
+                  ]
                 }
  *     produces:
  *       - application/json
@@ -45,10 +54,19 @@ const route = express.Router();
  *           application/json:
  *             {
  *                 "data":{
-                      "id": "50799f56-9ad2-4605-8376-c8e6db186431",
-                      "name": "org 01",
-                      "created_at": "2020-03-30T04:30:15.166Z",
-                      "updated_at": "2020-03-30T04:30:15.166Z"
+                      "id": 71,
+                      "name": "AffiliateSystem - Membership Policy #01",
+                      "description": "",
+                      "type": "MEMBERSHIP_AFFILIATE",
+                      "proportion_share": "11.11000",
+                      "rates": [
+                          "50.11",
+                          "30",
+                          "11",
+                          "9"
+                      ],
+                      "created_at": "2020-03-31T04:29:32.564Z",
+                      "updated_at": "2020-03-31T04:29:32.564Z"
                     }
  *             }
  *       400:
@@ -73,7 +91,6 @@ const route = express.Router();
  */
 
 route.post('/policies',
-  validator(create),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.create,
 );
@@ -121,7 +138,7 @@ route.post('/policies',
                       "membership_rate": {
                           "SILVER": 2,
                           "GOLD": 5,
-                          "DIAMIAD": 10
+                          "DIAMOND": 10
                       },
                       "created_at": "2020-03-25T03:59:59.881Z",
                       "updated_at": "2020-03-25T03:59:59.881Z"
@@ -356,7 +373,6 @@ route.get('/policies',
 
 route.put('/policies/:policyId',
   validator(policyIdParam, 'params'),
-  validator(update),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   controller.update,
 );
