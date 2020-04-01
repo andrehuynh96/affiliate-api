@@ -1,5 +1,6 @@
 const typedi = require('typedi');
 const _ = require('lodash');
+const Sequelize = require('sequelize');
 const moment = require('moment');
 const v4 = require('uuid/v4');
 const {
@@ -7,12 +8,14 @@ const {
   AffiliateRequestService,
   ClientService,
   ClientAffiliateService,
-} = require('../../services');
-const { policyHelper } = require('../../lib/helpers');
-const AffiliateRequestStatus = require('../../model/value-object/affiliate-request-status');
-const AffiliateRequestDetailsStatus = require('../../model/value-object/affiliate-request-details-status');
+} = require('app/services');
+const { policyHelper } = require('app/lib/helpers');
+const mapper = require('app/response-schema/affiliate-request.response-schema');
+const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
+const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
 
 const Container = typedi.Container;
+const Op = Sequelize.Op;
 
 const controller = {
   calculateRewards: async (req, res, next) => {
@@ -92,6 +95,64 @@ const controller = {
       return res.ok(affiliateRequest);
     }
     catch (err) {
+      next(err);
+    }
+  },
+
+  search: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const keyword = _.trim(query.keyword);
+      logger.info('AffiliateRequest::search');
+
+      const andCondition = [
+        {
+          affiliate_type_id: affiliateTypeId
+        }
+      ];
+
+      if (keyword) {
+        const cond2 = {
+          [Op.or]: [
+            {
+              status: {
+                [Op.substring]: keyword,
+              },
+            },
+            {
+              currency_symbol: {
+                [Op.substring]: keyword,
+              },
+            },
+          ]
+        };
+
+        andCondition.push(cond2);
+      }
+
+      const condition = {
+        [Op.and]: andCondition,
+      };
+
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      return res.ok({
+        items: mapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('search affiliate requests fail: ', err);
       next(err);
     }
   },
