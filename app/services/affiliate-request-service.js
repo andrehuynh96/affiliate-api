@@ -3,13 +3,12 @@ const _ = require('lodash');
 const Sequelize = require('sequelize');
 const { forEach } = require('p-iteration');
 const BaseService = require('./base-service');
-const db = require('app/model');
+const db = require('app/model').sequelize;
+const AffiliateRequest = require('app/model').affiliate_requests;
+const AffiliateRequestDetails = require('app/model').affiliate_request_details;
 
 const Op = Sequelize.Op;
 const Service = typedi.Service;
-const sequelize = db.sequelize;
-const AffiliateRequest = db.affiliate_requests;
-const AffiliateRequestDetails = db.affiliate_request_details;
 const NUM_OF_ITEMS_IN_A_BATCH = 100;
 
 class _AffiliateRequestService extends BaseService {
@@ -24,7 +23,7 @@ class _AffiliateRequestService extends BaseService {
         const details = data.details;
         delete data.details;
 
-        sequelize.transaction(async (t) => {
+        db.transaction(async (t) => {
           const affiliateRequest = await this.model.create(data, {
             transaction: t,
           });
@@ -57,28 +56,24 @@ class _AffiliateRequestService extends BaseService {
   hasDuplicate(currencySymbol, affiliateTypeId, fromDate, toDate) {
     return new Promise(async (resolve, reject) => {
       try {
-        // TODO: There a bug here, need a solution to check duplicate data
-        const cond = {
-          [Op.and]: [
-            {
+        const query = 'SELECT check_duplicate_data(:currency_symbol, :affiliate_type_id, :from_date, :to_date) as count;';
+        const [items] = await db.query(query,
+          {
+            replacements: {
               currency_symbol: currencySymbol,
               affiliate_type_id: affiliateTypeId,
+              from_date: fromDate,
+              to_date: toDate,
             },
-            {
-              [Op.or]: [
-                // {
-                //   from_date: { [Op.lte]: toDate, },
-                // },
-                {
-                  to_date: { [Op.gte]: fromDate, },
-                },
-              ]
-            },
-          ]
-        };
-        const result = await this.count(cond);
+          },
+          {
+            type: db.QueryTypes.SELECT,
+          });
 
-        resolve(result > 0);
+        console.log(items);
+        const count = items[0] ? items[0].count : 0;
+
+        resolve(count > 0);
       } catch (err) {
         reject(err);
       }
