@@ -65,7 +65,10 @@ router.use(
 router.get('/', function (req, res) {
   const result = {
     message: 'Hello',
+    app: config.app.name,
+    version: config.app.version,
   };
+
   res.json(result);
 });
 router.get('/health', (req, res) => res.send('OK!'));
