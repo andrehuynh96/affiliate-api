@@ -175,9 +175,10 @@ class CalculateRewardsProcessor {
       return policyData;
     });
 
+    const allRewardList = await this.calculateRewards(policyDataList);
+
     const transaction = await db.sequelize.transaction();
     try {
-      const allRewardList = await this.calculateRewards(policyDataList);
       await this.saveRewards(allRewardList, transaction);
       await affiliateRequestService.setRequestDetailsStatus(id, AffiliateRequestDetailsStatus.COMPLETED, transaction);
 
@@ -245,7 +246,7 @@ class CalculateRewardsProcessor {
   async processMembershipAffiliatePolicy(policyData) {
     const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId, currencySymbol } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
-    const { max_levels, rates, proportion_share } = policy;
+    const { max_levels, rates, proportion_share, membership_rate } = policy;
     const shareAmount = Decimal(amount).times(proportion_share / 100);
     const rewardList = [];
     const { clientService } = this;
@@ -261,6 +262,13 @@ class CalculateRewardsProcessor {
           return;
         }
 
+        const membershipRate = membership_rate[membershipType.toUpperCase()];
+        this.logger.debug(`MembershipType: ${membershipType}, membershipRate: ${membershipRate}.`);
+        if (_.isUndefined(membershipRate)) {
+          this.logger.warn('Can not get rate for membership: ', membershipType);
+          return;
+        }
+
         rewardList.push({
           client_affiliate_id: client_affliate_id,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
@@ -268,7 +276,7 @@ class CalculateRewardsProcessor {
           policy_id: policy.id,
           policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
           currency_symbol: currencySymbol,
-          amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
+          amount: shareAmount.times((rate / 100) * (membershipRate / 100)).toDecimalPlaces(8).toNumber(),
         });
       }
     });

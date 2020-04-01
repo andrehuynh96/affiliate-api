@@ -110,17 +110,17 @@ class _AffiliateRequestService extends BaseService {
   setRequestDetailsStatus(id, status, transaction) {
     return new Promise(async (resolve, reject) => {
       try {
-
         const result = await AffiliateRequestDetails.update(
           {
             status,
-          }, {
-          where: {
-            id,
           },
-          transaction: transaction,
-          returning: true
-        });
+          {
+            where: {
+              id,
+            },
+            transaction: transaction,
+            returning: true,
+          });
 
         resolve(result);
       } catch (err) {

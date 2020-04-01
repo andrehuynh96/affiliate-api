@@ -9,6 +9,12 @@ const createMembershipAffiliatePolicySchema = Joi.object().keys({
   rates: Joi.array().items(
     Joi.number().min(0).max(100).required(),
   ),
+  membership_rate: Joi.object({
+    SILVER: Joi.number().min(0).max(100).required(),
+    GOLD: Joi.number().min(0).max(100).required(),
+    PLATINUM: Joi.number().min(0).max(100).required(),
+    DIAMOND: Joi.number().min(0).max(100).required(),
+  }),
 });
 
 module.exports = createMembershipAffiliatePolicySchema;
