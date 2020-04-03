@@ -69,8 +69,6 @@ class _AffiliateRequestService extends BaseService {
           {
             type: db.QueryTypes.SELECT,
           });
-
-        console.log(items);
         const count = items[0] ? items[0].count : 0;
 
         resolve(count > 0);

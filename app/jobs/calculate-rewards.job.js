@@ -36,7 +36,11 @@ class _CalculateRewardsJob {
         maxStalledCount: 1000, // Max amount of times a stalled job will be re-processed.
         guardInterval: 5000, // Poll interval for delayed jobs and added jobs.
         retryProcessDelay: 5000, // delay before processing next job in case of internal error.
-        backoffStrategies: {}, // A set of custom backoff strategies keyed by name.
+        backoffStrategies: {
+          jitter: function (attemptsMade, err) {
+            return 10 * 1000 + Math.random() * 500;
+          }
+        },
         drainDelay: 5, // A timeout for when the queue is in drained state (empty waiting for jobs).
       },
     };
@@ -98,13 +102,16 @@ class _CalculateRewardsJob {
   async addJob(affiliateRequest) {
     const jobOpts = {
       priority: 1,
-      delay: 10 * 1000,
-      attempts: 1,
-      backoff: 1, // Backoff setting for automatic retries if the job fails
+      delay: 500,
+      attempts: 1000,
+      backoff: {
+        type: 'fixed',
+        delay: 5 * 1000,
+      },
       lifo: false,
       // timeout: number; // The number of milliseconds after which the job should be fail with a timeout error [optional]
       removeOnComplete: true,
-      removeOnFail: !true,
+      removeOnFail: false,
       stackTraceLimit: 3,
     };
 
