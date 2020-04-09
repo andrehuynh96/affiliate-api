@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const utils = require('app/lib/utils');
 const pkg = require('../../package.json');
 
@@ -61,7 +63,17 @@ const config = {
     password: utils.getOsEnv('BULL_REDIS_PASSWORD'),
     db: utils.toNumber(utils.getOsEnv('BULL_REDIS_DB')),
   },
-
+  jwt: {
+    options: {
+      issuer: process.env.JWT_SIGN_ISSUER,
+      subject: process.env.JWT_SIGN_SUBJECT,
+      audience: process.env.JWT_SIGN_AUDIENCE,
+      expiresIn: parseInt(process.env.JWT_EXPIRES_IN),
+      algorithm: 'RS256' // RSASSA [ "RS256", "RS384", "RS512" ]
+    },
+    public: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PUBLIC_KEY_FILE), 'utf8'),
+    private: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PRIVATE_KEY_FILE), 'utf8'),
+  },
 };
 
 module.exports = config;

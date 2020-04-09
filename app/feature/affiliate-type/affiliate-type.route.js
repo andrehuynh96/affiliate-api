@@ -2,7 +2,7 @@ const express = require('express');
 const controller = require('./affiliate-type.controller');
 const { create, update, organizationId, affiliateTypeId, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
-const appAuth = require('app/middleware/app-auth.middleware');
+const appAuth = require('app/middleware/authenticate.middleware');
 const route = express.Router();
 
 /* #region Create a new affiliate type */

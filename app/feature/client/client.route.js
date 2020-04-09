@@ -2,7 +2,7 @@ const express = require('express');
 const controller = require('./client.controller');
 const { create, setPolicies } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
-const appAuth = require('app/middleware/app-auth.middleware');
+const appAuth = require('app/middleware/authenticate.middleware');
 const route = express.Router();
 
 /* #region Generate a affiliate code */
@@ -16,15 +16,10 @@ const route = express.Router();
  *     description: Register a user and generate a affiliate code
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
@@ -104,23 +99,13 @@ route.post('/clients',
 /* #region  */
 /**
  * @swagger
- * /api/v1/clients:
+ * /api/v1/clients/set-policies:
  *   post:
- *     summary: Generate a affiliate code
+ *     summary: Set policies for client
  *     tags:
  *       - Client
- *     description: Register a user and generate a affiliate code
+ *     description:
  *     parameters:
- *       - in: header
- *         name: x-api-key
- *         type: string
- *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
  *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
