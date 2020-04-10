@@ -56,6 +56,7 @@ const config = {
     prefix: process.env.REDIS_PREFIX || 'affiliate:api:cache',
     pass: process.env.REDIS_PASS,
     db: utils.toNumber(utils.getOsEnvOptional('REDIS_CACHE_DB') || '1'),
+    ttlInSeconds: 2 * 60,
   },
   bull: {
     host: utils.getOsEnv('BULL_REDIS_HOST'),
@@ -68,8 +69,8 @@ const config = {
       issuer: process.env.JWT_SIGN_ISSUER,
       subject: process.env.JWT_SIGN_SUBJECT,
       audience: process.env.JWT_SIGN_AUDIENCE,
-      expiresIn: parseInt(process.env.JWT_EXPIRES_IN),
-      algorithm: 'RS256' // RSASSA [ "RS256", "RS384", "RS512" ]
+      expiresIn: utils.toNumber(process.env.JWT_EXPIRES_IN),
+      algorithm: 'RS256',
     },
     public: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PUBLIC_KEY_FILE), 'utf8'),
     private: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PRIVATE_KEY_FILE), 'utf8'),

@@ -3,6 +3,8 @@ const controller = require('./client.controller');
 const { create, setPolicies } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Generate a affiliate code */
@@ -91,6 +93,7 @@ const route = express.Router();
 route.post('/clients',
   validator(create),
   appAuth(),
+  verifySignature,
   controller.create
 );
 /* #endregion */
