@@ -27,6 +27,16 @@ const route = express.Router();
  *         type: number
  *         required: true
  *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: body
  *         name: data
  *         description:

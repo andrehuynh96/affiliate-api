@@ -16,8 +16,8 @@
   "license": "ISC",
   "main": "index.js",
   "scripts": {
-    "dev": "cross-env ENV_NAME=dev nodemon",
-    "proxy": "cross-env ENV_NAME=dev nodemon proxy.js",
+    "dev": "cross-env ENV_NAME=dev NODE_ENV=development nodemon",
+    "proxy": "cross-env ENV_NAME=dev  NODE_ENV=development nodemon proxy.js",
     "start": "node index.js",
     "eslint": "eslint .",
     "eslint:check": "eslint --print-config .eslintrc.js | eslint-config-prettier-check",

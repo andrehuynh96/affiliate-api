@@ -1,5 +1,7 @@
+const _ = require('lodash');
 const crypto = require('crypto');
 const urlMod = require('url');
+const moment = require('moment');
 const logger = require('app/lib/logger');
 const config = require('app/config');
 const { KEY } = require('app/constants');
@@ -37,13 +39,23 @@ module.exports = async (req, res, next) => {
       return next();
     }
 
-    const checksum = req.get('x-checksum');
-    const time = req.get('x-time');
-    const { apiKey, originalUrl } = req;
+    const checksum = _.trim(req.get('x-checksum'));
+    const time = _.trim(req.get('x-time'));
     if (!checksum) {
-      return res.badRequest();
+      return res.badRequest(res.__('NOT_FOUND_CHECK_SUM'), 'NOT_FOUND_CHECK_SUM');
+    }
+    if (!time) {
+      return res.badRequest(res.__('NOT_FOUND_X_TIME'), 'NOT_FOUND_X_TIME');
     }
 
+    // UTC date
+    const signedDate = moment.unix(time);
+    const now = moment.utc();
+    if (now.diff(signedDate, 'seconds') > config.signature.expiresIn) {
+      return res.badRequest(res.__('X_TIME_IS_OLD'), 'X_TIME_IS_OLD');
+    }
+
+    const { apiKey, originalUrl } = req;
     const app = await getApp(apiKey);
     if (!app) {
       return res.badRequest(res.__('NOT_FOUND_API_KEY'), 'NOT_FOUND_API_KEY');
@@ -57,6 +69,11 @@ module.exports = async (req, res, next) => {
       .digest('hex');
 
     if (hash != checksum) {
+      // FOR DEBUGING
+      if (config.signature.showChecksum) {
+        logger.info('checksum', hash);
+      }
+
       return res.badRequest('Wrong checksum.');
     }
 

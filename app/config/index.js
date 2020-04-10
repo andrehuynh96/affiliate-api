@@ -69,11 +69,16 @@ const config = {
       issuer: process.env.JWT_SIGN_ISSUER,
       subject: process.env.JWT_SIGN_SUBJECT,
       audience: process.env.JWT_SIGN_AUDIENCE,
+      // time in seconds
       expiresIn: utils.toNumber(process.env.JWT_EXPIRES_IN),
       algorithm: 'RS256',
     },
     public: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PUBLIC_KEY_FILE), 'utf8'),
     private: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PRIVATE_KEY_FILE), 'utf8'),
+  },
+  signature: {
+    expiresIn: utils.toNumber(process.env.SIGNATURE_EXPIRES_IN),
+    showChecksum: process.env.SIGNATURE_SHOW_CHECKSUM === 'true',
   },
 };
 

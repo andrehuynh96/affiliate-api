@@ -1,5 +1,9 @@
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
 const urlMod = require('url');
+const moment = require('moment');
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
@@ -10,12 +14,14 @@ app.use(bodyParser.json());
 
 app.all('*', function (req, res) {
   const { method, url, body, headers } = req;
+  console.log(url);
   const urlObj = urlMod.parse(url);
   const signedUrl = `${urlObj.path}`;
   const secretKey = headers['x-secret-key'];
-  const time = +new Date();
+  const time = moment.utc().unix();
 
   const content = `${secretKey}\n${method.toUpperCase()}\n${signedUrl}\n${JSON.stringify(body)}\n${time}`;
+  // console.log(content);
   const checksum = crypto
     .createHash('sha256')
     .update(content)
@@ -79,6 +85,8 @@ app.all('*', function (req, res) {
       res.setHeader(key, headers[key]);
     }
 
+    res.setHeader('x-checksum', checksum);
+    res.setHeader('x-time', time);
     res.send(response.data);
 
     res.end();
@@ -95,7 +103,20 @@ app.all('*', function (req, res) {
 
 });
 
+/*
+const privateKey = fs.readFileSync(path.join(__dirname, './key/key.pem'), 'utf8');
+const certificate = fs.readFileSync(path.join(__dirname, './key/cert.pem'), 'utf8');
+const options = {
+  key: privateKey,
+  cert: certificate,
+  passphrase: '123456'
+};
+
+const server = https.createServer(options, app);
+console.log('Proxy is listening on port 5050');
+server.listen(5051);
+*/
+
 const server = http.createServer(app);
 console.log('Proxy is listening on port 5050');
-
 server.listen(5050);
