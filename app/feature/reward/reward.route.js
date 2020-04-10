@@ -16,20 +16,25 @@ const route = express.Router();
  *     description: Calculate rewards for clients
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
  *         required: true
  *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: body
  *         name: data
  *         description:
@@ -137,15 +142,15 @@ route.post('/rewards',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
- *         type: string
+ *         name: x-affiliate-type-id
+ *         type: number
  *         required: true
- *         description: App secret key
+ *         description: Affiliate type id
  *       - name: keyword
  *         in: query
  *         type: string
