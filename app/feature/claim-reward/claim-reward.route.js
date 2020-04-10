@@ -3,6 +3,8 @@ const controller = require('./claim-reward.controller');
 const { create, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region User claims reward */
@@ -16,20 +18,25 @@ const route = express.Router();
  *     description: User claims reward
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
  *         required: true
  *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: body
  *         name: data
  *         description:
@@ -84,6 +91,7 @@ const route = express.Router();
 route.post('/claim-rewards',
   validator(create),
   appAuth(),
+  verifySignature,
   controller.calculateRewards,
 );
 /* #endregion */
@@ -99,15 +107,10 @@ route.post('/claim-rewards',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
@@ -193,6 +196,7 @@ route.post('/claim-rewards',
 route.get('/claim-rewards',
   validator(search, 'query'),
   appAuth(),
+  verifySignature,
   controller.search,
 );
 /* #endregion */

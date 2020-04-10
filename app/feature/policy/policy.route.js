@@ -3,6 +3,8 @@ const controller = require('./policy.controller');
 const { create, update, policyIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Create a new policy */
@@ -16,15 +18,20 @@ const route = express.Router();
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
+ *         name: x-time
  *         type: string
  *         required: true
- *         description: App secret key
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: body
  *         name: data
  *         description:
@@ -92,6 +99,7 @@ const route = express.Router();
 
 route.post('/policies',
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.create,
 );
 /* #endregion */
@@ -107,16 +115,11 @@ route.post('/policies',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
-  *       - in: params
+ *         description: Bearer {token}
+ *       - in: params
  *         name: policyId
  *         required: true
  *         description: Policy Id
@@ -181,6 +184,7 @@ route.post('/policies',
 route.get('/policies/:policyId',
   validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.getById,
 );
 /* #endregion */
@@ -196,15 +200,10 @@ route.get('/policies/:policyId',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - name: keyword
  *         in: query
  *         type: string
@@ -322,6 +321,7 @@ route.get('/policies/:policyId',
 route.get('/policies',
   validator(search, 'query'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.search,
 );
 /* #endregion */
@@ -337,15 +337,20 @@ route.get('/policies',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
+ *         name: x-time
  *         type: string
  *         required: true
- *         description: App secret key
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
   *       - in: params
  *         name: policyId
  *         required: true
@@ -431,6 +436,7 @@ route.get('/policies',
 route.put('/policies/:policyId',
   validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.update,
 );
 /* #endregion */
@@ -446,15 +452,20 @@ route.put('/policies/:policyId',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
+ *         name: x-time
  *         type: string
  *         required: true
- *         description: App secret key
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: params
  *         name: policyId
  *         required: true
@@ -508,6 +519,7 @@ route.put('/policies/:policyId',
 route.delete('/policies/:policyId',
   validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.delete,
 );
 /* #endregion */

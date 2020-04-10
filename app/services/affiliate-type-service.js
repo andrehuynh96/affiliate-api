@@ -1,5 +1,4 @@
 const typedi = require('typedi');
-const shortid = require('shortid');
 const BaseService = require('./base-service');
 const AffiliateType = require('app/model').affiliate_types;
 const Policy = require('app/model').policies;
@@ -34,6 +33,24 @@ class _AffiliateTypeService extends BaseService {
             deleted_flg: false,
           }
         }, options);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  findByIdAndOrganizationId(id, organizationId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findOne({
+          where: {
+            id: id,
+            deleted_flg: false,
+            organization_id: organizationId,
+          }
+        });
 
         resolve(result);
       } catch (err) {

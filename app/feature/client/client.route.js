@@ -120,10 +120,25 @@ route.post('/clients',
  *     description:
  *     parameters:
  *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
  *         required: true
  *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: body
  *         name: data
  *         description:
@@ -190,6 +205,7 @@ route.post('/clients',
 route.post('/clients/set-policies',
   validator(setPolicies),
   appAuth(),
+  verifySignature,
   controller.setPolicies
 );
 /* #endregion */

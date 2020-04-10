@@ -3,6 +3,8 @@ const controller = require('./reward.controller');
 const { create, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Calculate rewards for clients */
@@ -16,20 +18,25 @@ const route = express.Router();
  *     description: Calculate rewards for clients
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - in: header
  *         name: x-affiliate-type-id
  *         type: number
  *         required: true
  *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: body
  *         name: data
  *         description:
@@ -121,7 +128,8 @@ const route = express.Router();
 route.post('/rewards',
   validator(create),
   appAuth(),
-  controller.calculateRewards
+  verifySignature,
+  controller.calculateRewards,
 );
 /* #endregion */
 
@@ -137,15 +145,15 @@ route.post('/rewards',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
- *         type: string
+ *         name: x-affiliate-type-id
+ *         type: number
  *         required: true
- *         description: App secret key
+ *         description: Affiliate type id
  *       - name: keyword
  *         in: query
  *         type: string
@@ -227,6 +235,7 @@ route.post('/rewards',
 route.get('/affiliate-requests',
   validator(search, 'query'),
   appAuth(),
+  verifySignature,
   controller.search,
 );
 /* #endregion */

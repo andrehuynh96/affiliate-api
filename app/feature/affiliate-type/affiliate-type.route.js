@@ -3,6 +3,8 @@ const controller = require('./affiliate-type.controller');
 const { create, update, organizationId, affiliateTypeId, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Create a new affiliate type */
@@ -16,15 +18,20 @@ const route = express.Router();
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
+ *         name: x-time
  *         type: string
  *         required: true
- *         description: App secret key
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
  *       - in: params
  *         name: organizationId
  *         required: true
@@ -83,6 +90,7 @@ route.post('/organizations/:organizationId/affiliate-types',
   validator(organizationId, 'params'),
   validator(create),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.create,
 );
 /* #endregion */
@@ -98,15 +106,10 @@ route.post('/organizations/:organizationId/affiliate-types',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
+ *         description: Bearer {token}
  *       - in: params
  *         name: organizationId
  *         required: true
@@ -172,6 +175,7 @@ route.post('/organizations/:organizationId/affiliate-types',
 route.get('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
   validator(affiliateTypeId, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.getById,
 );
 /* #endregion */
@@ -187,16 +191,11 @@ route.get('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
- *       - in: header
- *         name: x-secret-key
- *         type: string
- *         required: true
- *         description: App secret key
-  *       - in: params
+ *         description: Bearer {token}
+ *       - in: params
  *         name: organizationId
  *         required: true
  *         description: Organization Id
@@ -269,6 +268,7 @@ route.get('/organizations/:organizationId/affiliate-types',
   validator(organizationId, 'params'),
   validator(search, 'query'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.search,
 );
 /* #endregion */
@@ -284,16 +284,26 @@ route.get('/organizations/:organizationId/affiliate-types',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
  *         type: string
  *         required: true
- *         description: App secret key
-  *       - in: params
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
+ *       - in: params
  *         name: organizationId
  *         required: true
  *         description: Organization Id
@@ -416,6 +426,7 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
   validator(affiliateTypeId, 'params'),
   validator(update),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.update,
 );
 /* #endregion */
@@ -431,16 +442,26 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
  *     description:
  *     parameters:
  *       - in: header
- *         name: x-api-key
+ *         name: Authorization
  *         type: string
  *         required: true
- *         description: App API key
+ *         description: Bearer {token}
  *       - in: header
- *         name: x-secret-key
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
  *         type: string
  *         required: true
- *         description: App secret key
-  *       - in: params
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
+ *       - in: params
  *         name: organizationId
  *         required: true
  *         description: Organization Id
@@ -497,6 +518,7 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
 route.delete('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
   validator(affiliateTypeId, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.delete,
 );
 /* #endregion */

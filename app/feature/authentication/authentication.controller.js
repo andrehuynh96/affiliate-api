@@ -28,7 +28,8 @@ module.exports = async (req, res, next) => {
 
     var payload = {
       app_id: app.id,
-      api_key: app.api_key
+      api_key: app.api_key,
+      organization_id: app.organization_id,
     };
     const token = jwt.sign(payload, config.jwt.private, config.jwt.options);
 

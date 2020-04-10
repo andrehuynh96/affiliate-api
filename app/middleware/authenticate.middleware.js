@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
+const _ = require('lodash');
 const config = require('app/config');
 const typedi = require('typedi');
 const { KEY } = require('app/constants');
+const logger = require('app/lib/logger');
 const { AppService, AffiliateTypeService } = require('../services');
 const { Container } = require('typedi');
 
@@ -10,10 +12,8 @@ module.exports = function (options) {
   const isIgnoredAffiliateTypeId = !!options.isIgnoredAffiliateTypeId;
 
   return async (req, res, next) => {
-    const affiliateTypeId = req.headers['x-affiliate-type-id'];
+    const affiliateTypeId = _.trim(req.headers['x-affiliate-type-id']);
     let token = req.headers['x-access-token'] || req.headers['authorization'];
-
-    console.log(req.headers['x-time']);
 
     if (token && (token.startsWith('Bearer ') || token.startsWith('bearer '))) {
       token = token.slice(7, token.length);
@@ -24,22 +24,27 @@ module.exports = function (options) {
 
     if (token) {
       try {
-        var decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
+        const decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
         req.appId = decodedToken.app_id;
         req.apiKey = decodedToken.api_key;
+        const organizationId = req.organizationId = decodedToken.organization_id;
 
         if (isIgnoredAffiliateTypeId) {
           return next();
         }
 
+        if (!affiliateTypeId) {
+          return res.badRequest(res.__('MISSING_AFFILIATE_TYPE_ID'), 'MISSING_AFFILIATE_TYPE_ID');
+        }
+
         // Validate affiliateTypeId
         const redisCacherService = Container.get('redisCacherService');
-        const key = redisCacherService.getCacheKey(KEY.getAffiliateTypeIdById, { affiliateTypeId });
+        const key = redisCacherService.getCacheKey(KEY.getAffiliateTypeIdByIdAndOrgId, { affiliateTypeId, organizationId });
         let affiliateType = await redisCacherService.get(key);
 
         if (!affiliateType) {
           const affiliateTypeService = Container.get(AffiliateTypeService);
-          affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+          affiliateType = await affiliateTypeService.findByIdAndOrganizationId(affiliateTypeId, organizationId);
 
           if (affiliateType) {
             await redisCacherService.set(key, affiliateType, config.redis.ttlInSeconds);
@@ -47,7 +52,7 @@ module.exports = function (options) {
         }
 
         if (!affiliateType) {
-          return res.unauthorized();
+          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_TYPE'), 'NOT_FOUND_AFFILIATE_TYPE');
         }
 
         req.affiliateTypeId = affiliateType.id;
@@ -55,7 +60,8 @@ module.exports = function (options) {
 
         return next();
       } catch (err) {
-        // const msg = 'Invalid token - ' + e.message;
+        logger.error(err);
+
         return res.serverInternalError(err);
       }
     }
