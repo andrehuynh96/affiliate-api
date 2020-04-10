@@ -3,6 +3,8 @@ const controller = require('./policy.controller');
 const { create, update, policyIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Create a new policy */
@@ -97,6 +99,7 @@ const route = express.Router();
 
 route.post('/policies',
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.create,
 );
 /* #endregion */
@@ -181,6 +184,7 @@ route.post('/policies',
 route.get('/policies/:policyId',
   validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.getById,
 );
 /* #endregion */
@@ -317,6 +321,7 @@ route.get('/policies/:policyId',
 route.get('/policies',
   validator(search, 'query'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.search,
 );
 /* #endregion */
@@ -431,6 +436,7 @@ route.get('/policies',
 route.put('/policies/:policyId',
   validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.update,
 );
 /* #endregion */
@@ -513,6 +519,7 @@ route.put('/policies/:policyId',
 route.delete('/policies/:policyId',
   validator(policyIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.delete,
 );
 /* #endregion */

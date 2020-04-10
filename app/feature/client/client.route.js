@@ -205,6 +205,7 @@ route.post('/clients',
 route.post('/clients/set-policies',
   validator(setPolicies),
   appAuth(),
+  verifySignature,
   controller.setPolicies
 );
 /* #endregion */

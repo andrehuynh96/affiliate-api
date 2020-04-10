@@ -19,9 +19,9 @@
     "dev": "cross-env ENV_NAME=dev NODE_ENV=development nodemon",
     "proxy": "cross-env ENV_NAME=dev  NODE_ENV=development nodemon proxy.js",
     "start": "node index.js",
-    "eslint": "eslint .",
-    "eslint:check": "eslint --print-config .eslintrc.js | eslint-config-prettier-check",
-    "eslint:fix": "eslint --fix .",
+    "lint": "eslint .",
+    "lint:check": "eslint --print-config .eslintrc.js | eslint-config-prettier-check",
+    "lintfix": "eslint --fix .",
     "prettier": "prettier --write \"{,!(node_modules)/**/}*.js\"",
     "test": "NODE_ENV=test mocha --recursive 'app/feature/**/*.test.js'"
   },

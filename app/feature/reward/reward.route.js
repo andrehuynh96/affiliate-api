@@ -3,6 +3,8 @@ const controller = require('./reward.controller');
 const { create, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Calculate rewards for clients */
@@ -126,7 +128,8 @@ const route = express.Router();
 route.post('/rewards',
   validator(create),
   appAuth(),
-  controller.calculateRewards
+  verifySignature,
+  controller.calculateRewards,
 );
 /* #endregion */
 
@@ -232,6 +235,7 @@ route.post('/rewards',
 route.get('/affiliate-requests',
   validator(search, 'query'),
   appAuth(),
+  verifySignature,
   controller.search,
 );
 /* #endregion */

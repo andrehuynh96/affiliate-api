@@ -3,6 +3,8 @@ const controller = require('./organization.controller');
 const { create, update, organizationIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region Create a new organization */
@@ -80,6 +82,7 @@ const route = express.Router();
 route.post('/organizations',
   validator(create),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.create,
 );
 /* #endregion */
@@ -155,6 +158,7 @@ route.post('/organizations',
 route.get('/organizations/:organizationId',
   validator(organizationIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.getById,
 );
 /* #endregion */
@@ -257,6 +261,7 @@ route.get('/organizations/:organizationId',
 route.get('/organizations',
   validator(search, 'query'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.search,
 );
 /* #endregion */
@@ -354,6 +359,7 @@ route.put('/organizations/:organizationId',
   validator(organizationIdParam, 'params'),
   validator(update),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.update,
 );
 /* #endregion */
@@ -436,6 +442,7 @@ route.put('/organizations/:organizationId',
 route.delete('/organizations/:organizationId',
   validator(organizationIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
   controller.delete,
 );
 /* #endregion */

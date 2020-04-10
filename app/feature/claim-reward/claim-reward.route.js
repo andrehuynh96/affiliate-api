@@ -3,6 +3,8 @@ const controller = require('./claim-reward.controller');
 const { create, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const verifySignature = require('app/middleware/verify-signature.middleware');
+
 const route = express.Router();
 
 /* #region User claims reward */
@@ -89,6 +91,7 @@ const route = express.Router();
 route.post('/claim-rewards',
   validator(create),
   appAuth(),
+  verifySignature,
   controller.calculateRewards,
 );
 /* #endregion */
@@ -193,6 +196,7 @@ route.post('/claim-rewards',
 route.get('/claim-rewards',
   validator(search, 'query'),
   appAuth(),
+  verifySignature,
   controller.search,
 );
 /* #endregion */
