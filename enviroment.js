@@ -11,7 +11,7 @@ const dotenvPath = path.join(__dirname);
 
 // https://github.com/bkeepers/dotenv#what-other-env-files-can-i-use
 const dotenvFiles = [
-  `${dotenvPath}/.env.${ENV_NAME}.local`,
+  `${dotenvPath}/.env.local`,
   `${dotenvPath}/.env.${ENV_NAME}`,
   `${dotenvPath}/.env`,
 ];

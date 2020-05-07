@@ -91,3 +91,4 @@ zTODO
 out
 *.code-workspace
 .env.dev.prod
+.env.local
