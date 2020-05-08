@@ -29,5 +29,5 @@
   "APP_NOT_INACTIVE": "App is not active.",
   "X_TIME_IS_OLD": "Time is too old",
   "MISSING_AFFILIATE_TYPE_ID": "Missing x-affiliate-type-id header",
-  "NOT_FOUND_AFFILIATE_TYPE": "Aaffiliate type is not found."
+  "NOT_FOUND_AFFILIATE_TYPE": "Affiliate type is not found."
 }

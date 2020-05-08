@@ -26,7 +26,7 @@ module.exports = async (req, res, next) => {
       return res.forbidden(res.__('APP_NOT_INACTIVE'), 'APP_NOT_INACTIVE');
     }
 
-    var payload = {
+    const payload = {
       app_id: app.id,
       api_key: app.api_key,
       organization_id: app.organization_id,

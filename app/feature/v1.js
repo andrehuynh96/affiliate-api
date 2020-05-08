@@ -9,5 +9,6 @@ router.use(require('./organization/organization.route'));
 router.use(require('./app/app.route'));
 router.use(require('./affiliate-type/affiliate-type.route'));
 router.use(require('./policy/policy.route'));
+router.use(require('./affiliate-code/affiliate-code.route'));
 
 module.exports = router;

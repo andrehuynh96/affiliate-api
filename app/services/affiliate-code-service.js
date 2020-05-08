@@ -1,10 +1,8 @@
-const typedi = require('typedi');
+const _ = require('lodash');
+const { Service } = require('typedi');
 const shortid = require('shortid');
 const BaseService = require('./base-service');
 const AffiliateCode = require('app/model').affiliate_codes;
-const ClientAffiliate = require('app/model').client_affiliates;
-
-const Service = typedi.Service;
 
 class _AffiliateCodeService extends BaseService {
   constructor() {
@@ -12,8 +10,11 @@ class _AffiliateCodeService extends BaseService {
   }
 
   generateCode() {
-    // eslint-disable-next-line no-useless-escape
-    return shortid.generate().replace(/_/g, '1').replace(/\-/g, '2');
+    let code = _.replace(_.replace(shortid.generate(), '_', 1), '-', 2);
+
+    code = code.toUpperCase();
+
+    return code;
   }
 
 }

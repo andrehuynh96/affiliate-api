@@ -4,11 +4,6 @@ const requestSchema = require('./authentication.request-schema');
 const validator = require('app/middleware/validator.middleware');
 const route = express.Router();
 
-route.post('/auth/token',
-  validator(requestSchema),
-  controller
-);
-
 /* #region Get toekn */
 /**
  * @swagger
@@ -65,6 +60,11 @@ route.post('/auth/token',
  *         schema:
  *           $ref: '#/definitions/500'
  */
+
+route.post('/auth/token',
+validator(requestSchema),
+controller
+);
 
 /* #endregion */
 

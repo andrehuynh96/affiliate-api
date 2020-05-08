@@ -124,6 +124,7 @@ const controller = {
         actived_flg: true,
         affiliateCodes: [{
           code,
+          deleted_flg: false,
         }]
       };
 
@@ -189,6 +190,102 @@ const controller = {
 
       // return res.ok(mapper(policyList));
       return res.ok({ isSuccess: true });
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+
+  updateAffiliateCode: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::updateAffiliateCode');
+      // const { body, affiliateTypeId, organizationId } = req;
+      // const { affiliate_code, membership_type } = body;
+      // const extClientId = _.trim(body.ext_client_id).toLowerCase();
+      // const { policies } = body;
+
+      // // Validate policies
+      // const policyService = Container.get(PolicyService);
+      // const policyIdList = _.uniq(policies);
+      // const { notFoundPolicyIdList, policyList } = await policyHelper.validatePolicyIdList(policyIdList, policyService);
+
+      // if (notFoundPolicyIdList.length > 0) {
+      //   const errorMessage = res.__('CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', notFoundPolicyIdList.join(', '));
+      //   return res.badRequest(errorMessage, 'CLIENT_SET_POLICIES_NOT_FOUND_POLICY_ID_LIST', { fields: ['policies'] });
+      // }
+
+      // // Validate ext_client_id
+      // const clientService = Container.get(ClientService);
+      // const extClientIdList = [extClientId];
+      // const extClientIdMapping = await clientService.getExtClientIdMapping(extClientIdList, affiliateTypeId);
+      // const clientAffiliateId = extClientIdMapping[extClientId];
+
+      // if (!clientAffiliateId) {
+      //   const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+      //   return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      // }
+
+      // const clientAffiliateService = Container.get(ClientAffiliateService);
+      // const clientAffiliate = await clientAffiliateService.findByPk(clientAffiliateId);
+      // if (!clientAffiliate) {
+      //   const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+      //   return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      // }
+
+      // const transaction = await db.sequelize.transaction();
+      // try {
+      //   const existPolicies = await clientAffiliate.getClientPolicies();
+      //   await clientAffiliate.removeClientPolicies(existPolicies);
+      //   await clientAffiliate.addClientPolicies(policyList);
+
+      //   await transaction.commit();
+      // } catch (err) {
+      //   await transaction.rollback();
+      //   logger.error(err);
+      //   throw err;
+      // }
+
+      // return res.ok(mapper(policyList));
+      return res.ok({ isSuccess: true });
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+
+  getAffiliateCodes: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::getAffiliateCodes');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+
+      const clientService = Container.get(ClientService);
+      const clients = await clientService.findByIdList([extClientId], affiliateTypeId);
+      const client = clients[0];
+      console.log(client);
+      const clientAffiliate = client ? client.ClientAffiliates[0] : null;
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const affiliateCodeService = Container.get(AffiliateCodeService);
+      const cond = {
+        client_affiliate_id: clientAffiliate.id,
+        deleted_flg: false,
+      };
+      const affiliateCodes = await affiliateCodeService.findAll(cond);
+      const result = affiliateCodes.map(x => x.code);
+
+      return res.ok(result);
     }
     catch (err) {
       logger.error(err);
