@@ -10,7 +10,7 @@ const route = express.Router();
 /* #region Get affiliate code details */
 /**
  * @swagger
- * /api/v1/affiliate-codes/:affiliateCodeId:
+ * /api/v1/affiliate-codes/:code:
  *   get:
  *     summary: Get affiliate code details
  *     tags:
@@ -44,7 +44,7 @@ const route = express.Router();
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -76,7 +76,7 @@ const route = express.Router();
  *           $ref: '#/definitions/500'
  */
 
-route.get('/affiliate-codes/:affiliateCodeId',
+route.get('/affiliate-codes/:code',
   validator(affiliateCodeIdParam, 'params'),
   appAuth(),
   verifySignature,

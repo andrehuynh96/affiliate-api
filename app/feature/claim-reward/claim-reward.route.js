@@ -71,7 +71,7 @@ const route = express.Router();
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *       401:

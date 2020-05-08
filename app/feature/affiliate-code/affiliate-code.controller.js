@@ -15,15 +15,12 @@ const controller = {
 
     try {
       const { body, affiliateTypeId, params } = req;
-      const { affiliateCodeId } = params;
-      logger.info('AffiliateCode::getById', affiliateCodeId);
+      let { code } = params;
+      code = _.trim(code).toUpperCase();
+      logger.info('AffiliateCode::getById', code);
 
       const affiliateCodeService = Container.get(AffiliateCodeService);
-      const cond = {
-        code: affiliateCodeId,
-        deleted_flg: false,
-      };
-      const affiliateCode = await affiliateCodeService.findOne(cond);
+      const affiliateCode = await affiliateCodeService.findByPk(code);
 
       if (!affiliateCode) {
         return res.notFound(res.__('AFFILIATE_CODE_IS_NOT_FOUND'), 'AFFILIATE_CODE_IS_NOT_FOUND');

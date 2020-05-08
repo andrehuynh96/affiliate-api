@@ -134,7 +134,7 @@ class BaseService {
   async update(instance) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await instance.update();
+        const result = await instance.save();
 
         resolve(result);
       } catch (err) {

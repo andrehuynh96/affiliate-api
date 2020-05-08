@@ -64,7 +64,7 @@ const route = express.Router();
  *           application/json:
  *             {
  *                 "data":{
-                      "code": "3n521hPsL",
+                      "code": "3N521HPSL",
                       "client_id": "75",
                       "updatedAt": "2020-03-19T05:45:36.129Z",
                       "createdAt": "2020-03-19T05:45:36.129Z"
@@ -72,7 +72,7 @@ const route = express.Router();
  *             }
  *
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           properties:
  *             message:
@@ -173,7 +173,7 @@ route.post('/clients',
  *             }
  *
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           properties:
  *             message:
@@ -214,7 +214,7 @@ route.post('/clients/set-policies',
 );
 /* #endregion */
 
-/* #region  Update affiliate code for client */
+/* #region Update affiliate code for client */
 /**
  * @swagger
  * /api/v1/clients/affiliate-codes:
@@ -255,7 +255,7 @@ route.post('/clients/set-policies',
  *            example:
  *               {
                     "ext_client_id":"binh.nt@blockchainlabs.asia",
-                    "affiliate_code": "OGWWDGD1I"
+                    "affiliate_code": "CODE6789"
                   }
  *     produces:
  *       - application/json
@@ -271,7 +271,7 @@ route.post('/clients/set-policies',
  *             }
  *
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           properties:
  *             message:
@@ -341,12 +341,12 @@ route.put('/clients/affiliate-codes',
  *           application/json:
  *             {
  *                 "data":[
-                        "VSRC6PXRK"
+                        "VERYGOOD"
                     ]
  *             }
  *
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           properties:
  *             message:

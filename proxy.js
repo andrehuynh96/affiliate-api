@@ -85,6 +85,7 @@ app.all('*', function (req, res) {
       res.setHeader(key, headers[key]);
     }
 
+    console.log(time, checksum);
     res.setHeader('x-checksum', checksum);
     res.setHeader('x-time', time);
     res.send(response.data);

@@ -9,12 +9,27 @@ class _AffiliateCodeService extends BaseService {
     super(AffiliateCode, 'AffiliateCode');
   }
 
-  generateCode() {
-    let code = _.replace(_.replace(shortid.generate(), '_', 1), '-', 2);
+  async generateCode() {
+    let code = null;
+    let affiliateCode = null;
 
-    code = code.toUpperCase();
+    do {
+      code = _.replace(_.replace(shortid.generate(), /_/g, 1), /-/g, 2);
+      code = code.toUpperCase();
+
+      affiliateCode = await this.findByPk(code);
+    } while (affiliateCode);
 
     return code;
+  }
+
+  findByPk(code) {
+    const cond = {
+      code,
+      deleted_flg: false,
+    };
+
+    return this.findOne(cond);
   }
 
 }

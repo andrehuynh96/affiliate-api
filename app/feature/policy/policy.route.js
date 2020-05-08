@@ -77,7 +77,7 @@ const route = express.Router();
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -148,7 +148,7 @@ route.post('/policies',
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -400,7 +400,7 @@ route.get('/policies',
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -483,7 +483,7 @@ route.put('/policies/:policyId',
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *

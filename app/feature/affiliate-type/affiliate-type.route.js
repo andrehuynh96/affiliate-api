@@ -66,7 +66,7 @@ const route = express.Router();
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -139,7 +139,7 @@ route.post('/organizations/:organizationId/affiliate-types',
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -389,7 +389,7 @@ route.get('/organizations/:organizationId/affiliate-types',
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
@@ -482,7 +482,7 @@ route.put('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
                     }
  *             }
  *       400:
- *         description: Baq request
+ *         description: Bad request
  *         schema:
  *           $ref: '#/definitions/400'
  *
