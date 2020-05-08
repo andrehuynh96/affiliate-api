@@ -35,6 +35,8 @@ const getApp = async (apiKey) => {
 
 module.exports = async (req, res, next) => {
   try {
+    logger.info('checksum....');
+
     if (req.method.toUpperCase() === 'GET') {
       return next();
     }
@@ -56,10 +58,14 @@ module.exports = async (req, res, next) => {
     }
 
     const { apiKey, originalUrl } = req;
+    logger.info('checksum....GET APP');
+
     const app = await getApp(apiKey);
     if (!app) {
       return res.badRequest(res.__('NOT_FOUND_API_KEY'), 'NOT_FOUND_API_KEY');
     }
+
+    logger.info('checksum....GET APP DONE');
 
     const signedUrl = originalUrl;
     const content = `${app.secret_key}\n${req.method.toUpperCase()}\n${signedUrl}\n${JSON.stringify(req.body)}\n${time}`;

@@ -12,6 +12,8 @@ module.exports = function (options) {
   const isIgnoredAffiliateTypeId = !!options.isIgnoredAffiliateTypeId;
 
   return async (req, res, next) => {
+    logger.log('authenticate.middleware..');
+
     const affiliateTypeId = _.trim(req.headers['x-affiliate-type-id']);
     let token = req.headers['x-access-token'] || req.headers['authorization'];
 
@@ -21,6 +23,8 @@ module.exports = function (options) {
     else {
       return res.unauthorized();
     }
+
+    logger.log('token', token);
 
     if (token) {
       try {
@@ -38,14 +42,18 @@ module.exports = function (options) {
         }
 
         // Validate affiliateTypeId
+        logger.log('Validate affiliateTypeId', affiliateTypeId, organizationId );
         const redisCacherService = Container.get('redisCacherService');
         const key = redisCacherService.getCacheKey(KEY.getAffiliateTypeIdByIdAndOrgId, { affiliateTypeId, organizationId });
         let affiliateType = await redisCacherService.get(key);
 
         if (!affiliateType) {
+          logger.log('Get affiliateType from db');
+
           const affiliateTypeService = Container.get(AffiliateTypeService);
           affiliateType = await affiliateTypeService.findByIdAndOrganizationId(affiliateTypeId, organizationId);
 
+          logger.log('redisCacherService.set(key');
           if (affiliateType) {
             await redisCacherService.set(key, affiliateType, config.redis.ttlInSeconds);
           }
