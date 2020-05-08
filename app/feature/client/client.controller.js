@@ -270,7 +270,6 @@ const controller = {
       const clientService = Container.get(ClientService);
       const clients = await clientService.findByIdList([extClientId], affiliateTypeId);
       const client = clients[0];
-      console.log(client);
       const clientAffiliate = client ? client.ClientAffiliates[0] : null;
       if (!clientAffiliate) {
         const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);

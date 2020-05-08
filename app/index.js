@@ -42,11 +42,11 @@ if (config.corsDomain) {
   router.use(cors());
 }
 
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: config.app.rateLimit,
-});
-router.use(limiter);
+// const limiter = rateLimit({
+//   windowMs: 60 * 1000,
+//   max: config.app.rateLimit,
+// });
+// router.use(limiter);
 
 router.use(helmet());
 router.use(

@@ -24,8 +24,6 @@ module.exports = function (options) {
       return res.unauthorized();
     }
 
-    logger.log('token', token);
-
     if (token) {
       try {
         const decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
