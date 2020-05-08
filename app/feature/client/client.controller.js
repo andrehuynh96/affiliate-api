@@ -8,10 +8,10 @@ const {
   ClientService,
   ClientAffiliateService,
   PolicyService,
-} = require('../../services');
-const { policyHelper } = require('../../lib/helpers');
-const PolicyType = require('../../model/value-object/policy-type');
-const MembershipType = require('../../model/value-object/membership-type');
+} = require('app/services');
+const { policyHelper } = require('app/lib/helpers');
+const PolicyType = require('app/model/value-object/policy-type');
+const MembershipType = require('app/model/value-object/membership-type');
 const mapper = require('app/response-schema/policy.response-schema');
 
 const Op = Sequelize.Op;

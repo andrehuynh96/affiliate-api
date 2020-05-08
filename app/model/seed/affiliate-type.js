@@ -13,7 +13,7 @@ module.exports = async () => {
       },
       {
         // id: 2,
-        name: 'Affiliate System',
+        name: 'Web wallet - Affiliate System',
         organization_id: '69366383-b9c2-497c-1111-391b017772ba',
         deleted_flg : false,
         DefaultPolicies: [
