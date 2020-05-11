@@ -49,7 +49,7 @@ const config = {
         logging: process.env.POSTPRES_DEBUG === 'true',
       }
     },
-    enableSeed: process.env.ENABLE_SEED === '1',
+    enableSeed: process.env.ENABLE_SEED === '1' || process.env.ENABLE_SEED === 'true',
   },
   redis: {
     host: process.env.REDIS_HOST,
