@@ -67,10 +67,13 @@ router.get('/', function (req, res) {
     message: 'Hello',
     app: config.app.name,
     version: config.app.version,
+    buildNumber: config.app.buildNumber,
+    description: config.app.description,
   };
 
   res.json(result);
 });
+
 router.get('/health', (req, res) => res.send('OK!'));
 require('app/config/swagger')(router, '/affiliate-api');
 router.use('/.well-known', express.static(path.join(__dirname, 'public')));

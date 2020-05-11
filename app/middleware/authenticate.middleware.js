@@ -25,8 +25,17 @@ module.exports = function (options) {
     }
 
     if (token) {
+      let decodedToken = null;
       try {
-        const decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
+        decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
+      // eslint-disable-next-line no-empty
+      } catch (e) { }
+
+      if (!decodedToken) {
+        return res.unauthorized();
+      }
+
+      try {
         req.appId = decodedToken.app_id;
         req.apiKey = decodedToken.api_key;
         const organizationId = req.organizationId = decodedToken.organization_id;
@@ -40,7 +49,7 @@ module.exports = function (options) {
         }
 
         // Validate affiliateTypeId
-        logger.log('Validate affiliateTypeId', affiliateTypeId, organizationId );
+        logger.log('Validate affiliateTypeId', affiliateTypeId, organizationId);
         const redisCacherService = Container.get('redisCacherService');
         const key = redisCacherService.getCacheKey(KEY.getAffiliateTypeIdByIdAndOrgId, { affiliateTypeId, organizationId });
         let affiliateType = await redisCacherService.get(key);

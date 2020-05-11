@@ -15,6 +15,7 @@ const config = {
     name: utils.getOsEnv('APP_NAME'),
     version: pkg.version,
     description: pkg.description,
+    buildNumber: process.env.BUILD_NUMBER || '',
     appHostName: utils.getOsEnv('APP_HOST_NAME'),
     port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
     rateLimit: utils.toNumber(process.env.RATE_LIMIT || 100),
@@ -81,5 +82,9 @@ const config = {
     showChecksum: process.env.SIGNATURE_SHOW_CHECKSUM === 'true',
   },
 };
+
+console.log('=======================================================');
+console.log(` ${config.app.name} version: ${config.app.version}. Build #${config.app.buildNumber} ${config.app.description}`);
+console.log('=======================================================');
 
 module.exports = config;

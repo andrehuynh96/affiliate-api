@@ -28,7 +28,6 @@ const controller = {
       ext_client_id = _.trim(ext_client_id).toLowerCase();
       affiliate_code = _.trim(affiliate_code).toUpperCase();
 
-
       // Validate membership type
       const isValidMembershipType = membership_type ? !!MembershipType[membership_type] : true;
       if (!isValidMembershipType) {
@@ -252,23 +251,32 @@ const controller = {
         return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
       }
 
+      if (referrerClientAffiliate.id === clientAffiliate.id) {
+        return res.forbidden(res.__('CLIENT_CAN_NOT_UPDATE_WITH_YOUR_REFERRAL_CODE'), 'CLIENT_CAN_NOT_UPDATE_WITH_YOUR_REFERRAL_CODE');
+      }
+
+      // Get children
+      const cond = {
+        root_client_affiliate_id: clientAffiliate.id,
+        affiliate_type_id: affiliateTypeId,
+      };
+      const childClientAffiliateList = await clientAffiliateService.findAll(cond);
+
+      if (childClientAffiliateList.length > 0) {
+        const isInNetwork = childClientAffiliateList.some(x => x.id === referrerClientAffiliate.id);
+        if (isInNetwork) {
+          return res.forbidden(res.__('CLIENT_CAN_NOT_UPDATE_WITH_REFERRAL_CODE_IN_YOUR_AFFILIATE_NETWORK'), 'CLIENT_CAN_NOT_UPDATE_WITH_REFERRAL_CODE_IN_YOUR_AFFILIATE_NETWORK');
+        }
+      }
+
       const transaction = await db.sequelize.transaction();
       try {
-        // Update data
-        const cond = {
-          root_client_affiliate_id: clientAffiliate.root_client_affiliate_id,
-          affiliate_type_id: affiliateTypeId,
-        };
-        let childClientAffiliateList = await clientAffiliateService.findAll(cond);
-        childClientAffiliateList = childClientAffiliateList.filter(x => x.id !== clientAffiliate.id);
-
         clientAffiliate.referrer_client_affiliate_id = referrerClientAffiliate.id;
         clientAffiliate.root_client_affiliate_id = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
         clientAffiliate.parent_path = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
         clientAffiliate.level = referrerClientAffiliate.level + 1;
         const updateClientAffiliateList = [clientAffiliate];
 
-        console.log(childClientAffiliateList.length);
         if (childClientAffiliateList.length > 0) {
           const cacheClients = _.reduce(childClientAffiliateList, (val, item) => {
             val[item.id] = item;
