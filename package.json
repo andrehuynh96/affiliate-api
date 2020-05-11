@@ -1,7 +1,7 @@
 {
   "name": "affiliate-api",
-  "version": "0.2.1",
-  "description": "Affiliate api",
+  "version": "0.2.2",
+  "description": "Affiliate api - v0.2.2-ms-rc",
   "repository": {
     "type": "git",
     "url": "https://gitlab.blockchainlabs.asia/infinito/affiliate-api.git"

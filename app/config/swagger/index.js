@@ -1,6 +1,7 @@
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
+const config = require('app/config');
 
 module.exports = function (app, prefix) {
   prefix = prefix || '';
@@ -8,7 +9,9 @@ module.exports = function (app, prefix) {
     swaggerDefinition: {
       info: {
         title: 'Affiliate API',
-        version: '1.0.0',
+        version: config.app.version,
+        buildNumber: config.app.buildNumber,
+        description: config.app.description,
       },
       servers: [
         {
