@@ -3,4 +3,5 @@ module.exports = {
   setPolicies: require('./set-policies'),
   updateAffiliateCode: require('./update-affiliate-code'),
   getAffiliateCodes: require('./get-affiliate-codes'),
+  getInvitees: require('./get-invitees'),
 };

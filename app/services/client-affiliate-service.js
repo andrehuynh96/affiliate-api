@@ -3,6 +3,7 @@ const typedi = require('typedi');
 const Sequelize = require('sequelize');
 const BaseService = require('./base-service');
 const ClientAffiliate = require('app/model').client_affiliates;
+const Client = require('app/model').clients;
 const AffiliateCode = require('app/model').affiliate_codes;
 const Policy = require('app/model').policies;
 const db = require('app/model').sequelize;
@@ -70,11 +71,35 @@ class _ClientAffiliateService extends BaseService {
         const result = await this.model.findAll({
           where: {
             affiliate_type_id: affiliateTypeId,
-            user_id: {
+            client_id: {
               [Op.in]: idList
             }
           }
         });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const client = await Client.findOne({
+          where: {
+            ext_client_id: extClientId,
+          },
+          include: [{
+            as: 'ClientAffiliates',
+            model: ClientAffiliate,
+            where: {
+              affiliate_type_id: affiliateTypeId,
+            }
+          }]
+        });
+        const result = client ? client.ClientAffiliates[0] : null;
 
         resolve(result);
       } catch (err) {

@@ -42,7 +42,7 @@ class _ClientService extends BaseService {
     });
   }
 
-  findByIdList(extClientIdList, affiliateTypeId) {
+  findByExtClientIdListAndAffiliateTypeId(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.findAll({
@@ -67,10 +67,28 @@ class _ClientService extends BaseService {
     });
   }
 
+  findByIdList(idList) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findAll({
+          where: {
+            id: {
+              [Op.in]: idList
+            }
+          },
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   getExtClientIdMapping(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.findByIdList(extClientIdList, affiliateTypeId);
+        const result = await this.findByExtClientIdListAndAffiliateTypeId(extClientIdList, affiliateTypeId);
         const mapping = {};
 
         result.forEach((client) => {

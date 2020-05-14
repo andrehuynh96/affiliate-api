@@ -8,7 +8,7 @@ module.exports = {
     mocha: true
   },
   parserOptions: {
-    ecmaVersion: 8,
+    ecmaVersion: 2018,
     sourceType: "module",
     ecmaFeatures: {
       modules: true,
@@ -19,7 +19,7 @@ module.exports = {
     "object-curly-spacing": [2, "always"],
     strict: 0,
     quotes: [2, "single", "avoid-escape"],
-    semi: [1, "always"],
+    semi: [2],
     "keyword-spacing": [2, { before: true, after: true }],
     "space-infix-ops": 2,
     "spaced-comment": [2, "always"],

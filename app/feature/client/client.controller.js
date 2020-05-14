@@ -13,7 +13,8 @@ const {
 const { policyHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
 const MembershipType = require('app/model/value-object/membership-type');
-const mapper = require('app/response-schema/policy.response-schema');
+const policyMapper = require('app/response-schema/policy.response-schema');
+const inviteeMapper = require('app/response-schema/invitee.response-schema');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -329,11 +330,9 @@ const controller = {
       logger.info('client::getAffiliateCodes');
       const { body, affiliateTypeId, organizationId, query } = req;
       const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
 
-      const clientService = Container.get(ClientService);
-      const clients = await clientService.findByIdList([extClientId], affiliateTypeId);
-      const client = clients[0];
-      const clientAffiliate = client ? client.ClientAffiliates[0] : null;
       if (!clientAffiliate) {
         const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
         return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
@@ -355,6 +354,64 @@ const controller = {
       next(err);
     }
   },
+
+  getInvitees: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::getInvitees');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+
+      // const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const condition = {
+        referrer_client_affiliate_id: clientAffiliate.id,
+      };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const { count: total, rows: items } = await clientAffiliateService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      let result = [];
+      if (items.length > 0) {
+        // Get email list
+        const clientService = Container.get(ClientService);
+        const clientIdList = items.map(x => x.client_id);
+        const clients = await clientService.findByIdList(clientIdList);
+
+        result = items.map(item => {
+          const client = clients.find(x => x.id === item.id);
+
+          return {
+            ...item.get({ plain: true }),
+            extClientId: client ? client.ext_client_id : null,
+          };
+        });
+      }
+
+      return res.ok({
+        items: inviteeMapper(result),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+
 
 };
 
