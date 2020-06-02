@@ -58,6 +58,7 @@
     "redlock": "^4.1.0",
     "rootpath": "^0.1.2",
     "sequelize": "^5.21.2",
+    "sequelize-cli": "^5.5.1",
     "sequelize-temporalize": "^4.1.0",
     "shortid": "^2.2.15",
     "string-template": "^1.0.0",
