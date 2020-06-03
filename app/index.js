@@ -69,6 +69,7 @@ router.get('/', function (req, res) {
     version: config.app.version,
     buildNumber: config.app.buildNumber,
     description: config.app.description,
+    enableSeed: config.db.enableSeed,
   };
 
   res.json(result);
