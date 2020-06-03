@@ -35,12 +35,15 @@ const getApp = async (apiKey) => {
 
 module.exports = async (req, res, next) => {
   try {
-    logger.info('checksum....');
+    if (!config.signature.isEnabled) {
+      return;
+    }
 
     if (req.method.toUpperCase() === 'GET') {
       return next();
     }
 
+    logger.info('checksum....');
     const checksum = _.trim(req.get('x-checksum'));
     const time = _.trim(req.get('x-time'));
     if (!checksum) {
@@ -77,7 +80,7 @@ module.exports = async (req, res, next) => {
     if (hash != checksum) {
       // FOR DEBUGING
       if (config.signature.showChecksum) {
-        logger.info('checksum', hash);
+        logger.info('time', moment.utc().unix(), 'checksum', hash);
       }
 
       return res.badRequest('Wrong checksum.');

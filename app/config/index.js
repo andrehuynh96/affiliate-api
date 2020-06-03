@@ -78,6 +78,7 @@ const config = {
     private: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PRIVATE_KEY_FILE), 'utf8'),
   },
   signature: {
+    isEnabled: process.env.SIGNATURE_IS_ENABLED === 'true',
     expiresIn: utils.toNumber(process.env.SIGNATURE_EXPIRES_IN),
     showChecksum: process.env.SIGNATURE_SHOW_CHECKSUM === 'true',
   },
