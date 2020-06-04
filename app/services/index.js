@@ -11,6 +11,7 @@ const RewardService = require('./reward-service');
 const ClaimRewardService = require('./claim-reward-service');
 const LockService = require('./lock-service');
 const OrganizationService = require('./organization-service');
+const PluTXUserIDService = require('./plutx-userid-service');
 
 module.exports = {
   AffiliateCodeService,
@@ -25,4 +26,5 @@ module.exports = {
   RewardService,
   ClaimRewardService,
   OrganizationService,
+  PluTXUserIDService,
 };

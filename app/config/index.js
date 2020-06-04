@@ -82,6 +82,14 @@ const config = {
     expiresIn: utils.toNumber(process.env.SIGNATURE_EXPIRES_IN),
     showChecksum: process.env.SIGNATURE_SHOW_CHECKSUM === 'true',
   },
+  plutxUserID: {
+    isEnabled: process.env.PLUTX_USERID_IS_ENABLED === 'true',
+    appName: process.env.PLUTX_USERID_APP_NAME,
+    kid: process.env.PLUTX_USERID_KID,
+    apiUrl: process.env.PLUTX_USERID_API_URL,
+    apiKey: process.env.PLUTX_USERID_APP_API_KEY,
+    secretKey: process.env.PLUTX_USERID_APP_SECRET_KEY,
+  },
 };
 
 console.log('=======================================================');
