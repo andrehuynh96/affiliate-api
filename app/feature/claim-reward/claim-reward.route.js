@@ -15,6 +15,7 @@ const route = express.Router();
  *     summary: User claims reward
  *     tags:
  *       - ClaimReward
+ *       - Backend
  *     description: User claims reward
  *     parameters:
  *       - in: header
@@ -104,6 +105,7 @@ route.post('/claim-rewards',
  *     summary: View claim reward history
  *     tags:
  *       - ClaimReward
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header

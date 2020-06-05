@@ -523,6 +523,5 @@ route.delete('/organizations/:organizationId/affiliate-types/:affiliateTypeId',
 );
 /* #endregion */
 
-
 module.exports = route;
 

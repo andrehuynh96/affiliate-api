@@ -15,6 +15,7 @@ const route = express.Router();
  *     summary: Get affiliate code details
  *     tags:
  *       - AffiliateCode
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header

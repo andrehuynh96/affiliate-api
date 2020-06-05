@@ -1,9 +1,14 @@
 const express = require('express');
 const controller = require('./reward.controller');
-const { create, search, viewRewards } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
+const {
+  create,
+  search,
+  viewRewards,
+  getAvailableRewards,
+} = require('./validator');
 
 const route = express.Router();
 
@@ -15,6 +20,7 @@ const route = express.Router();
  *     summary: Calculate rewards
  *     tags:
  *       - Reward
+ *       - Backend
  *     description: Calculate rewards for clients
  *     parameters:
  *       - in: header
@@ -141,6 +147,7 @@ route.post('/rewards',
  *     summary: View user's reward histories
  *     tags:
  *       - Reward
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -240,6 +247,116 @@ route.get('/rewards',
   controller.viewRewardHistories,
 );
 /* #endregion */
+
+/* #region Get Available Rewards */
+/**
+ * @swagger
+ * /api/v1/available-rewards:
+ *   get:
+ *     summary: Get Available Rewards
+ *     tags:
+ *       - Reward
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *       - name: offset
+ *         in: query
+ *         type: integer
+ *         format: int32
+ *         required: true
+ *       - name: limit
+ *         in: query
+ *         type: integer
+ *         format: int32
+ *         required: true
+ *
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             { data:
+ *                {
+                    items: [
+                        {
+                            "id": "7",
+                            "currency_symbol": "ETH",
+                            "amount": "0.00001",
+                            "created_at": "2020-06-05T08:06:11.177Z",
+                            "updated_at": "2020-06-05T08:06:11.177Z"
+                        },
+                        {
+                            "id": "6",
+                            "currency_symbol": "ETH",
+                            "amount": "5",
+                            "created_at": "2020-06-05T08:06:04.310Z",
+                            "updated_at": "2020-06-05T08:06:04.310Z"
+                        },
+                        {
+                            "id": "5",
+                            "currency_symbol": "ETH",
+                            "amount": "50.12",
+                            "created_at": "2020-06-05T08:05:49.590Z",
+                            "updated_at": "2020-06-05T08:05:49.590Z"
+                        },
+                        {
+                            "id": "2",
+                            "currency_symbol": "ETH",
+                            "amount": "0.6",
+                            "created_at": "2020-06-05T08:05:49.552Z",
+                            "updated_at": "2020-06-05T08:05:49.552Z"
+                        }
+                    ],
+                    "offset": 0,
+                    "limit": 10,
+                    "total": 3
+                  }
+                }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.get('/available-rewards',
+  validator(getAvailableRewards, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.getAvailableRewards,
+);
+/* #endregion */
+
 
 /* #region View affiliate requests */
 /**

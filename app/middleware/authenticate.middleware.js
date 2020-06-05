@@ -30,19 +30,18 @@ const getKey = (header, callback) => {
 };
 
 const getDecodedToken = (token) => {
-  if (config.plutxUserID.isEnabled) {
-    new Promise((resolve, reject) => {
-      jwt.verify(token, getKey, (err, data) => {
-        if (err) {
-          return reject(err);
-        }
+  // if (config.plutxUserID.isEnabled) {
+  //   return new Promise((resolve, reject) => {
+  //     jwt.verify(token, getKey, (err, data) => {
+  //       if (err) {
+  //         return reject(err);
+  //       }
 
-        console.log(data);
-        return resolve(data);
-      });
-    });
-  }
-
+  //       console.log(data);
+  //       return resolve(data);
+  //     });
+  //   });
+  // }
 
   let decodedToken = null;
   try {

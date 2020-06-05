@@ -13,8 +13,6 @@ const {
 
 const route = express.Router();
 
-
-
 /* #region Get invitees */
 /**
  * @swagger
@@ -23,6 +21,7 @@ const route = express.Router();
  *     summary: Get invitees
  *     tags:
  *       - Client
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -114,15 +113,15 @@ route.get('/clients',
 );
 /* #endregion */
 
-
 /* #region Generate a affiliate code */
 /**
  * @swagger
  * /api/v1/clients:
  *   post:
- *     summary: Generate a affiliate code
+ *     summary: Generate an affiliate code
  *     tags:
  *       - Client
+ *       - Backend
  *     description: Register a user and generate a affiliate code
  *     parameters:
  *       - in: header
@@ -325,6 +324,7 @@ route.post('/clients/set-policies',
  *     summary: Update affiliate code for client
  *     tags:
  *       - Client
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -418,6 +418,7 @@ route.put('/clients/affiliate-codes',
  *     summary: Get affiliate codes
  *     tags:
  *       - Client
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -493,6 +494,7 @@ route.get('/clients/affiliate-codes',
  *     summary: Get invitees
  *     tags:
  *       - Client
+  *       - Backend
  *     description:
  *     parameters:
  *       - in: header

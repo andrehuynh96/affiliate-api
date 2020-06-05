@@ -3,6 +3,7 @@ const controller = require('./policy.controller');
 const { create, update, policyIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const userIdAppAuth = require('app/middleware/plutx-userid-app-auth.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
 
 const route = express.Router();
@@ -98,7 +99,11 @@ const route = express.Router();
  */
 
 route.post('/policies',
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.create,
 );
@@ -112,6 +117,7 @@ route.post('/policies',
  *     summary: Get policy details
  *     tags:
  *       - Policy
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -320,7 +326,11 @@ route.get('/policies/:policyId',
 
 route.get('/policies',
   validator(search, 'query'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.search,
 );
@@ -334,6 +344,7 @@ route.get('/policies',
  *     summary: Update a policy
  *     tags:
  *       - Policy
+  *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -519,7 +530,11 @@ route.put('/policies/:policyId',
 
 route.delete('/policies/:policyId',
   validator(policyIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.delete,
 );

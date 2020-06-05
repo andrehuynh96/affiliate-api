@@ -12,6 +12,7 @@ const route = express.Router();
  *     summary: Get token
  *     tags:
  *       - Auth
+ *       - Backend
  *     description: Get token
  *     parameters:
  *       - in: body

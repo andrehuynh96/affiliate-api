@@ -2,13 +2,16 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Sequelize = require('sequelize');
 const moment = require('moment');
+const { map } = require('p-iteration');
 const v4 = require('uuid/v4');
+const Decimal = require('decimal.js');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
   ClientService,
   ClientAffiliateService,
   RewardService,
+  ClaimRewardService,
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
@@ -132,6 +135,50 @@ const controller = {
         limit: lim,
         total: total
       });
+    }
+    catch (err) {
+      logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  getAvailableRewards: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::viewRewardHistories');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const rewardService = Container.get(RewardService);
+      const claimRewardService = Container.get(ClaimRewardService);
+      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+
+      const result = await map(currencyList, async (item) => {
+        const { currency_symbol } = item;
+        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        const getTotalAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        let [totalReward, withdrawAmount] = await Promise.all([getTotalRewardTask, getTotalAmountOfClaimRewardTask]);
+
+        totalReward = Decimal(totalReward);
+        withdrawAmount = Decimal(withdrawAmount);
+        const availableAmount = totalReward.sub(withdrawAmount);
+
+        return {
+          currency: currency_symbol,
+          amount: availableAmount,
+        };
+      });
+
+      return res.ok(result);
     }
     catch (err) {
       logger.error('search rewards: ', err);

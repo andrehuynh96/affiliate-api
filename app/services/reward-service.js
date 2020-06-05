@@ -35,6 +35,25 @@ class _RewardService extends BaseService {
     });
   }
 
+  getCurrencyListForAffiliateClient(affiliateClientId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findAll({
+          group: ['client_affiliate_id', 'currency_symbol'],
+          attributes: ['currency_symbol'],
+          where: {
+            client_affiliate_id: affiliateClientId,
+          }
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+  }
+
   getTotalAmount(affiliateClientId, currencySymbol) {
     return new Promise(async (resolve, reject) => {
       try {

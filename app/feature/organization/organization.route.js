@@ -2,7 +2,7 @@ const express = require('express');
 const controller = require('./organization.controller');
 const { create, update, organizationIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
-const appAuth = require('app/middleware/authenticate.middleware');
+const userIdAppAuth = require('app/middleware/plutx-userid-app-auth.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
 
 const route = express.Router();
@@ -81,7 +81,11 @@ const route = express.Router();
 
 route.post('/organizations',
   validator(create),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.create,
 );
@@ -157,7 +161,11 @@ route.post('/organizations',
 
 route.get('/organizations/:organizationId',
   validator(organizationIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.getById,
 );
@@ -260,7 +268,11 @@ route.get('/organizations/:organizationId',
 
 route.get('/organizations',
   validator(search, 'query'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.search,
 );
@@ -358,7 +370,11 @@ route.get('/organizations',
 route.put('/organizations/:organizationId',
   validator(organizationIdParam, 'params'),
   validator(update),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.update,
 );
@@ -441,7 +457,11 @@ route.put('/organizations/:organizationId',
 
 route.delete('/organizations/:organizationId',
   validator(organizationIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.delete,
 );
