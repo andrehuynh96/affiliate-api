@@ -36,7 +36,7 @@ const getApp = async (apiKey) => {
 module.exports = async (req, res, next) => {
   try {
     if (!config.signature.isEnabled) {
-      return;
+      return next();
     }
 
     if (req.method.toUpperCase() === 'GET') {
