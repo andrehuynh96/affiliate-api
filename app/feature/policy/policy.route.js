@@ -364,15 +364,16 @@ route.get('/policies',
  *            - name
  *            example:
  *              {
-                  "name": "AffiliateSystem - AFFILIATE Policy #011",
+                  "name": "Membership system - Affiliate Policy",
                   "description": "",
-                  "type": "AFFILIATE",
-                  "proportion_share": 10.123,
+                  "proportion_share": 10,
+                  "max_levels": 5,
                   "rates": [
-                      50.11,
-                      30,
-                      11,
-                      9
+                      "50",
+                      "30",
+                      "10",
+                      "7",
+                      "3"
                   ]
                 }
  *     produces:
