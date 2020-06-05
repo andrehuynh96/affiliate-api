@@ -15,6 +15,7 @@ const PolicyType = require('app/model/value-object/policy-type');
 const MembershipType = require('app/model/value-object/membership-type');
 const policyMapper = require('app/response-schema/policy.response-schema');
 const inviteeMapper = require('app/response-schema/invitee.response-schema');
+const clientMapper = require('app/response-schema/client.response-schema');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -136,6 +137,43 @@ const controller = {
       return res.ok(clientAffiliate.affiliateCodes[0]);
     }
     catch (err) {
+      next(err);
+    }
+  },
+
+  search: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { query, affiliateTypeId, organizationId } = req;
+      const { offset, limit } = query;
+      const keyword = _.trim(query.keyword);
+      logger.info('Client::search');
+
+      const condition = {
+        organization_id: organizationId,
+      };
+      if (keyword) {
+        condition.name = {
+          [Op.substring]: keyword,
+        };
+      }
+
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const clientService = Container.get(ClientService);
+      const { count: total, rows: items } = await clientService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      return res.ok({
+        items: clientMapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('search policys fail: ', err);
       next(err);
     }
   },

@@ -12,6 +12,15 @@ class _PolicyService extends BaseService {
     super(Policy, 'Policy');
   }
 
+  findByPk(id) {
+    const cond = {
+      id: id,
+      deleted_flg: false,
+    };
+
+    return this.findOne(cond);
+  }
+
   findByIdList(idList) {
     return new Promise(async (resolve, reject) => {
       try {

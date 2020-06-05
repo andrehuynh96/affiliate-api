@@ -92,7 +92,7 @@ route.post('/claim-rewards',
   validator(create),
   appAuth(),
   verifySignature,
-  controller.calculateRewards,
+  controller.claimReward,
 );
 /* #endregion */
 

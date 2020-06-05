@@ -2,7 +2,7 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Decimal = require('decimal.js');
 const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
-const mapper = require('app/response-schema/reward.response-schema');
+const mapper = require('app/response-schema/claim-reward.response-schema');
 const config = require('app/config');
 const {
   ClaimRewardService,
@@ -14,7 +14,7 @@ const {
 const Container = typedi.Container;
 
 const controller = {
-  calculateRewards: async (req, res, next) => {
+  claimReward: async (req, res, next) => {
     let logger, lockService, lock;
 
     try {

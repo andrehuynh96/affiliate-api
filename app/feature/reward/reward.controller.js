@@ -8,9 +8,11 @@ const {
   AffiliateRequestService,
   ClientService,
   ClientAffiliateService,
+  RewardService,
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
+const rewardMapper = require('app/response-schema/reward.response-schema');
 const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
 
@@ -99,14 +101,52 @@ const controller = {
     }
   },
 
-  search: async (req, res, next) => {
+  viewRewardHistories: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::viewRewardHistories');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const condition = {
+        client_affiliate_id: clientAffiliate.id,
+      };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const rewardService = Container.get(RewardService);
+      const { count: total, rows: items } = await rewardService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      return res.ok({
+        items: rewardMapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  searchAffiliateRequests: async (req, res, next) => {
     const logger = Container.get('logger');
 
     try {
       const { query, affiliateTypeId } = req;
       const { offset, limit } = query;
       const keyword = _.trim(query.keyword);
-      logger.info('AffiliateRequest::search');
+      logger.info('Rewards::search');
 
       const andCondition = [
         {
