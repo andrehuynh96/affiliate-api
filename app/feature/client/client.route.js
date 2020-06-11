@@ -10,6 +10,7 @@ const {
   getAffiliateCodes,
   getInvitees,
   updateMembershipType,
+  getTreeChart,
 } = require('./validator');
 
 const route = express.Router();
@@ -679,6 +680,107 @@ route.get('/clients/invitees',
   appAuth(),
   verifySignature,
   controller.getInvitees
+);
+/* #endregion */
+
+
+/* #region Get tree chart */
+/**
+ * @swagger
+ * /api/v1/clients/tree-chart:
+ *   get:
+ *     summary: Get tree chart
+ *     tags:
+ *       - Client
+  *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *       - name: offset
+ *         in: query
+ *         type: integer
+ *         format: int32
+ *         required: true
+ *       - name: limit
+ *         in: query
+ *         type: integer
+ *         format: int32
+ *         required: true
+
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                 "data":[
+                      "items": [
+                          {
+                              "ext_client_id": "no-code24@blockchainlabs.asia",
+                              "created_at": "2020-05-08T08:24:27.829Z",
+                              "updated_at": "2020-05-11T02:45:24.908Z"
+                          },
+                          {
+                              "ext_client_id": "no-code23@blockchainlabs.asia",
+                              "created_at": "2020-05-08T08:24:19.666Z",
+                              "updated_at": "2020-05-11T02:45:24.907Z"
+                          }
+                      ],
+                      "offset": 0,
+                      "limit": 2,
+                      "total": 4
+                    ]
+ *             }
+ *
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.get('/clients/tree-chart',
+  validator(getTreeChart, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.getTreeChart
 );
 /* #endregion */
 

@@ -189,6 +189,82 @@ class _ClientAffiliateService extends BaseService {
     return result;
   }
 
+  async getDescendants(clientAffiliate) {
+    if (clientAffiliate.level === 1) {
+      return this.getDescendantsForRoot(clientAffiliate);
+    }
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { id, parent_path, root_org_unit_id } = clientAffiliate;
+        const query = `
+          SELECT id, "key", "name", description, parent_id, root_org_unit_id, "level", parent_path, actived_flg, deleted_flg, created_at, updated_at
+          FROM public.org_units
+          WHERE (
+            (
+              parent_path <@ :parent_path
+              AND root_org_unit_id = :root_org_unit_id
+              AND deleted_flg=false
+            )
+          )
+          ORDER BY "level" ASC
+        `;
+        const orgUnitResult = await db.query(query,
+          {
+            replacements: {
+              root_org_unit_id,
+              parent_path: `${clientAffiliate.parent_path}.${clientAffiliate.key}`,
+            },
+          },
+          {
+            model: OrgUnit,
+            mapToModel: true,
+            type: db.QueryTypes.SELECT,
+          });
+
+        const orgList = orgUnitResult[0].concat(clientAffiliate);
+        const orgUnitCache = _.reduce(orgList, (val, item) => {
+          val[item.id] = item;
+          item.children = [];
+
+          return val;
+        }, {});
+
+        // Find parents
+        orgList.forEach((item) => {
+          item.parent = item.parent_id ? orgUnitCache[item.parent_id] : null;
+
+          if (item.parent) {
+            item.parent.children.push(item);
+          }
+        });
+
+        let result = [];
+        orgUnitHelper.treeToList(clientAffiliate, result, null);
+        result = result.filter(x => x.id !== clientAffiliate.id);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  async getDescendantsForRoot(clientAffiliate) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          root_client_affiliate_id: clientAffiliate.id,
+        };
+        const result = await this.findAll(cond);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
 }
 
 const ClientAffiliateService = Service([], () => {

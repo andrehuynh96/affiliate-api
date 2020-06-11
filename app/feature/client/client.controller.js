@@ -10,7 +10,7 @@ const {
   ClientAffiliateService,
   PolicyService,
 } = require('app/services');
-const { policyHelper } = require('app/lib/helpers');
+const { policyHelper, clientHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
 const policyMapper = require('app/response-schema/policy.response-schema');
 const inviteeMapper = require('app/response-schema/invitee.response-schema');
@@ -470,6 +470,50 @@ const controller = {
       logger.error(err);
 
       next(err);
+    }
+  },
+
+  getTreeChart: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('Get tree chart');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
+      const clientService = Container.get(ClientService);
+      const clientIdList = descendants.map(x => x.client_id);
+      const clients = await clientService.findByIdList(clientIdList);
+
+      const mapItems = descendants.map(clientAffiliate => {
+        const client = clients.find(client => client.id === clientAffiliate.client_id);
+
+        return {
+          ...clientAffiliate.get({ plain: true }),
+          extClientId: client ? client.ext_client_id : null,
+        };
+      });
+
+      const rootClientAffiliate = {
+        ...clientAffiliate.get({ plain: true }),
+        extClientId: extClientId,
+      };
+      const rootNode = clientHelper.buildTree(rootClientAffiliate, mapItems);
+
+      return res.ok(rootNode);
+    }
+    catch (error) {
+      logger.error('getTreeChart fail', error);
+
+      next(error);
     }
   },
 

@@ -5,4 +5,5 @@ module.exports = {
   updateMembershipType: require('./update-membership-type'),
   getAffiliateCodes: require('./get-affiliate-codes'),
   getInvitees: require('./get-invitees'),
+  getTreeChart: require('./get-tree-chart'),
 };
