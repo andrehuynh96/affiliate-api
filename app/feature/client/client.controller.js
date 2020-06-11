@@ -12,7 +12,6 @@ const {
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
-const MembershipType = require('app/model/value-object/membership-type');
 const policyMapper = require('app/response-schema/policy.response-schema');
 const inviteeMapper = require('app/response-schema/invitee.response-schema');
 const clientMapper = require('app/response-schema/client.response-schema');
@@ -25,16 +24,10 @@ const controller = {
   create: async (req, res, next) => {
     try {
       const { body, affiliateTypeId, organizationId } = req;
-      const { membership_type } = body;
+      const { membership_type_id } = body;
       let { ext_client_id, affiliate_code } = body;
       ext_client_id = _.trim(ext_client_id).toLowerCase();
       affiliate_code = _.trim(affiliate_code).toUpperCase();
-
-      // Validate membership type
-      const isValidMembershipType = membership_type ? !!MembershipType[membership_type] : true;
-      if (!isValidMembershipType) {
-        return res.badRequest(res.__('REGISTER_CLIENT_INVALID_MEMBERSHIP_TYPE'), 'REGISTER_CLIENT_INVALID_MEMBERSHIP_TYPE', { fields: ['membership_type'] });
-      }
 
       const affiliateCodeService = Container.get(AffiliateCodeService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
@@ -95,7 +88,7 @@ const controller = {
       }, {
         ext_client_id,
         organization_id: organizationId,
-        membership_type,
+        membership_type_id,
       });
 
       const clientId = client.id;
@@ -109,11 +102,11 @@ const controller = {
       }
 
       // Update membership
-      if (membership_type && client.membership_type !== membership_type) {
+      if (membership_type_id && client.membership_type_id !== membership_type_id) {
         await clientService.updateWhere({
           id: client.id
         }, {
-          membership_type
+          membership_type_id
         });
       }
 
@@ -184,7 +177,7 @@ const controller = {
     try {
       logger.info('client::setPolicies');
       const { body, affiliateTypeId, organizationId } = req;
-      const { affiliate_code, membership_type } = body;
+      const { affiliate_code } = body;
       const extClientId = _.trim(body.ext_client_id).toLowerCase();
       const { policies } = body;
 

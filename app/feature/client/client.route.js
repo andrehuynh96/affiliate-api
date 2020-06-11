@@ -155,7 +155,8 @@ route.get('/clients',
  *            example:
  *               {
                     "ext_client_id":"binh.nt@blockchainlabs.asia",
-                    "affiliate_code": ""
+                    "affiliate_code": "",
+                    "membership_type_id": "f2db7def-62a2-45e9-bf87-bbe89a3dff17"
                   }
  *     produces:
  *       - application/json

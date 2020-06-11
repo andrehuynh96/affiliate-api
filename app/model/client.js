@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    membership_type: {
+    membership_type_id: {
       type: DataTypes.STRING(50),
       allowNull: true,
     },
