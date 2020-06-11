@@ -9,6 +9,7 @@ const {
   updateAffiliateCode,
   getAffiliateCodes,
   getInvitees,
+  updateMembershipType,
 } = require('./validator');
 
 const route = express.Router();
@@ -408,6 +409,100 @@ route.put('/clients/affiliate-codes',
   appAuth(),
   verifySignature,
   controller.updateAffiliateCode
+);
+/* #endregion */
+
+/* #region Update membership type for client */
+/**
+ * @swagger
+ * /api/v1/clients/membership-type:
+ *   put:
+ *     summary: Update membership type for client
+ *     tags:
+ *       - Client
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
+ *       - in: body
+ *         name: data
+ *         description:
+ *         schema:
+ *            type: object
+ *            required:
+ *            - ext_client_id
+ *            - membership_type_id
+ *            example:
+ *               {
+                    "ext_client_id":"binh.nt@blockchainlabs.asia",
+                    "membership_type_id": "f2db7def-62a2-45e9-bf87-bbe89a3dff17"
+                  }
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                 "data":{
+                      "isSuccess": true
+                    }
+ *             }
+ *
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.put('/clients/membership-type',
+  validator(updateMembershipType),
+  appAuth(),
+  verifySignature,
+  controller.updateMembershipType,
 );
 /* #endregion */
 

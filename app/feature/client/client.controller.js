@@ -354,6 +354,36 @@ const controller = {
     }
   },
 
+  updateMembershipType: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::updateMembershipType');
+      const { body, affiliateTypeId, organizationId } = req;
+      const { ext_client_id, membership_type_id } = body;
+      const extClientId = _.trim(ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const [numOfItems, items] = await clientService.updateWhere({
+        ext_client_id,
+        organization_id: organizationId,
+      }, {
+        membership_type_id,
+      });
+
+      if (!numOfItems) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      return res.ok({ isSuccess: true });
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+
   getAffiliateCodes: async (req, res, next) => {
     const logger = Container.get('logger');
 
