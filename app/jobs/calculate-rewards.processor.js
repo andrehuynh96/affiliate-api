@@ -214,15 +214,15 @@ class CalculateRewardsProcessor {
 
     // Get rate for memberhip clients
     const { clientService } = this;
-    const membershipType = await clientService.getMembershipType(stakerId, affiliateTypeId);
-    this.logger.debug(`MembershipType: ${membershipType ? membershipType : 'NA'} .`);
-    if (!membershipType) {
+    const membershipTypeId = await clientService.getMembershipType(stakerId, affiliateTypeId);
+    this.logger.debug(`MembershipType: ${membershipTypeId ? membershipTypeId : 'NA'} .`);
+    if (!membershipTypeId) {
       return rewardList;
     }
 
-    const rate = membership_rate[membershipType.toUpperCase()];
+    const rate = membership_rate[membershipTypeId];
     if (_.isUndefined(rate)) {
-      this.logger.warn('Can not get rate for membership: ', membershipType);
+      this.logger.warn('Can not get rate for membership: ', membershipTypeId);
       return rewardList;
     }
 
@@ -257,15 +257,15 @@ class CalculateRewardsProcessor {
       if (referrer && rate) {
         const client_affliate_id = referrer.id;
         // Get rate for membership client
-        const membershipType = await clientService.getMembershipType(client_affliate_id, affiliateTypeId);
-        if (!membershipType) {
+        const membershipTypeId = await clientService.getMembershipType(client_affliate_id, affiliateTypeId);
+        if (!membershipTypeId) {
           return;
         }
 
-        const membershipRate = membership_rate[membershipType.toUpperCase()];
-        this.logger.debug(`MembershipType: ${membershipType}, membershipRate: ${membershipRate}.`);
+        const membershipRate = membership_rate[membershipTypeId];
+        this.logger.debug(`MembershipType: ${membershipTypeId}, membershipRate: ${membershipRate}.`);
         if (_.isUndefined(membershipRate)) {
-          this.logger.warn('Can not get rate for membership: ', membershipType);
+          this.logger.warn('Can not get rate for membership: ', membershipTypeId);
           return;
         }
 

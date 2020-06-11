@@ -122,14 +122,13 @@ class _ClientService extends BaseService {
       }]
     });
 
-    result = client.membership_type || '';
+    result = client.membership_type_id || '';
 
     const ttlInSeconds = 60;
     await this.redisCacherService.set(key, result, ttlInSeconds);
 
     return result;
   }
-
 
 }
 
