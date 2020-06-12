@@ -4,7 +4,10 @@ const Sequelize = require('sequelize');
 const joi = require('joi');
 const mapper = require('app/response-schema/policy.response-schema');
 const config = require('app/config');
-const { PolicyService } = require('app/services');
+const {
+  PolicyService,
+  AffiliateTypeService,
+} = require('app/services');
 const MembershipType = require('app/model/value-object/policy-type');
 const {
   createMembershipPolicySchema,
@@ -25,12 +28,15 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      const { query } = req;
+      logger.info('Policy::search');
+      const { query, affiliateTypeId, organizationId } = req;
       const { offset, limit } = query;
       const keyword = _.trim(query.keyword);
-      logger.info('Policy::search');
-
+      const { affiliateType, policies } = await controller.getPoliciesByAffiliateTypeId(organizationId, affiliateTypeId);
+      const policyIdList = policies.map(x => x.id);
       const condition = {
+        id: policyIdList,
+        organization_id: organizationId,
         deleted_flg: false,
       };
       if (keyword) {
@@ -39,8 +45,8 @@ const controller = {
         };
       }
 
-      const off = parseInt(offset);
-      const lim = parseInt(limit);
+      const off = parseInt(offset || 0);
+      const lim = parseInt(limit || Number.MAX_SAFE_INTEGER);
       const order = [['created_at', 'DESC']];
       const policyService = Container.get(PolicyService);
       const { count: total, rows: items } = await policyService.findAndCountAll({ condition, offset: off, limit: lim, order });
@@ -116,12 +122,10 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      const { body, params } = req;
+      const { body, params, affiliateTypeId, organizationId } = req;
       const { policyId } = params;
       logger.info('Policy::getById', policyId);
-
-      const policyService = Container.get(PolicyService);
-      const policy = await policyService.findByPk(policyId);
+      const policy = await controller.getPolicy(organizationId, affiliateTypeId, policyId);
 
       if (!policy) {
         return res.notFound(res.__('POLICY_IS_NOT_FOUND'), 'POLICY_IS_NOT_FOUND');
@@ -141,11 +145,10 @@ const controller = {
 
     try {
       logger.info('Policy::update');
-      const { params } = req;
+      const { body, params, affiliateTypeId, organizationId } = req;
       const { policyId } = params;
-      const body = Object.assign({}, req.body);
       const policyService = Container.get(PolicyService);
-      const policy = await policyService.findByPk(policyId);
+      const policy = await controller.getPolicy(organizationId, affiliateTypeId, policyId);
 
       if (!policy) {
         return res.notFound(res.__('POLICY_IS_NOT_FOUND'), 'POLICY_IS_NOT_FOUND');
@@ -232,6 +235,31 @@ const controller = {
       next(err);
     }
   },
+
+  // Private functions
+  getPoliciesByAffiliateTypeId: async (organizationId, affiliateTypeId) => {
+    const affiliateTypeService = Container.get(AffiliateTypeService);
+
+    const cond = {
+      id: affiliateTypeId,
+      organization_id: organizationId,
+      deleted_flg: false,
+    };
+    const affiliateType = await affiliateTypeService.findOne(cond);
+    const defaultPolicies = await affiliateType.getDefaultPolicies();
+
+    return {
+      affiliateType,
+      policies: defaultPolicies
+    };
+  },
+  getPolicy: async (organizationId, affiliateTypeId, policyId) => {
+    const { affiliateType, policies } = await controller.getPoliciesByAffiliateTypeId(organizationId, affiliateTypeId);
+    const policy = await policies.find(x => x.id === Number(policyId));
+
+    return policy;
+  }
+
 
 };
 

@@ -34,6 +34,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSON,
       allowNull: true,
     },
+    organization_id: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
     deleted_flg: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
@@ -56,6 +60,9 @@ module.exports = (sequelize, DataTypes) => {
       through: 'client_policies',
       foreignKey: 'policy_id',
     });
+
+    Policy.belongsTo(models.organizations);
+
   };
 
   return Policy;
