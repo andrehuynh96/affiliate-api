@@ -292,41 +292,16 @@ route.get('/rewards',
  *         examples:
  *           application/json:
  *             { data:
- *                {
-                    items: [
-                        {
-                            "id": "7",
-                            "currency_symbol": "ETH",
-                            "amount": "0.00001",
-                            "created_at": "2020-06-05T08:06:11.177Z",
-                            "updated_at": "2020-06-05T08:06:11.177Z"
-                        },
-                        {
-                            "id": "6",
-                            "currency_symbol": "ETH",
-                            "amount": "5",
-                            "created_at": "2020-06-05T08:06:04.310Z",
-                            "updated_at": "2020-06-05T08:06:04.310Z"
-                        },
-                        {
-                            "id": "5",
-                            "currency_symbol": "ETH",
-                            "amount": "50.12",
-                            "created_at": "2020-06-05T08:05:49.590Z",
-                            "updated_at": "2020-06-05T08:05:49.590Z"
-                        },
-                        {
-                            "id": "2",
-                            "currency_symbol": "ETH",
-                            "amount": "0.6",
-                            "created_at": "2020-06-05T08:05:49.552Z",
-                            "updated_at": "2020-06-05T08:05:49.552Z"
-                        }
-                    ],
-                    "offset": 0,
-                    "limit": 10,
-                    "total": 3
-                  }
+                  [
+                      {
+                          "currency": "ETH",
+                          "amount": "250.8"
+                      },
+                      {
+                          "currency": "USD",
+                          "amount": "1323364"
+                      }
+                  ]
                 }
  *       400:
  *         description: Error

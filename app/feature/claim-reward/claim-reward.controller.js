@@ -9,6 +9,7 @@ const {
   RewardService,
   ClientService,
   LockService,
+  ClientAffiliateService,
 } = require('app/services');
 
 const Container = typedi.Container;
@@ -65,7 +66,7 @@ const controller = {
         currency_symbol,
         amount,
         affiliate_type_id: affiliateTypeId,
-        status: ClaimRewardStatus.PENDING,
+        status: ClaimRewardStatus.Pending,
       };
       const claimReward = await claimRewardService.create(data);
 
@@ -126,6 +127,46 @@ const controller = {
     }
     catch (err) {
       logger.error('get claim reward list fail: ', err);
+      next(err);
+    }
+  },
+
+  updateClaimRewardStatus: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('App::update');
+      const { body, params, affiliateTypeId, organizationId } = req;
+      const { claimRewardId } = params;
+      const { status } = body;
+      const claimRewardService = Container.get(ClaimRewardService);
+      const claimReward = await claimRewardService.findByPk(claimRewardId);
+      if (!claimReward) {
+        return res.notFound(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND');
+      }
+
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByPk(claimReward.client_affiliate_id);
+      if (clientAffiliate.affiliate_type_id != affiliateTypeId) {
+        return res.forbidden(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND');
+      }
+
+      if (claimReward.status !== ClaimRewardStatus.Pending) {
+        return res.forbidden(res.__('CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS'), 'CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS');
+      }
+
+      // InProcessing: 'InProcessing',
+      // Completed: 'Completed',
+      // Rejected: 'Rejected',
+      // TODO: validate status
+      claimReward.status = status;
+      await claimRewardService.update(claimReward);
+
+      return res.ok(mapper(claimReward));
+    }
+    catch (err) {
+      logger.error(err);
+
       next(err);
     }
   },
