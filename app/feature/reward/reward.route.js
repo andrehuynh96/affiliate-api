@@ -164,6 +164,7 @@ route.post('/rewards',
  *         in: query
  *         type: string
  *         required: true
+ *         description: Member's email
  *       - name: offset
  *         in: query
  *         type: integer
@@ -273,16 +274,7 @@ route.get('/rewards',
  *         in: query
  *         type: string
  *         required: true
- *       - name: offset
- *         in: query
- *         type: integer
- *         format: int32
- *         required: true
- *       - name: limit
- *         in: query
- *         type: integer
- *         format: int32
- *         required: true
+ *         description: Member's email
  *
  *     produces:
  *       - application/json
@@ -331,7 +323,6 @@ route.get('/available-rewards',
   controller.getAvailableRewards,
 );
 /* #endregion */
-
 
 /* #region View affiliate requests */
 /**
