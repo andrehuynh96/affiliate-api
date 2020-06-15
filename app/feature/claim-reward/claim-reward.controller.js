@@ -1,6 +1,7 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const Decimal = require('decimal.js');
+const Sequelize = require('sequelize');
 const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
 const mapper = require('app/response-schema/claim-reward.response-schema');
 const config = require('app/config');
@@ -13,6 +14,7 @@ const {
 } = require('app/services');
 
 const Container = typedi.Container;
+const Op = Sequelize.Op;
 
 const controller = {
   claimReward: async (req, res, next) => {
@@ -109,9 +111,13 @@ const controller = {
       }
 
       const condition = {
-        currency_symbol,
         client_affiliate_id: clientAffiliateId,
       };
+
+      if (currency_symbol) {
+        condition.currency_symbol = { [Op.iLike]: `${query.currency_symbol}` };
+      }
+
       const off = parseInt(offset);
       const lim = parseInt(limit);
       const order = [['created_at', 'DESC']];
