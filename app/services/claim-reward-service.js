@@ -4,6 +4,7 @@ const Sequelize = require('sequelize');
 const { forEach } = require('p-iteration');
 const BaseService = require('./base-service');
 const db = require('app/model');
+const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
 
 const Op = Sequelize.Op;
 const Service = typedi.Service;
@@ -23,6 +24,13 @@ class _ClaimRewardService extends BaseService {
           where: {
             client_affiliate_id: affiliateClientId,
             currency_symbol: currencySymbol,
+            status: {
+              [Op.in]: [
+                ClaimRewardStatus.Pending,
+                ClaimRewardStatus.InProcessing,
+                ClaimRewardStatus.Completed,
+              ]
+            }
           }
         };
         const total = await this.model.sum('amount', cond);
