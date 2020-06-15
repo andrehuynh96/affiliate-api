@@ -7,6 +7,7 @@ const Client = require('app/model').clients;
 const AffiliateCode = require('app/model').affiliate_codes;
 const Policy = require('app/model').policies;
 const db = require('app/model').sequelize;
+const { policyHelper, clientHelper } = require('app/lib/helpers');
 
 const Op = Sequelize.Op;
 const { Container, Service } = typedi;
@@ -198,17 +199,17 @@ class _ClientAffiliateService extends BaseService {
       try {
         const { id, parent_path, root_org_unit_id } = clientAffiliate;
         const query = `
-          SELECT id, "key", "name", description, parent_id, root_org_unit_id, "level", parent_path, actived_flg, deleted_flg, created_at, updated_at
-          FROM public.org_units
-          WHERE (
-            (
-              parent_path <@ :parent_path
-              AND root_org_unit_id = :root_org_unit_id
-              AND deleted_flg=false
-            )
+        SELECT id, client_id, affiliate_type_id, referrer_client_affiliate_id, "level", parent_path, root_client_affiliate_id, actived_flg, created_at, updated_at
+        FROM public.client_affiliates
+        WHERE (
+          (
+            parent_path <@ :parent_path
+            AND root_client_affiliate_id = :root_client_affiliate_id
           )
-          ORDER BY "level" ASC
-        `;
+        )
+        ORDER BY "level" DESC
+      `;
+
         const orgUnitResult = await db.query(query,
           {
             replacements: {
@@ -217,7 +218,7 @@ class _ClientAffiliateService extends BaseService {
             },
           },
           {
-            model: OrgUnit,
+            model: ClientAffiliate,
             mapToModel: true,
             type: db.QueryTypes.SELECT,
           });
@@ -240,7 +241,7 @@ class _ClientAffiliateService extends BaseService {
         });
 
         let result = [];
-        orgUnitHelper.treeToList(clientAffiliate, result, null);
+        clientHelper.treeToList(clientAffiliate, result, null);
         result = result.filter(x => x.id !== clientAffiliate.id);
 
         resolve(result);
