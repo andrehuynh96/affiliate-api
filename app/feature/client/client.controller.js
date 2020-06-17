@@ -212,8 +212,8 @@ const controller = {
       const transaction = await db.sequelize.transaction();
       try {
         const existPolicies = await clientAffiliate.getClientPolicies();
-        await clientAffiliate.removeClientPolicies(existPolicies);
-        await clientAffiliate.addClientPolicies(policyList);
+        await clientAffiliate.removeClientPolicies(existPolicies, { transaction });
+        await clientAffiliate.addClientPolicies(policyList, { transaction });
 
         await transaction.commit();
       } catch (err) {
@@ -335,7 +335,7 @@ const controller = {
         }
 
         await forEach(updateClientAffiliateList, async (instance) => {
-          await clientAffiliateService.update(instance);
+          await clientAffiliateService.update(instance, { transaction });
         });
 
         await transaction.commit();

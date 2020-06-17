@@ -53,8 +53,8 @@ const controller = {
 
       const transaction = await db.sequelize.transaction();
       try {
-        const affiliateType = await affiliateTypeService.create(data);
-        await affiliateType.addDefaultPolicies(policyList);
+        const affiliateType = await affiliateTypeService.create(data, { transaction });
+        await affiliateType.addDefaultPolicies(policyList, { transaction });
         await transaction.commit();
 
         const result = affiliateTypeMapper(affiliateType);
@@ -179,16 +179,18 @@ const controller = {
 
       const transaction = await db.sequelize.transaction();
       try {
-        const [numOfItems, items] = await affiliateTypeService.updateWhere(cond, data);
+        const [numOfItems, items] = await affiliateTypeService.updateWhere(cond, data, transaction);
         const affiliateType = numOfItems > 0 ? items[0] : null;
 
         if (!affiliateType) {
+          await transaction.rollback();
+
           return res.notFound(res.__('AFFILIATE_TYPE_IS_NOT_FOUND'), 'AFFILIATE_TYPE_IS_NOT_FOUND');
         }
 
         const existPolicies = await affiliateType.getDefaultPolicies();
-        await affiliateType.removeDefaultPolicies(existPolicies);
-        await affiliateType.addDefaultPolicies(policyList);
+        await affiliateType.removeDefaultPolicies(existPolicies, { transaction });
+        await affiliateType.addDefaultPolicies(policyList, { transaction });
         await transaction.commit();
 
         const result = affiliateTypeMapper(affiliateType);

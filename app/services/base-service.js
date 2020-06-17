@@ -114,13 +114,14 @@ class BaseService {
     });
   }
 
-  updateWhere(cond, data) {
+  updateWhere(cond, data, transaction) {
     cond = cond || {};
 
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.update(data, {
           where: cond,
+          transaction: transaction,
           returning: true
         });
 
@@ -131,10 +132,12 @@ class BaseService {
     });
   }
 
-  async update(instance) {
+  async update(instance, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await instance.save();
+        const result = await instance.save(options);
 
         resolve(result);
       } catch (err) {
