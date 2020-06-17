@@ -27,6 +27,7 @@ class _ClaimRewardService extends BaseService {
             status: {
               [Op.in]: [
                 ClaimRewardStatus.Pending,
+                ClaimRewardStatus.Approved,
                 ClaimRewardStatus.InProcessing,
                 ClaimRewardStatus.Completed,
               ]

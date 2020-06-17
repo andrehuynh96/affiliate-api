@@ -141,7 +141,7 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      logger.info('App::update');
+      logger.info('ClaimReward::update');
       const { body, params, affiliateTypeId, organizationId } = req;
       const { claimRewardId } = params;
       const { status } = body;
@@ -157,13 +157,14 @@ const controller = {
         return res.forbidden(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND');
       }
 
+      if (claimReward.status === status) {
+        return res.ok(mapper(claimReward));
+      }
+
       if (claimReward.status !== ClaimRewardStatus.Pending) {
         return res.forbidden(res.__('CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS'), 'CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS');
       }
 
-      // InProcessing: 'InProcessing',
-      // Completed: 'Completed',
-      // Rejected: 'Rejected',
       // TODO: validate status
       claimReward.status = status;
       await claimRewardService.update(claimReward);

@@ -1,8 +1,9 @@
 const ClaimRewardStatus = {
   Pending: 'Pending',
+  Rejected: 'Rejected',
+  Approved: 'Approved',
   InProcessing: 'InProcessing',
   Completed: 'Completed',
-  Rejected: 'Rejected',
   Failed: 'Failed',
 };
 

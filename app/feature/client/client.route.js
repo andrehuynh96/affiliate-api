@@ -683,7 +683,6 @@ route.get('/clients/invitees',
 );
 /* #endregion */
 
-
 /* #region Get tree chart */
 /**
  * @swagger

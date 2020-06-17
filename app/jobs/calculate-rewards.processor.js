@@ -24,6 +24,7 @@ const Op = Sequelize.Op;
 const sequelize = db.sequelize;
 const { Container, Service } = typedi;
 const { QueueOptions, Job } = Queue;
+const ROUND_DECIMAL_DIGITS = 10;
 
 class PolicyData {
 
@@ -235,7 +236,7 @@ class CalculateRewardsProcessor {
       policy_id: policy.id,
       policy_type: PolicyType.MEMBERSHIP,
       currency_symbol: currencySymbol,
-      amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
+      amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -276,7 +277,7 @@ class CalculateRewardsProcessor {
           policy_id: policy.id,
           policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
           currency_symbol: currencySymbol,
-          amount: shareAmount.times((rate / 100) * (membershipRate / 100)).toDecimalPlaces(8).toNumber(),
+          amount: shareAmount.times((rate / 100) * (membershipRate / 100)).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
         });
       }
     });
@@ -305,7 +306,7 @@ class CalculateRewardsProcessor {
           policy_id: policy.id,
           policy_type: PolicyType.AFFILIATE,
           currency_symbol: currencySymbol,
-          amount: shareAmount.times(rate / 100).toDecimalPlaces(8).toNumber(),
+          amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
         });
       }
     });
