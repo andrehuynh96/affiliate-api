@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const config = require('app/config');
-const typedi = require('typedi');
 const { KEY } = require('app/constants');
 const logger = require('app/lib/logger');
 const { AppService, AffiliateTypeService } = require('../services');

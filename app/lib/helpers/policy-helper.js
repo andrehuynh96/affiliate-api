@@ -1,22 +1,21 @@
-const typedi = require('typedi');
 const _ = require('lodash');
+const { Container } = require('typedi');
 const {
   AffiliateCodeService,
   AffiliateTypeService,
   ClientAffiliateService,
   PolicyService,
-} = require('../../services');
-const Container = typedi.Container;
+} = require('app/services');
 
 const policyHelper = {
   // Get policy witch apply for clients that same root client
-  async getPolicies({ affiliateTypeId, clientAffiliateService, clientAffiliate }) {
+  async getPolicies({ affiliateTypeId, clientAffiliate, clientAffiliateService, affiliateTypeService }) {
     const rootClientAffiliateId = clientAffiliate.root_client_affiliate_id || clientAffiliate.id;
 
-    return policyHelper.getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService });
+    return policyHelper.getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService, affiliateTypeService });
   },
 
-  async getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService }) {
+  async getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService, affiliateTypeService }) {
     let rootClientAffiliate = null;
     let policies = null;
     // First, we find policy witch apply for root user
@@ -29,7 +28,6 @@ const policyHelper = {
     }
 
     if (!_.some(policies)) {
-      const affiliateTypeService = Container.get(AffiliateTypeService);
       const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
       policies = await affiliateType.getDefaultPolicies();
       policies = policies ? policies.filter(x => !x.deleted_flg) : [];

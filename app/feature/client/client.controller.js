@@ -32,6 +32,7 @@ const controller = {
       const affiliateCodeService = Container.get(AffiliateCodeService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
       const clientService = Container.get(ClientService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
       let level = 1;
       let parentPath = 'root';
       let referrer_client_affiliate_id = null;
@@ -60,7 +61,12 @@ const controller = {
 
         rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
         // Check max level that policy can set for users
-        const { policies } = await policyHelper.getPolicies({ affiliateTypeId, clientAffiliateService, clientAffiliate: referrerClientAffiliate });
+        const { policies } = await policyHelper.getPolicies({
+          affiliateTypeId,
+          clientAffiliateService,
+          affiliateTypeService,
+          clientAffiliate: referrerClientAffiliate
+        });
         if (!_.some(policies)) {
           return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
         }
