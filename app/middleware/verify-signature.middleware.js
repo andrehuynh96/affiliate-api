@@ -43,7 +43,6 @@ module.exports = async (req, res, next) => {
       return next();
     }
 
-    logger.info('checksum....');
     const checksum = _.trim(req.get('x-checksum'));
     const time = _.trim(req.get('x-time'));
     if (!checksum) {
@@ -61,14 +60,10 @@ module.exports = async (req, res, next) => {
     }
 
     const { apiKey, originalUrl } = req;
-    logger.info('checksum....GET APP');
-
     const app = await getApp(apiKey);
     if (!app) {
       return res.badRequest(res.__('NOT_FOUND_API_KEY'), 'NOT_FOUND_API_KEY');
     }
-
-    logger.info('checksum....GET APP DONE');
 
     const signedUrl = originalUrl;
     const content = `${app.secret_key}\n${req.method.toUpperCase()}\n${signedUrl}\n${JSON.stringify(req.body)}\n${time}`;
@@ -80,7 +75,8 @@ module.exports = async (req, res, next) => {
     if (hash != checksum) {
       // FOR DEBUGING
       if (config.signature.showChecksum) {
-        logger.info('time', moment.utc().unix(), 'checksum', hash);
+        logger.info('SignedUrl: ', signedUrl, 'body: ', JSON.stringify(req.body));
+        logger.info('Wrong checksum. Time: ', moment.utc().unix(), 'checksum: ', hash);
       }
 
       return res.badRequest('Wrong checksum.');
