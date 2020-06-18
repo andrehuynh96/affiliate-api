@@ -7,6 +7,7 @@ const {
   ClientService,
   ClientAffiliateService,
   AffiliateTypeService,
+  AffiliateCodeStatisticsService,
 } = require('app/services');
 const mapper = require('app/response-schema/affiliate-code.response-schema');
 const { policyHelper, clientHelper } = require('app/lib/helpers');
@@ -104,6 +105,41 @@ const controller = {
       }
 
       return res.ok({ isValid: true });
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+  clickReferalCode: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { body, affiliateTypeId, params } = req;
+      let { code } = params;
+      code = _.trim(code).toUpperCase();
+      logger.info('AffiliateCode::clickReferalCode', code);
+
+      const affiliateCodeService = Container.get(AffiliateCodeService);
+      const affiliateCode = await affiliateCodeService.findByPk(code);
+      if (!affiliateCode) {
+        return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE');
+      }
+
+      const affiliateCodeStatisticsService = Container.get(AffiliateCodeStatisticsService);
+      const affiliateCodeStatistics = await affiliateCodeStatisticsService.findOrCreate({
+        affiliate_code: affiliateCode.code,
+      }, {
+        affiliate_code: affiliateCode.code,
+        num_of_clicks: 0,
+        deleted_flg: false,
+      });
+
+      affiliateCodeStatistics.num_of_clicks = Number(affiliateCodeStatistics.num_of_clicks) + 1;
+      await affiliateCodeStatisticsService.update(affiliateCodeStatistics);
+
+      return res.ok({ num_of_clicks: affiliateCodeStatistics.num_of_clicks });
     }
     catch (err) {
       logger.error(err);
