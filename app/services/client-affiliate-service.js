@@ -21,7 +21,9 @@ class _ClientAffiliateService extends BaseService {
     this.redisCacherService = Container.get('redisCacherService');
   }
 
-  create(data) {
+  create(data, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.create(data, {
@@ -30,7 +32,8 @@ class _ClientAffiliateService extends BaseService {
               model: AffiliateCode,
               as: 'affiliateCodes'
             },
-          ]
+          ],
+          transaction: options.transaction,
         });
 
         resolve(result);

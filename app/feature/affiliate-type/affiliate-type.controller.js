@@ -179,7 +179,7 @@ const controller = {
 
       const transaction = await db.sequelize.transaction();
       try {
-        const [numOfItems, items] = await affiliateTypeService.updateWhere(cond, data, transaction);
+        const [numOfItems, items] = await affiliateTypeService.updateWhere(cond, data, { transaction });
         const affiliateType = numOfItems > 0 ? items[0] : null;
 
         if (!affiliateType) {

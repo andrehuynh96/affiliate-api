@@ -22,6 +22,8 @@ const { Container, Service } = typedi;
 
 const controller = {
   create: async (req, res, next) => {
+    const logger = Container.get('logger');
+
     try {
       const { body, affiliateTypeId, organizationId } = req;
       const { membership_type_id } = body;
@@ -88,54 +90,69 @@ const controller = {
         parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
       }
 
-      const client = await clientService.findOrCreate({
-        ext_client_id,
-        organization_id: organizationId,
-      }, {
-        ext_client_id,
-        organization_id: organizationId,
-        membership_type_id,
-      });
-
-      const clientId = client.id;
-      // Check duplicate client
-      const existClientAffiliate = await clientAffiliateService.findOne({
-        client_id: clientId,
-        affiliate_type_id: affiliateTypeId,
-      });
-      if (existClientAffiliate) {
-        return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
-      }
-
-      // Update membership
-      if (membership_type_id && client.membership_type_id !== membership_type_id) {
-        await clientService.updateWhere({
-          id: client.id
+      const transaction = await db.sequelize.transaction();
+      try {
+        const client = await clientService.findOrCreate({
+          ext_client_id,
+          organization_id: organizationId,
         }, {
-          membership_type_id
+          ext_client_id,
+          organization_id: organizationId,
+          membership_type_id,
+        }, { transaction });
+
+        const clientId = client.id;
+        // Check duplicate client
+        const existClientAffiliate = await clientAffiliateService.findOne({
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
         });
+        if (existClientAffiliate) {
+          await transaction.rollback();
+
+          return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
+        }
+
+        // Update membership
+        if (membership_type_id && client.membership_type_id !== membership_type_id) {
+          await clientService.updateWhere(
+            {
+              id: client.id
+            },
+            {
+              membership_type_id
+            },
+            { transaction });
+        }
+
+        const code = await affiliateCodeService.generateCode();
+        const data = {
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
+          referrer_client_affiliate_id: referrer_client_affiliate_id,
+          level,
+          parent_path: parentPath,
+          root_client_affiliate_id: rootClientAffiliateId,
+          actived_flg: true,
+          affiliateCodes: [{
+            code,
+            deleted_flg: false,
+          }]
+        };
+
+        const clientAffiliate = await clientAffiliateService.create(data, { transaction });
+        await transaction.commit();
+
+        return res.ok(clientAffiliate.affiliateCodes[0]);
+      } catch (err) {
+        await transaction.rollback();
+        logger.error(err);
+
+        throw err;
       }
-
-      const code = await affiliateCodeService.generateCode();
-      const data = {
-        client_id: clientId,
-        affiliate_type_id: affiliateTypeId,
-        referrer_client_affiliate_id: referrer_client_affiliate_id,
-        level,
-        parent_path: parentPath,
-        root_client_affiliate_id: rootClientAffiliateId,
-        actived_flg: true,
-        affiliateCodes: [{
-          code,
-          deleted_flg: false,
-        }]
-      };
-
-      const clientAffiliate = await clientAffiliateService.create(data);
-
-      return res.ok(clientAffiliate.affiliateCodes[0]);
     }
     catch (err) {
+      logger.error(err);
       next(err);
     }
   },
