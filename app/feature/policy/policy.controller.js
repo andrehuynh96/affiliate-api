@@ -195,7 +195,7 @@ const controller = {
 
         if (total > 100) {
           const errorMessage = res.__('TOTAL_RATE_IS_EXCEED_100', total);
-          return res.forbidden(errorMessage, 'MISSING_PARAMETERS', { fields: ['code'] });
+          return res.forbidden(errorMessage, 'TOTAL_RATE_IS_EXCEED_100', { fields: ['rates'] });
         }
       }
 
