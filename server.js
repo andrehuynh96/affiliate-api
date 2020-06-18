@@ -43,19 +43,6 @@ database.init(async err => {
   require('app/model');
   database.instanse.sync({ force: false }).then(() => {
     logger.info('Resync data model and do not drop any data');
-
-    logger.info('Sequelize migrations ...');
-    const exec = require('child_process').execSync;
-    const cmd = 'npx sequelize-cli db:migrate';
-    exec(cmd, function (error, stdout, stderr) {
-      logger.info('stdout ', stdout);
-      logger.info('stderr ', stderr);
-
-      if (error) {
-        logger.error(error);
-      }
-    });
-
     require('app/model/seed');
   });
 
@@ -69,6 +56,19 @@ database.init(async err => {
   const server = http.createServer(app);
 
   server.listen(config.app.port, config.app.appHostName, function () {
+    logger.info('Sequelize migrations ...');
+    const exec = require('child_process').execSync;
+    const cmd = 'npx sequelize-cli db:migrate';
+    exec(cmd, function (error, stdout, stderr) {
+      logger.info('Sequelize done.');
+      logger.info('stdout ', stdout);
+      logger.info('stderr ', stderr);
+
+      if (error) {
+        logger.error(error);
+      }
+    });
+
     console.log('=======================================================');
     console.log(`App: ${config.app.name}, version: ${config.app.version}.`);
     console.log('=======================================================');

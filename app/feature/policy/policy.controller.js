@@ -182,7 +182,21 @@ const controller = {
           details: result.error.details,
         };
 
-        return res.badRequest('Bad Request', '', err);
+        return res.badRequest(res.__('MISSING_PARAMETERS'), 'MISSING_PARAMETERS', { err });
+      }
+
+      if (type === MembershipType.AFFILIATE || type === MembershipType.MEMBERSHIP_AFFILIATE) {
+        const { rates } = classInstance;
+        const total = rates.reduce((result, value) => {
+          result = result + Number(value);
+
+          return result;
+        }, 0);
+
+        if (total > 100) {
+          const errorMessage = res.__('TOTAL_RATE_IS_EXCEED_100', total);
+          return res.forbidden(errorMessage, 'MISSING_PARAMETERS', { fields: ['code'] });
+        }
       }
 
       const cond = {

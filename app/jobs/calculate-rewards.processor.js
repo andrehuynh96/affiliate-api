@@ -14,6 +14,7 @@ const {
   ClientAffiliateService,
   PolicyService,
   RewardService,
+  AffiliateTypeService,
 } = require('../services');
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('../model/value-object/affiliate-request-details-status');
@@ -57,6 +58,7 @@ class CalculateRewardsProcessor {
     this.affiliateRequestService = Container.get(AffiliateRequestService);
     this.clientService = Container.get(ClientService);
     this.clientAffiliateService = Container.get(ClientAffiliateService);
+    this.affiliateTypeService = Container.get(AffiliateTypeService);
     this.policyService = Container.get(PolicyService);
     this.rewardService = Container.get(RewardService);
 
@@ -137,7 +139,7 @@ class CalculateRewardsProcessor {
   }
 
   async processAffiliateRequestDetails(affiliateRequest, affiliateRequestDetails) {
-    const { logger, affiliateRequestService, clientAffiliateService, redisCacherService, policyService } = this;
+    const { logger, affiliateRequestService, clientAffiliateService, redisCacherService, policyService, affiliateTypeService } = this;
     const { affiliate_type_id } = affiliateRequest;
     const { id, client_affiliate_id, affiliate_request_id, amount } = affiliateRequestDetails;
 
@@ -160,6 +162,7 @@ class CalculateRewardsProcessor {
       rootClientAffiliateId: rootClientAffiliate.id,
       affiliateTypeId: rootClientAffiliate.affiliate_type_id,
       clientAffiliateService,
+      affiliateTypeService,
     });
 
     const policyDataList = policies.map((policy) => {
@@ -288,17 +291,33 @@ class CalculateRewardsProcessor {
   }
 
   async processAffliatePolicy(policyData) {
-    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, currencySymbol } = policyData;
-    this.logger.debug(`Processing affliate policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
+    const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId, currencySymbol } = policyData;
+    const isMembershipSystem = policy.is_membership_system;
 
+    if (isMembershipSystem) {
+      this.logger.debug(`Processing affliate policy when ${stakerId} purchased a package with amount ${amount} ${currencySymbol}.\n`, policy.get({ plain: true }));
+    } else {
+      this.logger.debug(`Processing affliate policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
+    }
+
+    const { clientService } = this;
     const { max_levels, rates, proportion_share } = policy;
     const shareAmount = Decimal(amount).times(proportion_share / 100);
     const rewardList = [];
 
-    _.zip(referrerList, rates).forEach((arrays) => {
+    await forEach(_.zip(referrerList, rates), async (arrays) => {
       const [referrer, rate] = arrays;
 
       if (referrer && rate) {
+        if (isMembershipSystem) {
+          const membershipTypeId = await clientService.getMembershipType(stakerId, affiliateTypeId);
+          this.logger.debug(`MembershipType: ${membershipTypeId ? membershipTypeId : 'NA'} .`);
+          // Non-paid member
+          if (!membershipTypeId) {
+            return;
+          }
+        }
+
         rewardList.push({
           client_affiliate_id: referrer.id,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,

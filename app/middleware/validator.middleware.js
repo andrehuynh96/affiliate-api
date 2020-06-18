@@ -15,7 +15,7 @@ module.exports = function (schema, type) {
         details: result.error.details,
       };
 
-      return res.badRequest('Bad Request', '', err);
+      return res.badRequest(res.__('MISSING_PARAMETERS'), 'MISSING_PARAMETERS', err);
     }
 
     next();

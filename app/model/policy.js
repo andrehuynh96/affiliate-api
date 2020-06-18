@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(256),
       allowNull: false
     },
+    is_membership_system: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      default: false,
+    },
     proportion_share: {
       type: DataTypes.DECIMAL,
       allowNull: false,
