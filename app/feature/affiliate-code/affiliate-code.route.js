@@ -115,7 +115,7 @@ route.get('/affiliate-codes/:code',
  *           application/json:
  *             {
  *                 "data":{
-                        "data": true
+                        isValid: true
                     }
  *             }
  *       400:

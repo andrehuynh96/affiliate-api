@@ -103,7 +103,7 @@ const controller = {
         return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
       }
 
-      return res.ok(true);
+      return res.ok({ isValid: true });
     }
     catch (err) {
       logger.error(err);
