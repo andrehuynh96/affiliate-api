@@ -41,7 +41,7 @@ const controller = {
       let rootClientAffiliateId = null;
       let affiliateCodeInstance = null;
       let affiliatePolicy = null;
-      let transaction = null;
+      const transaction = await db.sequelize.transaction();
 
       try {
         // Has refferer
@@ -59,7 +59,6 @@ const controller = {
             return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
           }
 
-          transaction = await db.sequelize.transaction();
           // Referrer code doesn't exist on system
           if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
             referrerClientAffiliate = await clientAffiliateService.findOne({
@@ -176,8 +175,6 @@ const controller = {
         return res.ok(clientAffiliate.affiliateCodes[0]);
       } catch (err) {
         await transaction.rollback();
-        logger.error(err);
-
         throw err;
       }
     }
