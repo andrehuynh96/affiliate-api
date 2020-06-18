@@ -71,7 +71,7 @@ const controller = {
       }
 
       if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
-        return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['code'] });
+        return res.ok({ isValid: true });
       }
 
       const clientAffiliateService = Container.get(ClientAffiliateService);

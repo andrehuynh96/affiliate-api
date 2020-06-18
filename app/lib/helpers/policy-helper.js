@@ -23,7 +23,7 @@ const policyHelper = {
     // Below level 1
     if (rootClientAffiliateId) {
       rootClientAffiliate = await clientAffiliateService.findByPk(rootClientAffiliateId, { isIncludePolicies: true });
-      policies = await rootClientAffiliate.ClientPolicies;
+      policies = rootClientAffiliate ? await rootClientAffiliate.ClientPolicies : null;
       policies = policies ? policies.filter(x => !x.deleted_flg) : [];
     }
 

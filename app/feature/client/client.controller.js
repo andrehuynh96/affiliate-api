@@ -41,57 +41,87 @@ const controller = {
       let rootClientAffiliateId = null;
       let affiliateCodeInstance = null;
       let affiliatePolicy = null;
+      let transaction = null;
 
-      // Has refferer
-      if (affiliate_code) {
-        affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
-
-        if (!affiliateCodeInstance) {
-          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
-        }
-
-        referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
-        const referrerClientAffiliate = await affiliateCodeInstance.getOwner();
-
-        if (!referrerClientAffiliate) {
-          return res.notFound(res.__('NOT_FOUND_REFERRER_USER'), 'NOT_FOUND_REFERRER_USER');
-        }
-
-        if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
-          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
-        }
-
-        rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
-        // Check max level that policy can set for users
-        const { policies } = await policyHelper.getPolicies({
-          affiliateTypeId,
-          clientAffiliateService,
-          affiliateTypeService,
-          clientAffiliate: referrerClientAffiliate
-        });
-        if (!_.some(policies)) {
-          return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
-        }
-
-        affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
-        if (!affiliatePolicy) {
-          return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
-        }
-
-        level = referrerClientAffiliate.level + 1;
-        const maxLevels = affiliatePolicy.max_levels;
-
-        if (maxLevels && level > maxLevels) {
-          const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
-
-          return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
-        }
-
-        parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
-      }
-
-      const transaction = await db.sequelize.transaction();
       try {
+        // Has refferer
+        if (affiliate_code) {
+          affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
+
+          if (!affiliateCodeInstance) {
+            return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+          }
+
+          referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
+          let referrerClientAffiliate = await affiliateCodeInstance.getOwner();
+
+          if (!referrerClientAffiliate) {
+            return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+          }
+
+          transaction = await db.sequelize.transaction();
+          // Referrer code doesn't exist on system
+          if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
+            referrerClientAffiliate = await clientAffiliateService.findOne({
+              client_id: referrerClientAffiliate.client_id,
+              affiliate_type_id: affiliateTypeId,
+            });
+
+            if (!referrerClientAffiliate) {
+              const code = await affiliateCodeService.generateCode();
+              const data = {
+                client_id: referrerClientAffiliate.client_id,
+                affiliate_type_id: affiliateTypeId,
+                referrer_client_affiliate_id: null,
+                level: 1,
+                parent_path: 'root',
+                root_client_affiliate_id: null,
+                actived_flg: true,
+                affiliateCodes: [{
+                  code,
+                  deleted_flg: false,
+                }]
+              };
+
+              referrerClientAffiliate = await clientAffiliateService.create(data, { transaction });
+            }
+          }
+
+          rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
+          // Check max level that policy can set for users
+          const { policies } = await policyHelper.getPolicies({
+            affiliateTypeId,
+            clientAffiliateService,
+            affiliateTypeService,
+            clientAffiliate: referrerClientAffiliate
+          });
+
+          if (!_.some(policies)) {
+            await transaction.rollback();
+
+            return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+          }
+
+          affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
+          if (!affiliatePolicy) {
+            await transaction.rollback();
+
+            return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+          }
+
+          level = referrerClientAffiliate.level + 1;
+          const maxLevels = affiliatePolicy.max_levels;
+
+          if (maxLevels && level > maxLevels) {
+            await transaction.rollback();
+            const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+
+            return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
+          }
+
+          parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
+        }
+
         const client = await clientService.findOrCreate({
           ext_client_id,
           organization_id: organizationId,
