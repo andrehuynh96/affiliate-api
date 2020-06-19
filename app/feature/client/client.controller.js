@@ -41,24 +41,57 @@ const controller = {
       let rootClientAffiliateId = null;
       let affiliateCodeInstance = null;
       let affiliatePolicy = null;
-      const transaction = await db.sequelize.transaction();
+      let transaction = null;
+      let referrerClientAffiliate;
+
+      // Has refferer
+      if (affiliate_code) {
+        affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
+
+        if (!affiliateCodeInstance) {
+          return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+        }
+
+        referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
+        referrerClientAffiliate = await affiliateCodeInstance.getOwner();
+
+        if (!referrerClientAffiliate) {
+          return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+        }
+      }
 
       try {
+        let client = await clientService.findOne({
+          ext_client_id,
+          organization_id: organizationId,
+        });
+
+        let clientId = null;
+        if (client) {
+          // Check duplicate client
+          clientId = client.id;
+          const existClientAffiliate = await clientAffiliateService.findOne({
+            client_id: clientId,
+            affiliate_type_id: affiliateTypeId,
+          });
+
+          if (existClientAffiliate) {
+            return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
+          }
+        } else {
+          transaction = await db.sequelize.transaction();
+
+          client = await clientService.create({
+            ext_client_id,
+            organization_id: organizationId,
+            membership_type_id,
+          }, { transaction });
+
+          clientId = client.id;
+        }
+
         // Has refferer
-        if (affiliate_code) {
-          affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
-
-          if (!affiliateCodeInstance) {
-            return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
-          }
-
-          referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
-          let referrerClientAffiliate = await affiliateCodeInstance.getOwner();
-
-          if (!referrerClientAffiliate) {
-            return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
-          }
-
+        if (referrerClientAffiliate) {
           // Referrer code doesn't exist on system
           if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
             referrerClientAffiliate = await clientAffiliateService.findOne({
@@ -121,27 +154,6 @@ const controller = {
           parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
         }
 
-        const client = await clientService.findOrCreate({
-          ext_client_id,
-          organization_id: organizationId,
-        }, {
-          ext_client_id,
-          organization_id: organizationId,
-          membership_type_id,
-        }, { transaction });
-
-        const clientId = client.id;
-        // Check duplicate client
-        const existClientAffiliate = await clientAffiliateService.findOne({
-          client_id: clientId,
-          affiliate_type_id: affiliateTypeId,
-        });
-        if (existClientAffiliate) {
-          await transaction.rollback();
-
-          return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
-        }
-
         // Update membership
         if (membership_type_id && client.membership_type_id !== membership_type_id) {
           await clientService.updateWhere(
@@ -174,7 +186,10 @@ const controller = {
 
         return res.ok(clientAffiliate.affiliateCodes[0]);
       } catch (err) {
-        await transaction.rollback();
+        if (transaction) {
+          await transaction.rollback();
+        }
+
         throw err;
       }
     }
