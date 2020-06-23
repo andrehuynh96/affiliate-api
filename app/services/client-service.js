@@ -42,6 +42,37 @@ class _ClientService extends BaseService {
     });
   }
 
+  getClientMappingByClientAffiliateIdList(clientAffiliateIdList) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findAll({
+          where: {
+          },
+          include: [{
+            as: 'ClientAffiliates',
+            model: ClientAffiliate,
+            where: {
+              id: {
+                [Op.in]: clientAffiliateIdList,
+              },
+            }
+          }]
+        });
+        const mapping = {};
+
+        result.forEach((client) => {
+          const clientAffiliate = client.ClientAffiliates[0];
+
+          mapping[clientAffiliate.id] = client;
+        });
+
+        resolve(mapping);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   findByExtClientIdListAndAffiliateTypeId(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {

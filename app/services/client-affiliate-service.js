@@ -69,25 +69,6 @@ class _ClientAffiliateService extends BaseService {
     });
   }
 
-  findByIdList(idList, affiliateTypeId) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const result = await this.model.findAll({
-          where: {
-            affiliate_type_id: affiliateTypeId,
-            client_id: {
-              [Op.in]: idList
-            }
-          }
-        });
-
-        resolve(result);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
   findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {

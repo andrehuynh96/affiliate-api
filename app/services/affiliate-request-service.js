@@ -105,6 +105,23 @@ class _AffiliateRequestService extends BaseService {
     });
   }
 
+  searchDetailsList({ condition, offset, limit, order }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await AffiliateRequestDetails.findAndCountAll({
+          where: condition,
+          offset,
+          limit,
+          order
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   setRequestDetailsStatus(id, status, transaction) {
     return new Promise(async (resolve, reject) => {
       try {

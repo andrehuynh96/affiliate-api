@@ -16,6 +16,7 @@ const {
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
+const affiliateRequestDetailsMapper = require('app/response-schema/affiliate-request-details.response-schema');
 const rewardMapper = require('app/response-schema/reward.response-schema');
 const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
@@ -280,6 +281,60 @@ const controller = {
       affiliateRequest.affiliateType = affiliateRequest.AffiliateType ? affiliateRequest.AffiliateType.name : null;
 
       return res.ok(mapper(affiliateRequest));
+    }
+    catch (err) {
+      logger.error('getAffiliateRequestDetails: ', err);
+      next(err);
+    }
+  },
+
+  getAffiliateRequestDetailList: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('getAffiliateRequestDetails::search');
+      const { body, params, query } = req;
+      const { requestId } = params;
+      const { offset, limit } = query;
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const affiliateRequest = await affiliateRequestService.findByPk(requestId);
+
+      if (!affiliateRequest) {
+        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+      }
+
+      const condition = {
+        affiliate_request_id: affiliateRequest.id,
+      };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const { count: total, rows: items } = await affiliateRequestService.searchDetailsList({ condition, offset: off, limit: lim, order });
+
+      let result = [];
+      if (items.length > 0) {
+        // Get email list
+        const clientService = Container.get(ClientService);
+        const clientAffiliateIdList = items.map(item => item.client_affiliate_id);
+        const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+
+        result = items.map(item => {
+          const client = clientMapping[item.client_affiliate_id];
+
+          return {
+            ...item.get({ plain: true }),
+            extClientId: client ? client.ext_client_id : null,
+            currency_symbol: affiliateRequest.currency_symbol,
+          };
+        });
+      }
+
+      return res.ok({
+        items: affiliateRequestDetailsMapper(result),
+        offset: off,
+        limit: lim,
+        total: total
+      });
     }
     catch (err) {
       logger.error('getAffiliateRequestDetails: ', err);
