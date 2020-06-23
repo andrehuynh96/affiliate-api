@@ -12,6 +12,7 @@ const {
   ClientAffiliateService,
   RewardService,
   ClaimRewardService,
+  AffiliateTypeService,
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
@@ -190,28 +191,90 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      const { query, affiliateTypeId } = req;
+      logger.info('ffiliateRequests::search');
+      const { query } = req;
+      const { offset, limit } = query;
+      let fromDate, toDate;
+      const condition = {};
+
+      if (query.from_date || query.to_date) {
+        condition.created_at = {};
+      }
+
+      if (query.from_date) {
+        fromDate = moment(query.from_date).toDate();
+        condition.created_at[Op.gte] = fromDate;
+      }
+      if (query.to_date) {
+        toDate = moment(query.to_date).add(1, 'minute').toDate();
+        condition.created_at[Op.lt] = toDate;
+      }
+      if (fromDate && toDate && fromDate >= toDate) {
+        return res.badRequest(res.__('TO_DATE_MUST_BE_GREATER_THAN_OR_EQUAL_FROM_DATE'), 'TO_DATE_MUST_BE_GREATER_THAN_OR_EQUAL_FROM_DATE', { field: ['from_date', 'to_date'] });
+      }
+
+      if (query.status) {
+        condition.status = query.status;
+      }
+
+      if (query.currency) {
+        condition.currency_symbol = { [Op.iLike]: query.currency };
+      }
+
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateTypeIdList = _.uniq(items.map(x => x.affiliate_type_id));
+      const affiliateTypes = await affiliateTypeService.findAll({
+        id: {
+          [Op.in]: affiliateTypeIdList,
+        },
+      });
+
+      items.forEach((item) => {
+        const affiliateType = affiliateTypes.find(x => x.id === item.affiliate_type_id);
+
+        item.affiliateType = affiliateType ? affiliateType.name : null;
+      });
+
+      return res.ok({
+        items: mapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('search affiliate requests fail: ', err);
+      next(err);
+    }
+  },
+
+  getAffiliateRequestDetails: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('ffiliateRequests::search');
+      const { query } = req;
       const { offset, limit } = query;
       const keyword = _.trim(query.keyword);
-      logger.info('Rewards::search');
-
-      const andCondition = [
-        {
-          affiliate_type_id: affiliateTypeId
-        }
-      ];
+      const andCondition = [];
 
       if (keyword) {
         const cond2 = {
           [Op.or]: [
             {
               status: {
-                [Op.substring]: keyword,
+                [Op.iLike]: keyword,
               },
             },
             {
               currency_symbol: {
-                [Op.substring]: keyword,
+                [Op.iLike]: keyword,
               },
             },
           ]

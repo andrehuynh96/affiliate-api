@@ -339,12 +339,16 @@ route.get('/available-rewards',
  *         type: string
  *         required: true
  *         description: Bearer {token}
- *       - in: header
- *         name: x-affiliate-type-id
- *         type: number
- *         required: true
- *         description: Affiliate type id
- *       - name: keyword
+ *       - name: from_date
+ *         in: query
+ *         type: string
+ *       - name: to_date
+ *         in: query
+ *         type: string
+ *       - name: status
+ *         in: query
+ *         type: string
+ *       - name: currency
  *         in: query
  *         type: string
  *       - name: offset
@@ -357,7 +361,6 @@ route.get('/available-rewards',
  *         type: integer
  *         format: int32
  *         required: true
- *
  *     produces:
  *       - application/json
  *     responses:
@@ -368,33 +371,26 @@ route.get('/available-rewards',
  *             { data:
  *                {
                     items: [
-                      {
-                          "id": "8b4909ee-504a-422e-962b-165307a6d918",
-                          "status": "COMPLETED",
-                          "currency_symbol": "ETH",
-                          "from_date": "2020-03-11T00:00:01.000Z",
-                          "to_date": "2020-03-12T00:00:00.000Z",
-                          "created_at": "2020-03-31T06:46:45.576Z",
-                          "updated_at": "2020-03-31T06:46:55.638Z"
-                      },
-                      {
-                          "id": "9b4a02fc-7607-45a9-8ac1-a52acde17d1b",
-                          "status": "COMPLETED",
-                          "currency_symbol": "ETH",
-                          "from_date": "2020-03-10T00:00:00.000Z",
-                          "to_date": "2020-03-11T00:00:00.000Z",
-                          "created_at": "2020-03-31T06:46:26.558Z",
-                          "updated_at": "2020-03-31T06:46:36.692Z"
-                      },
-                      {
-                          "id": "7ce5b316-7ae8-493a-992c-93092439fbf3",
-                          "status": "COMPLETED",
-                          "currency_symbol": "ETH",
-                          "from_date": "2020-03-04T00:00:00.000Z",
-                          "to_date": "2020-03-05T00:00:01.000Z",
-                          "created_at": "2020-03-31T06:45:17.790Z",
-                          "updated_at": "2020-03-31T06:45:28.088Z"
-                      },
+                        {
+                            "id": "7a5f1990-7b3d-4b6b-9329-8949acce2d7f",
+                            "status": "COMPLETED",
+                            "currency_symbol": "ETH",
+                            "from_date": "2020-03-02T00:00:02.000Z",
+                            "to_date": "2020-03-03T00:00:01.000Z",
+                            "affiliate_type": "Membership System",
+                            "created_at": "2020-06-15T08:43:53.713Z",
+                            "updated_at": "2020-06-15T08:43:57.277Z"
+                        },
+                        {
+                            "id": "ed8e290d-9b7e-4833-800a-a785987bd747",
+                            "status": "COMPLETED",
+                            "currency_symbol": "ETH",
+                            "from_date": "2020-03-03T00:00:02.000Z",
+                            "to_date": "2020-03-04T00:00:01.000Z",
+                            "affiliate_type": "Membership System",
+                            "created_at": "2020-06-11T10:09:12.623Z",
+                            "updated_at": "2020-06-11T10:09:15.109Z"
+                        }
                     ],
                     "offset": 0,
                     "limit": 10,
@@ -424,7 +420,7 @@ route.get('/available-rewards',
 
 route.get('/affiliate-requests',
   validator(search, 'query'),
-  appAuth(),
+  appAuth({ isIgnoredAffiliateTypeId: true }),
   verifySignature,
   controller.searchAffiliateRequests,
 );
