@@ -20,6 +20,7 @@ const destObject = {
     from_date: 'from_date',
     to_date: 'to_date',
     affiliateType: 'affiliate_type',
+    error_message: 'error_message?',
     createdAt: 'created_at',
     updatedAt: 'updated_at',
     created_by: 'created_by',

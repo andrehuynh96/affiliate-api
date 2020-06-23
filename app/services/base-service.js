@@ -21,10 +21,12 @@ class BaseService {
     });
   }
 
-  findByPk(id) {
+  findByPk(id, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.findByPk(id);
+        const result = await this.model.findByPk(id, options);
 
         resolve(result);
       } catch (err) {
@@ -33,12 +35,14 @@ class BaseService {
     });
   }
 
-  findOne(cond) {
+  findOne(cond, options) {
+    options = options || {};
     cond = cond || {};
 
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.findOne({
+          ...options,
           where: cond,
         });
 

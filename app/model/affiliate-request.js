@@ -43,10 +43,13 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   AffiliateRequest.associate = (models) => {
-    AffiliateRequest.belongsTo(models.affiliate_types);
+    AffiliateRequest.belongsTo(models.affiliate_types, {
+      as: 'AffiliateType',
+      foreignKey: 'affiliate_type_id',
+    });
 
     AffiliateRequest.hasMany(models.affiliate_request_details, {
-      as: 'requestDetailsList',
+      as: 'RequestDetailsList',
       foreignKey: 'affiliate_request_id',
       sourceKey: 'id',
     });

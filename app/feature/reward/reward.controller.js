@@ -19,6 +19,7 @@ const mapper = require('app/response-schema/affiliate-request.response-schema');
 const rewardMapper = require('app/response-schema/reward.response-schema');
 const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
+const AffiliateType = require('app/model').affiliate_types;
 
 const Container = typedi.Container;
 const Op = Sequelize.Op;
@@ -258,51 +259,30 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      logger.info('ffiliateRequests::search');
-      const { query } = req;
-      const { offset, limit } = query;
-      const keyword = _.trim(query.keyword);
-      const andCondition = [];
+      logger.info('getAffiliateRequestDetails::search');
+      const { body, params } = req;
+      const { requestId } = params;
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const options = {
+        include: [
+          {
+            model: AffiliateType,
+            as: 'AffiliateType',
+          }
+        ],
+      };
+      const affiliateRequest = await affiliateRequestService.findByPk(requestId, options);
 
-      if (keyword) {
-        const cond2 = {
-          [Op.or]: [
-            {
-              status: {
-                [Op.iLike]: keyword,
-              },
-            },
-            {
-              currency_symbol: {
-                [Op.iLike]: keyword,
-              },
-            },
-          ]
-        };
-
-        andCondition.push(cond2);
+      if (!affiliateRequest) {
+        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
       }
 
-      const condition = {
-        [Op.and]: andCondition,
-      };
+      affiliateRequest.affiliateType = affiliateRequest.AffiliateType ? affiliateRequest.AffiliateType.name : null;
 
-      const off = parseInt(offset);
-      const lim = parseInt(limit);
-      const order = [['created_at', 'DESC']];
-
-      const affiliateRequestService = Container.get(AffiliateRequestService);
-      const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
-
-      return res.ok({
-        items: mapper(items),
-        offset: off,
-        limit: lim,
-        total: total
-      });
+      return res.ok(mapper(affiliateRequest));
     }
     catch (err) {
-      logger.error('search affiliate requests fail: ', err);
+      logger.error('getAffiliateRequestDetails: ', err);
       next(err);
     }
   },

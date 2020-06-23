@@ -8,6 +8,7 @@ const {
   search,
   viewRewards,
   getAvailableRewards,
+  requestIdParam,
 } = require('./validator');
 
 const route = express.Router();
@@ -425,6 +426,73 @@ route.get('/affiliate-requests',
   controller.searchAffiliateRequests,
 );
 /* #endregion */
+
+/* #region Get affiliate request details */
+/**
+ * @swagger
+ * /api/v1/affiliate-requests/:requestId:
+ *   get:
+ *     summary: Get affiliate request details
+ *     tags:
+ *       - AffiliateRequest
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                data:
+ *                {
+                    "id": "7a5f1990-7b3d-4b6b-9329-8949acce2d7f",
+                    "status": "COMPLETED",
+                    "currency_symbol": "ETH",
+                    "from_date": "2020-03-02T00:00:02.000Z",
+                    "to_date": "2020-03-03T00:00:01.000Z",
+                    "created_at": "2020-06-15T08:43:53.713Z",
+                    "updated_at": "2020-06-15T08:43:57.277Z"
+                  }
+                }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.get('/affiliate-requests/:requestId',
+  validator(requestIdParam, 'params'),
+  appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
+  controller.getAffiliateRequestDetails,
+);
+/* #endregion */
+
+
+
+
 
 module.exports = route;
 
