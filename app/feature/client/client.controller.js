@@ -76,7 +76,24 @@ const controller = {
           });
 
           if (existClientAffiliate) {
-            return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
+            if (!membership_type_id) {
+              return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
+            }
+
+            // Update membership
+            if (membership_type_id && client.membership_type_id !== membership_type_id) {
+              await clientService.updateWhere(
+                {
+                  id: client.id
+                },
+                {
+                  membership_type_id
+                });
+            }
+
+            const affiliateCodes = await existClientAffiliate.getAffiliateCodes();
+
+            return res.ok(affiliateCodes[0]);
           }
         } else {
           transaction = await db.sequelize.transaction();
@@ -88,6 +105,10 @@ const controller = {
           }, { transaction });
 
           clientId = client.id;
+        }
+
+        if (!transaction) {
+          transaction = await db.sequelize.transaction();
         }
 
         // Has refferer

@@ -5,7 +5,6 @@ const createMembershipPolicySchema = Joi.object().keys({
   description: Joi.string().optional().allow('').max(1000),
   type: Joi.string().max(250).required(),
   proportion_share: Joi.number().min(0).max(100).required(),
-  max_levels: Joi.number().integer().min(1).required(),
   membership_rate: Joi.object({
     SILVER: Joi.number().min(0).max(100).required(),
     GOLD: Joi.number().min(0).max(100).required(),
