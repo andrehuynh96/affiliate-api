@@ -21,6 +21,7 @@ const rewardMapper = require('app/response-schema/reward.response-schema');
 const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
 const AffiliateType = require('app/model').affiliate_types;
+const db = require('app/model');
 
 const Container = typedi.Container;
 const Op = Sequelize.Op;
@@ -87,20 +88,31 @@ const controller = {
         affiliate_type_id: affiliateTypeId,
         details: requestDetailsLists,
       };
-      const affiliateRequest = await affiliateRequestService.create(data);
 
-      // Add to queue job
-      const calculateRewardsJob = Container.get('calculateRewardsJob');
-      const job = await calculateRewardsJob.addJob(affiliateRequest);
+      const transaction = await db.sequelize.transaction();
+      try {
+        const affiliateRequest = await affiliateRequestService.create(data, { transaction });
 
-      affiliateRequest.job_id = job.id + '';
-      await affiliateRequestService.updateWhere({
-        id: affiliateRequest.id
-      }, {
-        job_id: affiliateRequest.job_id,
-      });
+        // Add to queue job
+        const calculateRewardsJob = Container.get('calculateRewardsJob');
+        const job = await calculateRewardsJob.addJob(affiliateRequest);
 
-      return res.ok(affiliateRequest);
+        affiliateRequest.job_id = job.id + '';
+        await affiliateRequestService.updateWhere(
+          {
+            id: affiliateRequest.id
+          },
+          {
+            job_id: affiliateRequest.job_id,
+          },
+          { transaction });
+        await transaction.commit();
+
+        return res.ok(affiliateRequest);
+      } catch (err) {
+        await transaction.rollback();
+        throw err;
+      }
     }
     catch (err) {
       next(err);

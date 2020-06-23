@@ -304,11 +304,9 @@ const controller = {
         await transaction.commit();
       } catch (err) {
         await transaction.rollback();
-        logger.error(err);
         throw err;
       }
 
-      // return res.ok(mapper(policyList));
       return res.ok({ isSuccess: true });
     }
     catch (err) {
