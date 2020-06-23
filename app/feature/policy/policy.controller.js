@@ -2,6 +2,7 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Sequelize = require('sequelize');
 const joi = require('joi');
+const db = require('app/model');
 const mapper = require('app/response-schema/policy.response-schema');
 const config = require('app/config');
 const {
@@ -41,7 +42,7 @@ const controller = {
       };
       if (keyword) {
         condition.name = {
-          [Op.substring]: keyword,
+          [Op.iLike]: keyword,
         };
       }
 
@@ -68,7 +69,7 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      const body = Object.assign({}, req.body);
+      const { body, affiliateTypeId, organizationId } = req;
       const { type } = body;
       if (!MembershipType[type]) {
         return res.badRequest(res.__('CREATE_POLICY_TYPE_IS_INVALID'), 'CREATE_POLICY_TYPE_IS_INVALID', { fields: ['type'] });
@@ -103,13 +104,40 @@ const controller = {
         return res.badRequest('Bad Request', '', err);
       }
 
-      const policyService = Container.get(PolicyService);
-      const data = classInstance;
-      delete data.id;
+      if (type === MembershipType.AFFILIATE || type === MembershipType.MEMBERSHIP_AFFILIATE) {
+        const { rates } = classInstance;
+        const total = rates.reduce((result, value) => {
+          result = result + Number(value);
 
-      const policy = await policyService.create(data);
+          return result;
+        }, 0);
 
-      return res.ok(mapper(policy));
+        if (total > 100) {
+          const errorMessage = res.__('TOTAL_RATE_IS_EXCEED_100', total);
+          return res.forbidden(errorMessage, 'TOTAL_RATE_IS_EXCEED_100', { fields: ['rates'] });
+        }
+      }
+
+      const transaction = await db.sequelize.transaction();
+      try {
+        const policyService = Container.get(PolicyService);
+        const affiliateTypeService = Container.get(AffiliateTypeService);
+        const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+        const data = {
+          ...classInstance,
+          organization_id: organizationId,
+        };
+        delete data.id;
+        const policy = await policyService.create(data, { transaction });
+        await policy.addAffiliateType(affiliateType, { transaction });
+        await transaction.commit();
+
+        return res.ok(mapper(policy));
+      } catch (error) {
+        await transaction.rollback();
+
+        throw error;
+      }
     }
     catch (err) {
       logger.error(err);

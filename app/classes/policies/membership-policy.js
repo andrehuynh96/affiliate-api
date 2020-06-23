@@ -11,8 +11,12 @@ class MembershipPolicy extends BasePolicy {
     }
 
     this.type = PolicyType.MEMBERSHIP;
-    this.max_levels = this.max_levels || 0;
-    this.membership_rate = this.membership_rate || {};
+    this.membership_rates = this.membership_rates || [];
+    this.membership_rate = this.membership_rates.reduce((result, item) => {
+      result[item.membership_type_id] = item.rate;
+
+      return result;
+    }, {});
   }
 
 }

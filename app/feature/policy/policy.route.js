@@ -99,11 +99,7 @@ const route = express.Router();
  */
 
 route.post('/policies',
-  userIdAppAuth({
-    isIgnoredAffiliateTypeId: true,
-    scopes: ['affiliate', 'system_admin'],
-    checkAllScopes: true,
-  }),
+  appAuth(),
   verifySignature,
   controller.create,
 );
