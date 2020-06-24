@@ -326,6 +326,81 @@ route.get('/available-rewards',
 );
 /* #endregion */
 
+/* #region Get reward statistics */
+/**
+ * @swagger
+ * /api/v1/reward-statistics:
+ *   get:
+ *     summary: Get reward statistics
+ *     tags:
+ *       - Reward
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *         description: Member's email
+ *
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             { data:
+                  [
+                      {
+                          "currency": "ETH",
+                          "amount": "250.8"
+                      },
+                      {
+                          "currency": "USD",
+                          "amount": "1323364"
+                      }
+                  ]
+                }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.get('/reward-statistics',
+  validator(getAvailableRewards, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.getRewardStatistics,
+);
+/* #endregion */
+
 /* #region View affiliate requests */
 /**
  * @swagger

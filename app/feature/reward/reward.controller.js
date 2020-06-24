@@ -20,6 +20,7 @@ const affiliateRequestDetailsMapper = require('app/response-schema/affiliate-req
 const rewardMapper = require('app/response-schema/reward.response-schema');
 const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
+const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
 const AffiliateType = require('app/model').affiliate_types;
 const db = require('app/model');
 
@@ -190,6 +191,62 @@ const controller = {
         return {
           currency: currency_symbol,
           amount: availableAmount,
+        };
+      });
+
+      return res.ok(result);
+    }
+    catch (err) {
+      logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  getRewardStatistics: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::getRewardStatistics');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const rewardService = Container.get(RewardService);
+      const claimRewardService = Container.get(ClaimRewardService);
+      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+
+      const result = await map(currencyList, async (item) => {
+        const { currency_symbol } = item;
+        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
+        const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
+          ClaimRewardStatus.Approved,
+          ClaimRewardStatus.InProcessing,
+          ClaimRewardStatus.Completed,
+        ]);
+        // eslint-disable-next-line prefer-const
+        let [totalReward, withdrawAmount, pendingAmount] = await Promise.all([
+          getTotalRewardTask,
+          getPaidAmountOfClaimRewardTask,
+          getPendingAmountClaimRewardTask,
+        ]);
+
+        totalReward = Decimal(totalReward);
+        const availableAmount = totalReward.sub(Number(withdrawAmount) + Number(pendingAmount)).toNumber();
+
+        return {
+          currency: currency_symbol,
+          total_amount: totalReward.toNumber(),
+          available_amount: availableAmount,
+          pending_amount: pendingAmount,
+          paid_amount: withdrawAmount,
         };
       });
 

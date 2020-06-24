@@ -17,7 +17,16 @@ class _ClaimRewardService extends BaseService {
     super(ClaimReward, 'ClaimReward');
   }
 
-  getTotalAmount(affiliateClientId, currencySymbol) {
+  getTotalAmount(affiliateClientId, currencySymbol, statusList) {
+    if (!statusList) {
+      statusList = [
+        ClaimRewardStatus.Pending,
+        ClaimRewardStatus.Approved,
+        ClaimRewardStatus.InProcessing,
+        ClaimRewardStatus.Completed,
+      ];
+    }
+
     return new Promise(async (resolve, reject) => {
       try {
         const cond = {
@@ -25,12 +34,7 @@ class _ClaimRewardService extends BaseService {
             client_affiliate_id: affiliateClientId,
             currency_symbol: currencySymbol,
             status: {
-              [Op.in]: [
-                ClaimRewardStatus.Pending,
-                ClaimRewardStatus.Approved,
-                ClaimRewardStatus.InProcessing,
-                ClaimRewardStatus.Completed,
-              ]
+              [Op.in]: statusList,
             }
           }
         };
