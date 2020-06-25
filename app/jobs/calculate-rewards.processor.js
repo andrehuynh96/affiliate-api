@@ -19,6 +19,7 @@ const {
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('../model/value-object/affiliate-request-details-status');
 const PolicyType = require('../model/value-object/policy-type');
+const CommissonType = require('../model/value-object/commisson-type');
 const policyHelper = require('../lib/helpers/policy-helper');
 
 const Op = Sequelize.Op;
@@ -240,6 +241,7 @@ class CalculateRewardsProcessor {
       policy_type: PolicyType.MEMBERSHIP,
       currency_symbol: currencySymbol,
       amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
+      commisson_type: CommissonType.Direct,
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -251,11 +253,15 @@ class CalculateRewardsProcessor {
     const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId, currencySymbol } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
     const { max_levels, rates, proportion_share, membership_rate } = policy;
+    if (proportion_share == 0) {
+      return [];
+    }
+
     const shareAmount = Decimal(amount).times(proportion_share / 100);
     const rewardList = [];
     const { clientService } = this;
 
-    await forEach(_.zip(referrerList, rates), async (arrays) => {
+    await forEach(_.zip(referrerList, rates), async (arrays, index) => {
       const [referrer, rate] = arrays;
 
       if (referrer && rate) {
@@ -281,6 +287,7 @@ class CalculateRewardsProcessor {
           policy_type: PolicyType.MEMBERSHIP_AFFILIATE,
           currency_symbol: currencySymbol,
           amount: shareAmount.times((rate / 100) * (membershipRate / 100)).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
+          commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
         });
       }
     });
@@ -302,10 +309,14 @@ class CalculateRewardsProcessor {
 
     const { clientService } = this;
     const { max_levels, rates, proportion_share } = policy;
+    if (proportion_share == 0) {
+      return [];
+    }
+
     const shareAmount = Decimal(amount).times(proportion_share / 100);
     const rewardList = [];
 
-    await forEach(_.zip(referrerList, rates), async (arrays) => {
+    await forEach(_.zip(referrerList, rates), async (arrays, index) => {
       const [referrer, rate] = arrays;
 
       if (referrer && rate) {
@@ -326,6 +337,7 @@ class CalculateRewardsProcessor {
           policy_type: PolicyType.AFFILIATE,
           currency_symbol: currencySymbol,
           amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
+          commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
         });
       }
     });
