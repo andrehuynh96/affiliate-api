@@ -567,16 +567,22 @@ const controller = {
       const { body, affiliateTypeId, organizationId, query } = req;
       const { offset, limit } = query;
       const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
       const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
 
       if (!clientAffiliate) {
-        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
-        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+        const client = await clientService.findOne({ ext_client_id: extClientId });
+        const rootNode = {
+          id: client ? client.id : null,
+          ext_client_id: extClientId,
+          children: [],
+        };
+
+        return res.ok(rootNode);
       }
 
       const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
-      const clientService = Container.get(ClientService);
       const clientIdList = descendants.map(x => x.client_id);
       const clients = await clientService.findByIdList(clientIdList);
 
