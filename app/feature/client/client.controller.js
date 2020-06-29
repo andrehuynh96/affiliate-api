@@ -566,21 +566,62 @@ const controller = {
       const { ext_client_id, membership_type_id } = body;
       const extClientId = _.trim(ext_client_id).toLowerCase();
       const clientService = Container.get(ClientService);
-      const [numOfItems, items] = await clientService.updateWhere(
-        {
-          ext_client_id,
-          organization_id: organizationId,
-        },
-        {
-          membership_type_id: membership_type_id ? membership_type_id : null,
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+
+      const transaction = await db.sequelize.transaction();
+      try {
+        const [numOfItems, items] = await clientService.updateWhere(
+          {
+            ext_client_id,
+            organization_id: organizationId,
+          },
+          {
+            membership_type_id: membership_type_id ? membership_type_id : null,
+          }, { transaction });
+
+
+        if (!numOfItems) {
+          await transaction.rollback();
+
+          const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+          return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+        }
+
+        const client = items[0];
+        const clientId = client.id;
+        const existClientAffiliate = await clientAffiliateService.findOne({
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
         });
 
-      if (!numOfItems) {
-        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
-        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+        if (!existClientAffiliate) {
+          const affiliateCodeService = Container.get(AffiliateCodeService);
+          const code = await affiliateCodeService.generateCode();
+          const data = {
+            client_id: clientId,
+            affiliate_type_id: affiliateTypeId,
+            referrer_client_affiliate_id: null,
+            level: 1,
+            parent_path: 'root',
+            root_client_affiliate_id: null,
+            actived_flg: true,
+            affiliateCodes: [{
+              code,
+              deleted_flg: false,
+            }]
+          };
+
+          const clientAffiliate = await clientAffiliateService.create(data, { transaction });
+        }
+        await transaction.commit();
+
+        return res.ok({ isSuccess: true });
+      } catch (error) {
+        await transaction.rollback();
+
+        throw error;
       }
 
-      return res.ok({ isSuccess: true });
     }
     catch (err) {
       logger.error(err);
