@@ -60,21 +60,28 @@ const controller = {
       logger.info('AffiliateCode::checkReferenceCode', code);
 
       const affiliateCodeService = Container.get(AffiliateCodeService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
       const affiliateCode = await affiliateCodeService.findByPk(code);
       if (!affiliateCode) {
         return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE');
       }
 
-      const referrerClientAffiliate = await affiliateCode.getOwner();
+      let referrerClientAffiliate = await affiliateCode.getOwner();
       if (!referrerClientAffiliate) {
-        return res.notFound(res.__('NOT_FOUND_REFERRER_USER'), 'NOT_FOUND_REFERRER_USER');
+        return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE');
       }
 
       if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
-        return res.ok({ isValid: true });
+        referrerClientAffiliate = await clientAffiliateService.findOne({
+          client_id: referrerClientAffiliate.client_id,
+          affiliate_type_id: affiliateTypeId,
+        });
+
+        if (!referrerClientAffiliate) {
+          return res.badRequest(res.__('MEMBERSHIP_ORDER_AFFILIATE_CODE_IS_INVALID'), 'MEMBERSHIP_ORDER_AFFILIATE_CODE_IS_INVALID', { fields: ['affiliate_code'] });
+        }
       }
 
-      const clientAffiliateService = Container.get(ClientAffiliateService);
       const clientService = Container.get(ClientService);
       const affiliateTypeService = Container.get(AffiliateTypeService);
       const rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;

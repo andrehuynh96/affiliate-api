@@ -1,5 +1,6 @@
 module.exports = {
   create: require('./create'),
+  registerMembership: require('./register-membership'),
   setPolicies: require('./set-policies'),
   updateAffiliateCode: require('./update-affiliate-code'),
   updateMembershipType: require('./update-membership-type'),
