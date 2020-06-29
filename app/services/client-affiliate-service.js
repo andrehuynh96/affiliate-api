@@ -181,7 +181,7 @@ class _ClientAffiliateService extends BaseService {
 
     return new Promise(async (resolve, reject) => {
       try {
-        const { id, parent_path, root_org_unit_id } = clientAffiliate;
+        const { id, parent_path, root_client_affiliate_id } = clientAffiliate;
         const query = `
         SELECT id, client_id, affiliate_type_id, referrer_client_affiliate_id, "level", parent_path, root_client_affiliate_id, actived_flg, created_at, updated_at
         FROM public.client_affiliates
@@ -197,7 +197,7 @@ class _ClientAffiliateService extends BaseService {
         const orgUnitResult = await db.query(query,
           {
             replacements: {
-              root_org_unit_id,
+              root_client_affiliate_id,
               parent_path: `${clientAffiliate.parent_path}.${clientAffiliate.key}`,
             },
           },
