@@ -569,6 +569,8 @@ const controller = {
       const extClientId = _.trim(query.ext_client_id).toLowerCase();
       const clientService = Container.get(ClientService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
       const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
 
       if (!clientAffiliate) {
@@ -576,6 +578,7 @@ const controller = {
         const rootNode = {
           id: client ? client.id : null,
           ext_client_id: extClientId,
+          affiliate_type_name: affiliateType.name,
           children: [],
         };
 
@@ -585,7 +588,6 @@ const controller = {
       const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
       const clientIdList = descendants.map(x => x.client_id);
       const clients = await clientService.findByIdList(clientIdList);
-
       const mapItems = descendants.map(clientAffiliate => {
         const client = clients.find(client => client.id === clientAffiliate.client_id);
 
@@ -600,6 +602,7 @@ const controller = {
         extClientId: extClientId,
       };
       const rootNode = clientHelper.buildTree(rootClientAffiliate, mapItems);
+      rootNode.affiliate_type_name = affiliateType.name;
 
       return res.ok(rootNode);
     }
