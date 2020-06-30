@@ -5,11 +5,12 @@ const joi = require('joi');
 const db = require('app/model');
 const mapper = require('app/response-schema/policy.response-schema');
 const config = require('app/config');
+const MembershipType = require('app/model/value-object/policy-type');
+const PolicyTypeName = require('app/model/value-object/policy-type-name');
 const {
   PolicyService,
   AffiliateTypeService,
 } = require('app/services');
-const MembershipType = require('app/model/value-object/policy-type');
 const {
   createMembershipPolicySchema,
   createMembershipAffiliatePolicySchema,
@@ -51,6 +52,7 @@ const controller = {
       const order = [['created_at', 'DESC']];
       const policyService = Container.get(PolicyService);
       const { count: total, rows: items } = await policyService.findAndCountAll({ condition, offset: off, limit: lim, order });
+      items.forEach(item => item.type = PolicyTypeName[item.type]);
 
       return res.ok({
         items: mapper(items),
