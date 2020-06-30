@@ -12,6 +12,7 @@ const {
   getInvitees,
   updateMembershipType,
   getTreeChart,
+  extClientId,
 } = require('./validator');
 
 const route = express.Router();
@@ -884,6 +885,176 @@ route.get('/clients/tree-chart',
   appAuth(),
   verifySignature,
   controller.getTreeChart
+);
+/* #endregion */
+
+/* #region Deactive a user */
+/**
+ * @swagger
+ * /api/v1/clients/deactivate:
+ *   put:
+ *     summary: Deactive a user
+ *     tags:
+ *       - Client
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                 "data":{
+                      "isSuccess": true
+                    }
+ *             }
+ *
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.put('/clients/deactivate',
+  validator(extClientId, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.deactivate,
+);
+/* #endregion */
+
+/* #region Active a user */
+/**
+ * @swagger
+ * /api/v1/clients/activate:
+ *   put:
+ *     summary: Deactive a user
+ *     tags:
+ *       - Client
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                 "data":{
+                      "isSuccess": true
+                    }
+ *             }
+ *
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.put('/clients/activate',
+  validator(extClientId, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.activate,
 );
 /* #endregion */
 

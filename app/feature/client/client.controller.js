@@ -95,6 +95,7 @@ const controller = {
           client = await clientService.create({
             ext_client_id,
             organization_id: organizationId,
+            actived_flg: true,
           }, { transaction });
 
           clientId = client.id;
@@ -260,6 +261,7 @@ const controller = {
             ext_client_id,
             organization_id: organizationId,
             membership_type_id,
+            actived_flg: true,
           }, { transaction });
 
           clientId = client.id;
@@ -724,7 +726,6 @@ const controller = {
     try {
       logger.info('Get tree chart');
       const { body, affiliateTypeId, organizationId, query } = req;
-      const { offset, limit } = query;
       const extClientId = _.trim(query.ext_client_id).toLowerCase();
       const clientService = Container.get(ClientService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
@@ -767,6 +768,66 @@ const controller = {
     }
     catch (error) {
       logger.error('getTreeChart fail', error);
+
+      next(error);
+    }
+  },
+
+  deactivate: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('deactivate');
+      const { body, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const [numOfItems, items] = await clientService.updateWhere(
+        {
+          ext_client_id: extClientId,
+          organization_id: organizationId,
+        },
+        {
+          actived_flg: false,
+        });
+
+      if (!numOfItems) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      return res.ok({ isSuccess: true });
+    }
+    catch (error) {
+      logger.error('deactivate', error);
+
+      next(error);
+    }
+  },
+
+  activate: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('activate');
+      const { body, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const [numOfItems, items] = await clientService.updateWhere(
+        {
+          ext_client_id: extClientId,
+          organization_id: organizationId,
+        },
+        {
+          actived_flg: true,
+        });
+
+      if (!numOfItems) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      return res.ok({ isSuccess: true });
+    }
+    catch (error) {
+      logger.error('activate', error);
 
       next(error);
     }
