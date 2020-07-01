@@ -32,6 +32,12 @@ module.exports = async () => {
       rates: [50, 30, 15, 5],
       organization_id: '69366383-b9c2-497c-1111-391b017772ba',
       is_membership_system: false,
+      membership_rate: {
+        // Silver
+        'd146bc01-9e56-4664-9788-79e518877f0b': 20,
+        // Gold
+        '88fda933-0658-49c4-a9c7-4c0021e9a071': 100,
+      },
     }));
 
     models.push(new AffiliatePolicy({

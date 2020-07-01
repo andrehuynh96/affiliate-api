@@ -65,6 +65,7 @@ class CalculateRewardsProcessor {
 
     this.job = job;
     this.data = job.data;
+    this.cache = {};
   }
 
   async process() {
@@ -181,6 +182,7 @@ class CalculateRewardsProcessor {
     });
 
     const allRewardList = await this.calculateRewards(policyDataList);
+    // throw new Error('AAA');
 
     const transaction = await db.sequelize.transaction();
     try {
@@ -216,10 +218,24 @@ class CalculateRewardsProcessor {
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
     const { max_levels, proportion_share, membership_rate } = policy;
     const rewardList = [];
+    if (proportion_share == 0) {
+      return rewardList;
+    }
 
     // Get rate for memberhip clients
     const { clientService } = this;
-    const membershipTypeId = await clientService.getMembershipType(stakerId, affiliateTypeId);
+    const client = await this.getClientByClientAffiliateId(stakerId, affiliateTypeId, clientService);
+    if (!client) {
+      return rewardList;
+    }
+
+    this.logger.debug(`Processing membership policy for ${client.ext_client_id}.`);
+    if (!client.actived_flg) {
+      this.logger.info(`Client ${client.ext_client_id} is not active.`);
+      return rewardList;
+    }
+
+    const membershipTypeId = client.membership_type_id;
     this.logger.debug(`MembershipType: ${membershipTypeId ? membershipTypeId : 'NA'} .`);
     if (!membershipTypeId) {
       return rewardList;
@@ -265,13 +281,20 @@ class CalculateRewardsProcessor {
       const [referrer, rate] = arrays;
 
       if (referrer && rate) {
-        const client_affliate_id = referrer.id;
-        // Get rate for membership client
-        const membershipTypeId = await clientService.getMembershipType(client_affliate_id, affiliateTypeId);
-        if (!membershipTypeId) {
+        const clientAffiliateId = referrer.id;
+        const client = await this.getClientByClientAffiliateId(clientAffiliateId, affiliateTypeId, clientService);
+        if (!client) {
           return;
         }
 
+        this.logger.debug(`Processing membership affliate policy for ${client.ext_client_id}.`);
+        if (!client.actived_flg) {
+          this.logger.info(`Client ${client.ext_client_id} is not active.`);
+          return;
+        }
+
+        // Get rate for membership client
+        const membershipTypeId = client.membership_type_id;
         const membershipRate = membership_rate[membershipTypeId];
         this.logger.debug(`MembershipType: ${membershipTypeId}, membershipRate: ${membershipRate}.`);
         if (_.isUndefined(membershipRate)) {
@@ -280,7 +303,7 @@ class CalculateRewardsProcessor {
         }
 
         rewardList.push({
-          client_affiliate_id: client_affliate_id,
+          client_affiliate_id: clientAffiliateId,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
           affiliate_request_detail_id: affiliateRequestDetails.id,
           policy_id: policy.id,
@@ -320,17 +343,20 @@ class CalculateRewardsProcessor {
       const [referrer, rate] = arrays;
 
       if (referrer && rate) {
-        if (isMembershipSystem) {
-          const membershipTypeId = await clientService.getMembershipType(stakerId, affiliateTypeId);
-          this.logger.debug(`MembershipType: ${membershipTypeId ? membershipTypeId : 'NA'} .`);
-          // Non-paid member
-          if (!membershipTypeId) {
-            return;
-          }
+        const clientAffiliateId = referrer.id;
+        const client = await this.getClientByClientAffiliateId(clientAffiliateId, affiliateTypeId, clientService);
+        if (!client) {
+          return;
+        }
+
+        this.logger.debug(`Processing affliate policy for ${client.ext_client_id}.`);
+        if (!client.actived_flg) {
+          this.logger.info(`Client ${client.ext_client_id} is not active.`);
+          return;
         }
 
         rewardList.push({
-          client_affiliate_id: referrer.id,
+          client_affiliate_id: clientAffiliateId,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
           affiliate_request_detail_id: affiliateRequestDetails.id,
           policy_id: policy.id,
@@ -349,6 +375,22 @@ class CalculateRewardsProcessor {
   async saveRewards(rewardList, transaction) {
     const { rewardService } = this;
     await rewardService.bulkCreate(rewardList, transaction);
+  }
+
+  // Get client then save into cache
+  async getClientByClientAffiliateId(clientAffiliateId, affiliateTypeId, clientService) {
+    const key = `client-${clientAffiliateId}-${affiliateTypeId}`.toUpperCase();
+    let client = this.cache[key];
+    if (client) {
+      return client;
+    }
+
+    client = await clientService.findByClientAffiliateId(clientAffiliateId, affiliateTypeId);
+    if (client) {
+      this.cache[key] = client;
+    }
+
+    return client;
   }
 
   jobResult() {
