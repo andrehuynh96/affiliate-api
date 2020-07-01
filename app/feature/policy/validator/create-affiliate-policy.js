@@ -7,7 +7,7 @@ const createAffiliatePolicySchema = Joi.object().keys({
   proportion_share: Joi.number().min(0).max(100).required(),
   max_levels: Joi.number().integer().min(1).optional(),
   is_membership_system: Joi.boolean().optional(),
-  rates: Joi.array().items(
+  rates: Joi.array().required().items(
     Joi.number().min(0).max(100).required(),
   ),
 });

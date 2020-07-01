@@ -11,7 +11,7 @@ const createMembershipPolicySchema = Joi.object().keys({
   type: Joi.string().max(250).required(),
   proportion_share: Joi.number().min(0).max(100).required(),
   is_membership_system: Joi.boolean().optional(),
-  membership_rates: Joi.array().items(membershipRateSchema),
+  membership_rates: Joi.array().required().items(membershipRateSchema),
 });
 
 module.exports = createMembershipPolicySchema;
