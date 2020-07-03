@@ -259,11 +259,18 @@ route.post('/clients',
  *            required:
  *            - ext_client_id
  *            - affiliate_code
+ *            - membership_order_id
+ *            - membership_type_id
+ *            - currency_symbol
+ *            - amount
  *            example:
  *               {
-                    "ext_client_id":"binh.nt@blockchainlabs.asia",
-                    "affiliate_code": "",
-                    "membership_type_id": "f2db7def-62a2-45e9-bf87-bbe89a3dff17"
+                    "ext_client_id": "myhn+110127@blockchainlabs.asia",
+                    "membership_order_id": "1",
+                    "affiliate_code": "NFRWKSETK",
+                    "membership_type_id": "f2db7def-62a2-45e9-bf87-bbe89a3dff17",
+                    "currency_symbol": "USDT",
+                    "amount": 100
                   }
  *     produces:
  *       - application/json
@@ -274,11 +281,54 @@ route.post('/clients',
  *           application/json:
  *             {
  *                 "data":{
-                      "code": "3N521HPSL",
-                      "client_id": "75",
-                      "updatedAt": "2020-03-19T05:45:36.129Z",
-                      "createdAt": "2020-03-19T05:45:36.129Z"
-                    }
+                      "rewards": [
+                          {
+                              "id": "60",
+                              "client_affiliate_id": "215",
+                              "referrer_client_affiliate_id": null,
+                              "affiliate_request_detail_id": null,
+                              "from_client_affiliate_id": "220",
+                              "amount": "15",
+                              "policy_id": 4,
+                              "currency_symbol": "USD",
+                              "commisson_type": "Direct",
+                              "membership_order_id": "6",
+                              "createdAt": "2020-07-03T02:30:13.263Z",
+                              "updatedAt": "2020-07-03T02:30:13.263Z",
+                              "clientAffiliateId": "215",
+                              "affiliateRequestDetailId": null,
+                              "policyId": 4,
+                              "ext_client_id": "myhn+110127@blockchainlabs.asia",
+                              "introduced_by_ext_client_id": null
+                          },
+                          {
+                              "id": "61",
+                              "client_affiliate_id": "179",
+                              "referrer_client_affiliate_id": "215",
+                              "affiliate_request_detail_id": null,
+                              "from_client_affiliate_id": "220",
+                              "amount": "5",
+                              "policy_id": 4,
+                              "currency_symbol": "USD",
+                              "commisson_type": "Indirect",
+                              "membership_order_id": "6",
+                              "createdAt": "2020-07-03T02:30:13.263Z",
+                              "updatedAt": "2020-07-03T02:30:13.263Z",
+                              "clientAffiliateId": "179",
+                              "affiliateRequestDetailId": null,
+                              "policyId": 4,
+                              "ext_client_id": "hungtv+5000@blockchainlabs.asia",
+                              "introduced_by_ext_client_id": "myhn+110127@blockchainlabs.asia"
+                          }
+                      ],
+                      "affiliate_code": {
+                          "code": "B0SJVRIGJ",
+                          "client_affiliate_id": "220",
+                          "deleted_flg": false,
+                          "createdAt": "2020-07-02T11:45:57.952Z",
+                          "updatedAt": "2020-07-02T11:45:57.952Z"
+                      }
+                  }
  *             }
  *
  *       400:
