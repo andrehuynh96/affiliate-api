@@ -902,17 +902,24 @@ const controller = {
   async fillExtClientId(rewardList) {
     const clientService = Container.get(ClientService);
     const clientAffiliateService = Container.get(ClientAffiliateService);
-    const clientAffiliateIdList = rewardList.map(x => x.referrer_client_affiliate_id).filter(x => x);
-    const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+    const clientAffiliateIdList = [];
+    rewardList.forEach(item => {
+      clientAffiliateIdList.push(item.client_affiliate_id);
+
+      if (item.referrer_client_affiliate_id) {
+        clientAffiliateIdList.push(item.referrer_client_affiliate_id);
+      }
+    });
+    const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(_.uniq(clientAffiliateIdList));
 
     rewardList = rewardList.map(item => {
       const plainItem = item.get ? item.get({ plain: true }) : item;
 
-      if (plainItem.referrer_client_affiliate_id) {
-        const client = clientMapping[plainItem.referrer_client_affiliate_id];
+      let client = clientMapping[plainItem.client_affiliate_id];
+      plainItem.ext_client_id = client ? client.ext_client_id : null;
 
-        plainItem.introduced_by_ext_client_id = client ? client.ext_client_id : null;
-      }
+      client = clientMapping[plainItem.referrer_client_affiliate_id || ''];
+      plainItem.introduced_by_ext_client_id = client ? client.ext_client_id : null;
 
       return plainItem;
     });
