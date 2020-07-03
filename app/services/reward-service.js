@@ -17,15 +17,15 @@ class _RewardService extends BaseService {
     super(Reward, 'Reward');
   }
 
-  bulkCreate(items, transaction) {
+  bulkCreate(items, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
         const chunks = _.chunk(items, NUM_OF_ITEMS_IN_A_BATCH);
 
         await forEach(chunks, async (chunk) => {
-          await Reward.bulkCreate(chunk, {
-            transaction: transaction,
-          });
+          await Reward.bulkCreate(chunk, options);
         });
 
         resolve(chunks);
