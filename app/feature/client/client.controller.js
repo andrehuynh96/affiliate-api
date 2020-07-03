@@ -69,9 +69,10 @@ const controller = {
             return res.badRequest(res.__('AFFILIATE_CODE_IS_INVALID'), 'AFFILIATE_CODE_IS_INVALID', { fields: ['affiliate_code'] });
           }
         }
+
+        referrer_client_affiliate_id = referrerClientAffiliate.id;
       }
 
-      referrer_client_affiliate_id = referrerClientAffiliate.id;
       try {
         let client = await clientService.findOne({
           ext_client_id,
