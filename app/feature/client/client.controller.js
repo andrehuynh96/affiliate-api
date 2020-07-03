@@ -9,12 +9,14 @@ const {
   ClientService,
   ClientAffiliateService,
   PolicyService,
+  RewardService,
 } = require('app/services');
 const { policyHelper, clientHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
 const policyMapper = require('app/response-schema/policy.response-schema');
 const inviteeMapper = require('app/response-schema/invitee.response-schema');
 const clientMapper = require('app/response-schema/client.response-schema');
+const CalculateRewards = require('app/jobs/calculate-rewards');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -51,9 +53,7 @@ const controller = {
           return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
 
-        referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
         referrerClientAffiliate = await affiliateCodeInstance.getOwner();
-
         if (!referrerClientAffiliate) {
           return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
@@ -71,6 +71,7 @@ const controller = {
         }
       }
 
+      referrer_client_affiliate_id = referrerClientAffiliate.id;
       try {
         let client = await clientService.findOne({
           ext_client_id,
@@ -132,7 +133,7 @@ const controller = {
           level = referrerClientAffiliate.level + 1;
           const maxLevels = affiliatePolicy.max_levels;
 
-          if (maxLevels && level > maxLevels) {
+          if (maxLevels && level > maxLevels + 1) {
             await transaction.rollback();
             const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
@@ -181,7 +182,7 @@ const controller = {
     try {
       const { body, affiliateTypeId, organizationId } = req;
       // eslint-disable-next-line prefer-const
-      let { ext_client_id, affiliate_code, membership_type_id } = body;
+      let { ext_client_id, affiliate_code, membership_order_id, membership_type_id, amount, currency_symbol } = body;
       ext_client_id = _.trim(ext_client_id).toLowerCase();
       affiliate_code = _.trim(affiliate_code).toUpperCase();
 
@@ -203,7 +204,6 @@ const controller = {
         return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
       }
 
-      referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
       referrerClientAffiliate = await affiliateCodeInstance.getOwner();
       if (!referrerClientAffiliate) {
         return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
@@ -221,6 +221,7 @@ const controller = {
         }
       }
 
+      referrer_client_affiliate_id = referrerClientAffiliate.id;
       try {
         let client = await clientService.findOne({
           ext_client_id,
@@ -248,9 +249,22 @@ const controller = {
                 });
             }
 
-            const affiliateCodes = await existClientAffiliate.getAffiliateCodes();
+            const clientAffiliateId = existClientAffiliate.id;
+            const rewardList = await controller.getRewards({
+              clientAffiliateId,
+              membershipOrderId: membership_order_id,
+              amount,
+              affiliateTypeId,
+              currencySymbol: currency_symbol,
+            });
 
-            return res.ok(affiliateCodes[0]);
+            const affiliateCodes = await existClientAffiliate.getAffiliateCodes();
+            const result = {
+              rewards: rewardList,
+              affiliate_code: affiliateCodes[0],
+            };
+
+            return res.ok(result);
           }
 
           clientId = client.id;
@@ -298,7 +312,7 @@ const controller = {
           level = referrerClientAffiliate.level + 1;
           const maxLevels = affiliatePolicy.max_levels;
 
-          if (maxLevels && level > maxLevels) {
+          if (maxLevels && level > maxLevels + 1) {
             await transaction.rollback();
             const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
@@ -326,7 +340,21 @@ const controller = {
         const clientAffiliate = await clientAffiliateService.create(data, { transaction });
         await transaction.commit();
 
-        return res.ok(clientAffiliate.affiliateCodes[0]);
+        transaction = null;
+        const clientAffiliateId = clientAffiliate.id;
+        const rewardList = await controller.getRewards({
+          clientAffiliateId,
+          membershipOrderId: membership_order_id,
+          amount,
+          affiliateTypeId,
+          currencySymbol: currency_symbol,
+        });
+        const result = {
+          rewards: rewardList,
+          affiliate_code: clientAffiliate.affiliateCodes[0],
+        };
+
+        return res.ok(result);
       } catch (err) {
         if (transaction) {
           await transaction.rollback();
@@ -832,6 +860,66 @@ const controller = {
       next(error);
     }
   },
+
+  // Private functions
+  async getRewards({
+    clientAffiliateId,
+    affiliateTypeId,
+    membershipOrderId,
+    amount,
+    currencySymbol,
+  }) {
+    const rewardService = Container.get(RewardService);
+    const cond = {
+      membership_order_id: membershipOrderId,
+    };
+    let rewardList = await rewardService.findAll(cond);
+    // Already calculated rewards for Membership Order
+    if (rewardList.length) {
+      return controller.fillExtClientId(rewardList);
+    }
+
+    const calculateRewards = new CalculateRewards();
+    const affiliateRequestDetails = {
+      client_affiliate_id: clientAffiliateId,
+      amount,
+    };
+    rewardList = await calculateRewards.getRewardList({
+      affiliateTypeId: affiliateTypeId,
+      currencySymbol: currencySymbol,
+      affiliateRequestDetails,
+    });
+    rewardList.forEach(item => {
+      item.from_client_affiliate_id = clientAffiliateId;
+      item.membership_order_id = membershipOrderId;
+    });
+
+    await rewardService.bulkCreate(rewardList);
+
+    return controller.fillExtClientId(rewardList);
+  },
+
+  async fillExtClientId(rewardList) {
+    const clientService = Container.get(ClientService);
+    const clientAffiliateService = Container.get(ClientAffiliateService);
+    const clientAffiliateIdList = rewardList.map(x => x.referrer_client_affiliate_id).filter(x => x);
+    const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+
+    rewardList = rewardList.map(item => {
+      const plainItem = item.get ? item.get({ plain: true }) : item;
+
+      if (plainItem.referrer_client_affiliate_id) {
+        const client = clientMapping[plainItem.referrer_client_affiliate_id];
+
+        plainItem.introduced_by_ext_client_id = client ? client.ext_client_id : null;
+      }
+
+      return plainItem;
+    });
+
+    return rewardList;
+  }
+
 
 };
 

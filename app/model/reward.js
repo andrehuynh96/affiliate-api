@@ -10,9 +10,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BIGINT,
       allowNull: false,
     },
+    referrer_client_affiliate_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+    },
     affiliate_request_detail_id: {
       type: DataTypes.BIGINT,
-      allowNull: false,
+      allowNull: true,
+    },
+    from_client_affiliate_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
     },
     amount: {
       type: DataTypes.DECIMAL,
@@ -30,6 +38,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(50),
       allowNull: true,
       default: '',
+    },
+    membership_order_id: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      default: null
     },
   }, {
     underscored: true,

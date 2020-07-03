@@ -268,17 +268,17 @@ const controller = {
       let fromDate, toDate;
       const condition = {};
 
-      if (query.from_date || query.to_date) {
-        condition.created_at = {};
-      }
-
       if (query.from_date) {
         fromDate = moment(query.from_date).toDate();
-        condition.created_at[Op.gte] = fromDate;
+        condition.from_date = {
+          [Op.gte]: fromDate,
+        };
       }
       if (query.to_date) {
         toDate = moment(query.to_date).add(1, 'minute').toDate();
-        condition.created_at[Op.lt] = toDate;
+        condition.to_date = {
+          [Op.lt]: toDate,
+        };
       }
       if (fromDate && toDate && fromDate >= toDate) {
         return res.badRequest(res.__('TO_DATE_MUST_BE_GREATER_THAN_OR_EQUAL_FROM_DATE'), 'TO_DATE_MUST_BE_GREATER_THAN_OR_EQUAL_FROM_DATE', { field: ['from_date', 'to_date'] });
