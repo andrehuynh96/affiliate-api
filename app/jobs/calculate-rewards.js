@@ -53,7 +53,7 @@ class CalculateRewards {
     const clientAffiliate = await clientAffiliateService.findByPk(client_affiliate_id);
     const referrerList = await clientAffiliateService.getReferrerList(clientAffiliate);
 
-    logger.debug('Referrer list: ', referrerList.map(item => item.id));
+    logger.debug(`Referrer list clientAffiliateId: ${clientAffiliateId}: `, referrerList.map(item => item.id));
     const rootClientAffiliate = !clientAffiliate.referrer_client_affiliate_id ? clientAffiliate : referrerList.find((item) => item.level === 1);
 
     if (!rootClientAffiliate) {
@@ -192,6 +192,8 @@ class CalculateRewards {
           return;
         }
 
+        const invitee = referrerList.find(x => x.referrer_client_affiliate_id == clientAffiliateId);
+
         rewardList.push({
           client_affiliate_id: clientAffiliateId,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
@@ -201,7 +203,7 @@ class CalculateRewards {
           currency_symbol: currencySymbol,
           amount: shareAmount.times((rate / 100) * (membershipRate / 100)).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
-          referrer_client_affiliate_id: null,
+          referrer_client_affiliate_id: invitee ? invitee.id : null,
         });
       }
     });
@@ -246,6 +248,8 @@ class CalculateRewards {
           return;
         }
 
+        const invitee = referrerList.find(x => x.referrer_client_affiliate_id == clientAffiliateId);
+
         rewardList.push({
           client_affiliate_id: clientAffiliateId,
           affiliate_request_id: affiliateRequestDetails.affiliate_request_id,
@@ -255,7 +259,7 @@ class CalculateRewards {
           currency_symbol: currencySymbol,
           amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
-          referrer_client_affiliate_id: null,
+          referrer_client_affiliate_id: invitee ? invitee.id : null,
         });
       }
     });

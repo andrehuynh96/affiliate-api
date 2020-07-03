@@ -6,7 +6,7 @@ module.exports = {
       return Promise.all([
         queryInterface.describeTable('clients')
           .then(async (tableDefinition) => {
-            const sql = 'ALTER TABLE public.rewards ALTER COLUMN affiliate_request_detail_id SET NOT NULL;';
+            const sql = 'ALTER TABLE public.rewards ALTER COLUMN affiliate_request_detail_id DROP NOT NULL;';
             await queryInterface.sequelize.query(sql, {}, {});
 
             return Promise.resolve();

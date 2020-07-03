@@ -249,9 +249,22 @@ const controller = {
                 });
             }
 
-            const affiliateCodes = await existClientAffiliate.getAffiliateCodes();
+            const clientAffiliateId = existClientAffiliate.id;
+            const rewardList = await controller.getRewards({
+              clientAffiliateId,
+              membershipOrderId: membership_order_id,
+              amount,
+              affiliateTypeId,
+              currencySymbol: currency_symbol,
+            });
 
-            return res.ok(affiliateCodes[0]);
+            const affiliateCodes = await existClientAffiliate.getAffiliateCodes();
+            const result = {
+              rewards: rewardList,
+              affiliate_code: affiliateCodes[0],
+            };
+
+            return res.ok(result);
           }
 
           clientId = client.id;
@@ -335,7 +348,6 @@ const controller = {
           amount,
           affiliateTypeId,
           currencySymbol: currency_symbol,
-          transaction
         });
         const result = {
           rewards: rewardList,
@@ -852,18 +864,27 @@ const controller = {
   // Private functions
   async getRewards({
     clientAffiliateId,
+    affiliateTypeId,
     membershipOrderId,
     amount,
-    affiliateTypeId,
     currencySymbol,
-    transaction
   }) {
+    const rewardService = Container.get(RewardService);
+    const cond = {
+      membership_order_id: membershipOrderId,
+    };
+    let rewardList = await rewardService.findAll(cond);
+    // Already calculated rewards for Membership Order
+    if (rewardList.length) {
+      return controller.fillExtClientId(rewardList);
+    }
+
     const calculateRewards = new CalculateRewards();
     const affiliateRequestDetails = {
       client_affiliate_id: clientAffiliateId,
       amount,
     };
-    const rewardList = await calculateRewards.getRewardList({
+    rewardList = await calculateRewards.getRewardList({
       affiliateTypeId: affiliateTypeId,
       currencySymbol: currencySymbol,
       affiliateRequestDetails,
@@ -873,11 +894,32 @@ const controller = {
       item.membership_order_id = membershipOrderId;
     });
 
-    // const rewardService = Container.get(RewardService);
-    // await rewardService.bulkCreate(rewardList, { transaction });
+    await rewardService.bulkCreate(rewardList);
+
+    return controller.fillExtClientId(rewardList);
+  },
+
+  async fillExtClientId(rewardList) {
+    const clientService = Container.get(ClientService);
+    const clientAffiliateService = Container.get(ClientAffiliateService);
+    const clientAffiliateIdList = rewardList.map(x => x.referrer_client_affiliate_id).filter(x => x);
+    const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+
+    rewardList = rewardList.map(item => {
+      const plainItem = item.get ? item.get({ plain: true }) : item;
+
+      if (plainItem.referrer_client_affiliate_id) {
+        const client = clientMapping[plainItem.referrer_client_affiliate_id];
+
+        plainItem.introduced_by_ext_client_id = client ? client.ext_client_id : null;
+      }
+
+      return plainItem;
+    });
 
     return rewardList;
-  },
+  }
+
 
 };
 

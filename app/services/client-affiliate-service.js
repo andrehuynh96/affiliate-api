@@ -158,7 +158,7 @@ class _ClientAffiliateService extends BaseService {
 
     const result = referrerList.map((item) => {
       return {
-        id: item.id,
+        id: Number(item.id),
         affiliate_type_id: item.affiliate_type_id,
         level: item.level,
         root_client_id: item.root_client_id,
