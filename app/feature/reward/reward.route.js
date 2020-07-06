@@ -362,14 +362,27 @@ route.get('/available-rewards',
  *           application/json:
  *             { data:
                   [
-                      {
-                          "currency": "ETH",
-                          "amount": "250.8"
-                      },
-                      {
-                          "currency": "USD",
-                          "amount": "1323364"
-                      }
+                    {
+                        "currency": "USD",
+                        "total_amount": 30,
+                        "available_amount": 24,
+                        "pending_amount": 6,
+                        "paid_amount": 0
+                    },
+                    {
+                        "currency": "ETH",
+                        "total_amount": 250.8,
+                        "available_amount": 250,
+                        "pending_amount": 0.688228,
+                        "paid_amount": 0.111772
+                    },
+                    {
+                        "currency": "USDT",
+                        "total_amount": 6,
+                        "available_amount": 6,
+                        "pending_amount": 0,
+                        "paid_amount": 0
+                    }
                   ]
                 }
  *       400:
