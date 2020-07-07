@@ -222,6 +222,21 @@ const controller = {
       const claimRewardService = Container.get(ClaimRewardService);
       const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
 
+      // Client doesn't have any reward
+      if (!currencyList.length) {
+        const result = [
+          {
+            currency: 'USDT',
+            total_amount: 0,
+            available_amount: 0,
+            pending_amount: 0,
+            paid_amount: 0,
+          },
+        ];
+
+        return res.ok(result);
+      }
+
       const result = await map(currencyList, async (item) => {
         const { currency_symbol } = item;
         const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
