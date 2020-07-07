@@ -134,12 +134,12 @@ const controller = {
           level = referrerClientAffiliate.level + 1;
           const maxLevels = affiliatePolicy.max_levels;
 
-          if (maxLevels && level > maxLevels + 1) {
-            await transaction.rollback();
-            const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+          // if (maxLevels && level > maxLevels + 1) {
+          //   await transaction.rollback();
+          //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
-            return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
-          }
+          //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
+          // }
 
           parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
         }
@@ -313,12 +313,12 @@ const controller = {
           level = referrerClientAffiliate.level + 1;
           const maxLevels = affiliatePolicy.max_levels;
 
-          if (maxLevels && level > maxLevels + 1) {
-            await transaction.rollback();
-            const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+          // if (maxLevels && level > maxLevels + 1) {
+          //   await transaction.rollback();
+          //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
-            return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
-          }
+          //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
+          // }
 
           parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
         }
