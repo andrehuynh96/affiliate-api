@@ -90,6 +90,10 @@ const config = {
     apiKey: process.env.PLUTX_USERID_APP_API_KEY,
     secretKey: process.env.PLUTX_USERID_APP_SECRET_KEY,
   },
+  affiliate: {
+    numOfRefferalStructures: utils.toNumber(process.env.AFFILIATE_NUM_OF_REFFERAL_STRUCTURES),
+  },
+
 };
 
 console.log('=======================================================');

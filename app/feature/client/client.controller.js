@@ -1,6 +1,6 @@
 const typedi = require('typedi');
 const _ = require('lodash');
-const { forEach } = require('p-iteration');
+const { forEach, map } = require('p-iteration');
 const Sequelize = require('sequelize');
 const db = require('app/model');
 const {
@@ -15,8 +15,10 @@ const { policyHelper, clientHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
 const policyMapper = require('app/response-schema/policy.response-schema');
 const inviteeMapper = require('app/response-schema/invitee.response-schema');
+const referralStructureMapper = require('app/response-schema/referral-structure.response-schema');
 const clientMapper = require('app/response-schema/client.response-schema');
 const CalculateRewards = require('app/jobs/calculate-rewards');
+const config = require('app/config');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -797,6 +799,71 @@ const controller = {
     }
     catch (error) {
       logger.error('getTreeChart fail', error);
+
+      next(error);
+    }
+  },
+
+  getReferralStructure: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('Get Referral Structure');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        return res.ok([]);
+      }
+
+      const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
+      const maxLevel = Math.max(_.max(descendants.map(x => x.level)), clientAffiliate.level + config.affiliate.numOfRefferalStructures);
+      const rootClientAffiliate = {
+        ...clientAffiliate.get({ plain: true }),
+        extClientId: extClientId,
+      };
+      const rootNode = clientHelper.buildTree(rootClientAffiliate, descendants);
+
+      let result = rootNode.children;
+      const total = result.length;
+      const grandTotal = {
+        num_of_level_1_affiliates: total,
+        total: 0,
+      };
+
+      result = _.orderBy(result, ['createdAt'], ['desc']);
+      const clientIdList = result.map(x => x.client_id);
+      const clients = await clientService.findByIdList(clientIdList);
+
+      result = result.map((item) => {
+        const nodes = [];
+        clientHelper.getAllNodes(item, nodes);
+        const client = clients.find(client => client.id == item.client_id);
+        item.ext_client_id = client ? client.ext_client_id : null;
+        item = referralStructureMapper(item);
+
+        for (let level = item.level + 1; level <= maxLevel; level++) {
+          const propertyName = `num_of_level_${level - 1}_affiliates`;
+          const total1 = nodes.filter(node => node.level == level).length;
+
+          item[propertyName] = total1;
+          grandTotal[propertyName] = (grandTotal[propertyName] || 0) + total1;
+          grandTotal.total += total1;
+        }
+
+        return item;
+      });
+
+      result.unshift(grandTotal);
+
+      return res.ok(result);
+    }
+    catch (error) {
+      logger.error('Get Referral Structure', error);
 
       next(error);
     }

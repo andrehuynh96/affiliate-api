@@ -11,6 +11,8 @@ const clientHelper = {
         ...inviteeMapper(x),
         referrer_client_affiliate_id: x.referrer_client_affiliate_id,
         ext_client_id: x.extClientId,
+        client_id: x.client_id,
+        level: x.level,
         id: x.id,
       };
     });
@@ -52,6 +54,13 @@ const clientHelper = {
     }
 
     node.children = null;
+  },
+  getAllNodes(node, nodes) {
+    nodes.push(node);
+
+    if (node.children.length > 0) {
+      node.children.forEach(childNode => clientHelper.getAllNodes(childNode, nodes));
+    }
   },
   getRootOrgUnitListHasSystemAdminOU(orgUnitList) {
     const idCache = _.keyBy(orgUnitList, 'id');

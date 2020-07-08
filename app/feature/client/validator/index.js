@@ -8,4 +8,5 @@ module.exports = {
   getInvitees: require('./get-invitees'),
   getTreeChart: require('./get-tree-chart'),
   extClientId: require('./ext-client-id'),
+  getRefferalStructure: require('./get-refferal-structure'),
 };

@@ -13,6 +13,7 @@ const {
   updateMembershipType,
   getTreeChart,
   extClientId,
+  getRefferalStructure,
 } = require('./validator');
 
 const route = express.Router();
@@ -882,23 +883,44 @@ route.get('/clients/invitees',
  *         examples:
  *           application/json:
  *             {
- *                 "data":[
-                      "items": [
+ *                 "data": {
+                      "ext_client_id": "huy.pq+37@blockchainlabs.asia",
+                      "created_at": "2020-07-01T09:58:18.214Z",
+                      "updated_at": "2020-07-01T09:58:18.214Z",
+                      "referrer_client_affiliate_id": null,
+                      "id": "198",
+                      "children": [
                           {
-                              "ext_client_id": "no-code24@blockchainlabs.asia",
-                              "created_at": "2020-05-08T08:24:27.829Z",
-                              "updated_at": "2020-05-11T02:45:24.908Z"
+                              "ext_client_id": "myhn+110120@blockchainlabs.asia",
+                              "created_at": "2020-07-02T10:21:30.524Z",
+                              "updated_at": "2020-07-02T10:21:30.524Z",
+                              "referrer_client_affiliate_id": "198",
+                              "id": "208",
+                              "children": [],
+                              "parent": null
                           },
                           {
-                              "ext_client_id": "no-code23@blockchainlabs.asia",
-                              "created_at": "2020-05-08T08:24:19.666Z",
-                              "updated_at": "2020-05-11T02:45:24.907Z"
+                              "ext_client_id": "myhn+110121@blockchainlabs.asia",
+                              "created_at": "2020-07-02T10:22:34.210Z",
+                              "updated_at": "2020-07-02T10:22:34.210Z",
+                              "referrer_client_affiliate_id": "198",
+                              "id": "209",
+                              "children": [],
+                              "parent": null
+                          },
+                          {
+                              "ext_client_id": "huy.pq+38@blockchainlabs.asia",
+                              "created_at": "2020-07-03T03:54:20.221Z",
+                              "updated_at": "2020-07-03T03:54:20.221Z",
+                              "referrer_client_affiliate_id": "198",
+                              "id": "222",
+                              "children": [],
+                              "parent": null
                           }
                       ],
-                      "offset": 0,
-                      "limit": 2,
-                      "total": 4
-                    ]
+                      "parent": null,
+                      "affiliate_type_name": "Membership System"
+                  }
  *             }
  *
  *       400:
@@ -935,6 +957,161 @@ route.get('/clients/tree-chart',
   appAuth(),
   verifySignature,
   controller.getTreeChart
+);
+/* #endregion */
+
+/* #region Get referral structure */
+/**
+ * @swagger
+ * /api/v1/clients/referral-structure:
+ *   get:
+ *     summary: Get referral structure
+ *     tags:
+ *       - Client
+  *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *       - name: offset
+ *         in: query
+ *         type: integer
+ *         format: int32
+ *         required: true
+ *       - name: limit
+ *         in: query
+ *         type: integer
+ *         format: int32
+ *         required: true
+
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                 "data":[
+                      {
+                          "num_of_level_1_affiliates": 7,
+                          "total": 25,
+                          "num_of_level_2_affiliates": 4,
+                          "num_of_level_3_affiliates": 20,
+                          "num_of_level_4_affiliates": 1
+                      },
+                      {
+                          "id": "41",
+                          "client_id": "90",
+                          "level": 2,
+                          "ext_client_id": "myhn@blockchainlabs.asia",
+                          "num_of_level_2_affiliates": 0,
+                          "num_of_level_3_affiliates": 0,
+                          "num_of_level_4_affiliates": 0
+                      },
+                      {
+                          "id": "151",
+                          "client_id": "192",
+                          "level": 2,
+                          "ext_client_id": "ducblc_@yopmail.com",
+                          "num_of_level_2_affiliates": 0,
+                          "num_of_level_3_affiliates": 0,
+                          "num_of_level_4_affiliates": 0
+                      },
+                      {
+                          "id": "161",
+                          "client_id": "198",
+                          "level": 2,
+                          "ext_client_id": "ancd@blockchainlabs.asia",
+                          "num_of_level_2_affiliates": 0,
+                          "num_of_level_3_affiliates": 0,
+                          "num_of_level_4_affiliates": 0
+                      },
+                      {
+                          "id": "165",
+                          "client_id": "202",
+                          "level": 2,
+                          "ext_client_id": "ducblc_2@yopmail.com",
+                          "num_of_level_2_affiliates": 0,
+                          "num_of_level_3_affiliates": 0,
+                          "num_of_level_4_affiliates": 0
+                      },
+                      {
+                          "id": "150",
+                          "client_id": "191",
+                          "level": 2,
+                          "ext_client_id": "huyht+906@blockchainlabs.asia",
+                          "num_of_level_2_affiliates": 0,
+                          "num_of_level_3_affiliates": 0,
+                          "num_of_level_4_affiliates": 0
+                      },
+                      {
+                          "id": "154",
+                          "client_id": "195",
+                          "level": 2,
+                          "ext_client_id": "trunglk+3333@blockchainlabs.asia",
+                          "num_of_level_2_affiliates": 2,
+                          "num_of_level_3_affiliates": 2,
+                          "num_of_level_4_affiliates": 0
+                      },
+                      {
+                          "id": "185",
+                          "client_id": "46",
+                          "level": 2,
+                          "ext_client_id": "binhnt+3@blockchainlabs.asia",
+                          "num_of_level_2_affiliates": 2,
+                          "num_of_level_3_affiliates": 18,
+                          "num_of_level_4_affiliates": 1
+                      }
+                    ]
+ *             }
+ *
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.get('/clients/referral-structure',
+  validator(getRefferalStructure, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.getReferralStructure,
 );
 /* #endregion */
 
