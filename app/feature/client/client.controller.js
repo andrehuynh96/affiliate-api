@@ -783,7 +783,7 @@ const controller = {
         const client = clients.find(client => client.id === clientAffiliate.client_id);
 
         return {
-          ...clientAffiliate.get({ plain: true }),
+          ...clientAffiliate,
           extClientId: client ? client.ext_client_id : null,
         };
       });
@@ -832,8 +832,17 @@ const controller = {
       const total = result.length;
       const grandTotal = {
         num_of_level_1_affiliates: total,
+        num_of_level_2_affiliates: 0,
+        num_of_level_3_affiliates: 0,
+        num_of_level_4_affiliates: 0,
         total: 0,
       };
+
+      if (!total) {
+        result.unshift(grandTotal);
+
+        return res.ok(result);
+      }
 
       result = _.orderBy(result, ['createdAt'], ['desc']);
       const clientIdList = result.map(x => x.client_id);
@@ -847,7 +856,7 @@ const controller = {
         item = referralStructureMapper(item);
 
         for (let level = item.level + 1; level <= maxLevel; level++) {
-          const propertyName = `num_of_level_${level - 1}_affiliates`;
+          const propertyName = `num_of_level_${level - rootClientAffiliate.level}_affiliates`;
           const total1 = nodes.filter(node => node.level == level).length;
 
           item[propertyName] = total1;
