@@ -78,7 +78,7 @@ const controller = {
         });
 
         if (!referrerClientAffiliate) {
-          return res.badRequest(res.__('MEMBERSHIP_ORDER_AFFILIATE_CODE_IS_INVALID'), 'MEMBERSHIP_ORDER_AFFILIATE_CODE_IS_INVALID', { fields: ['affiliate_code'] });
+          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
       }
 

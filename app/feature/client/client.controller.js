@@ -68,7 +68,7 @@ const controller = {
           });
 
           if (!referrerClientAffiliate) {
-            return res.badRequest(res.__('AFFILIATE_CODE_IS_INVALID'), 'AFFILIATE_CODE_IS_INVALID', { fields: ['affiliate_code'] });
+            return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
           }
         }
 
@@ -220,7 +220,7 @@ const controller = {
         });
 
         if (!referrerClientAffiliate) {
-          return res.badRequest(res.__('AFFILIATE_CODE_IS_INVALID'), 'AFFILIATE_CODE_IS_INVALID', { fields: ['affiliate_code'] });
+          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
       }
 
