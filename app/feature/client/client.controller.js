@@ -854,7 +854,7 @@ const controller = {
         num_of_level_2_affiliates: 0,
         num_of_level_3_affiliates: 0,
         num_of_level_4_affiliates: 0,
-        total: 0,
+        total: total,
       };
 
       if (!total) {
