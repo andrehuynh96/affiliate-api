@@ -1001,6 +1001,7 @@ const controller = {
     const clientAffiliateIdList = [];
     rewardList.forEach(item => {
       clientAffiliateIdList.push(item.client_affiliate_id);
+      clientAffiliateIdList.push(item.from_client_affiliate_id);
 
       if (item.referrer_client_affiliate_id) {
         clientAffiliateIdList.push(item.referrer_client_affiliate_id);
@@ -1014,7 +1015,7 @@ const controller = {
       let client = clientMapping[plainItem.client_affiliate_id];
       plainItem.ext_client_id = client ? client.ext_client_id : null;
 
-      client = clientMapping[plainItem.referrer_client_affiliate_id || ''];
+      client = clientMapping[plainItem.referrer_client_affiliate_id || plainItem.from_client_affiliate_id || ''];
       plainItem.introduced_by_ext_client_id = client ? client.ext_client_id : null;
 
       return plainItem;
