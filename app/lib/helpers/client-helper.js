@@ -6,16 +6,7 @@ const inviteeMapper = require('app/response-schema/invitee.response-schema');
 
 const clientHelper = {
   buildTree(clientAffiliate, descendants) {
-    const allItems = descendants.concat(clientAffiliate).map(x => {
-      return {
-        ...inviteeMapper(x),
-        referrer_client_affiliate_id: x.referrer_client_affiliate_id,
-        ext_client_id: x.extClientId,
-        client_id: x.client_id,
-        level: x.level,
-        id: x.id,
-      };
-    });
+    const allItems = descendants.concat(clientAffiliate);
 
     const cache = _.reduce(allItems, (val, item) => {
       val[item.id] = item;

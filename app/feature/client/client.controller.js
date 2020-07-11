@@ -797,14 +797,14 @@ const controller = {
         const client = clients.find(client => client.id === clientAffiliate.client_id);
 
         return {
-          ...clientAffiliate,
-          extClientId: client ? client.ext_client_id : null,
+          ...(clientAffiliate.get ? clientAffiliate.get({ plain: true }) : clientAffiliate),
+          ext_client_id: client ? client.ext_client_id : null,
         };
       });
 
       const rootClientAffiliate = {
         ...clientAffiliate.get({ plain: true }),
-        extClientId: extClientId,
+        ext_client_id: extClientId,
       };
       const rootNode = clientHelper.buildTree(rootClientAffiliate, mapItems);
       rootNode.affiliate_type_name = affiliateType.name;
@@ -840,7 +840,12 @@ const controller = {
         ...clientAffiliate.get({ plain: true }),
         extClientId: extClientId,
       };
-      const rootNode = clientHelper.buildTree(rootClientAffiliate, descendants);
+      const mapItems = descendants.map(clientAffiliate => {
+        return {
+          ...(clientAffiliate.get ? clientAffiliate.get({ plain: true }) : clientAffiliate),
+        };
+      });
+      const rootNode = clientHelper.buildTree(rootClientAffiliate, mapItems);
 
       let result = rootNode.children;
       const total = result.length;
