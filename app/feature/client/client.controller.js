@@ -241,7 +241,7 @@ const controller = {
           });
 
           if (existClientAffiliate) {
-            // Update membership
+            // Update membership type
             if (client.membership_type_id !== membership_type_id) {
               await clientService.updateWhere(
                 {
@@ -268,6 +268,19 @@ const controller = {
             };
 
             return res.ok(result);
+          }
+
+          transaction = await db.sequelize.transaction();
+          // Update membership type
+          if (client.membership_type_id !== membership_type_id) {
+            await clientService.updateWhere(
+              {
+                id: client.id
+              },
+              {
+                membership_type_id
+              },
+              { transaction });
           }
 
           clientId = client.id;
@@ -341,6 +354,7 @@ const controller = {
         };
 
         const clientAffiliate = await clientAffiliateService.create(data, { transaction });
+
         await transaction.commit();
 
         transaction = null;
