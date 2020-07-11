@@ -105,11 +105,11 @@ const controller = {
       const level = referrerClientAffiliate.level + 1;
       const maxLevels = affiliatePolicy.max_levels;
 
-      if (maxLevels && level > maxLevels) {
-        const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+      // if (maxLevels && level > maxLevels) {
+      //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
-        return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
-      }
+      //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
+      // }
 
       return res.ok({ isValid: true });
     }
