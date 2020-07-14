@@ -835,7 +835,7 @@ const controller = {
       }
 
       const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
-      const maxLevel = Math.max(_.max(descendants.map(x => x.level)), clientAffiliate.level + config.affiliate.numOfRefferalStructures);
+      const maxLevel = clientAffiliate.level + config.affiliate.numOfRefferalStructures;
       const rootClientAffiliate = {
         ...clientAffiliate.get({ plain: true }),
         extClientId: extClientId,
