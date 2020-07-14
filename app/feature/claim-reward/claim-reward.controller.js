@@ -2,6 +2,7 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Decimal = require('decimal.js');
 const Sequelize = require('sequelize');
+const { forEach } = require('p-iteration');
 const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
 const mapper = require('app/response-schema/claim-reward.response-schema');
 const config = require('app/config');
@@ -141,35 +142,52 @@ const controller = {
     const logger = Container.get('logger');
 
     try {
-      logger.info('ClaimReward::update');
+      logger.info('updateClaimRewardStatus');
       const { body, params, affiliateTypeId, organizationId } = req;
-      const { claimRewardId } = params;
-      const { status } = body;
+      const { status, id_list } = body;
       const claimRewardService = Container.get(ClaimRewardService);
-      const claimReward = await claimRewardService.findByPk(claimRewardId);
-      if (!claimReward) {
-        return res.notFound(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND');
-      }
-
       const clientAffiliateService = Container.get(ClientAffiliateService);
-      const clientAffiliate = await clientAffiliateService.findByPk(claimReward.client_affiliate_id);
-      if (clientAffiliate.affiliate_type_id != affiliateTypeId) {
-        return res.forbidden(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND');
+      const claimRewards = await claimRewardService.findAll({ id: id_list });
+      const notFoundIdList = [];
+      const notPendingIdList = [];
+      const cache = {};
+
+      await forEach(claimRewards, async (claimReward) => {
+        cache[claimReward.id] = claimReward;
+
+        if (!(claimReward.status === ClaimRewardStatus.Pending || claimReward.status === status)) {
+          notPendingIdList.push(claimReward.id);
+        }
+
+        const clientAffiliate = await clientAffiliateService.findByPk(claimReward.client_affiliate_id);
+        if (clientAffiliate.affiliate_type_id != affiliateTypeId) {
+          notFoundIdList.push(claimReward.id);
+        }
+      });
+
+      id_list.forEach(id => {
+        if (!cache[id]) {
+          notFoundIdList.push(id);
+        }
+      });
+
+      if (notFoundIdList.length > 0) {
+        return res.notFound(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND', { field: ['notFoundIdList'], id_list: notFoundIdList });
       }
 
-      if (claimReward.status === status) {
-        return res.ok(mapper(claimReward));
+      if (notPendingIdList.length > 0) {
+        return res.forbidden(res.__('CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS'), 'CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS', { id_list: notPendingIdList });
       }
 
-      if (claimReward.status !== ClaimRewardStatus.Pending) {
-        return res.forbidden(res.__('CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS'), 'CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS');
-      }
+      const cond = {
+        id: id_list,
+      };
+      const data = {
+        status: status,
+      };
+      await claimRewardService.updateWhere(cond, data);
 
-      // TODO: validate status
-      claimReward.status = status;
-      await claimRewardService.update(claimReward);
-
-      return res.ok(mapper(claimReward));
+      return res.ok(true);
     }
     catch (err) {
       logger.error(err);
