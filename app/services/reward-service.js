@@ -70,7 +70,26 @@ class _RewardService extends BaseService {
         reject(err);
       }
     });
+  }
 
+  getTotalAmountGroupByLevel(affiliateClientId, currencySymbol) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const total = await this.model.findAll({
+          where: {
+            client_affiliate_id: affiliateClientId,
+            currency_symbol: currencySymbol,
+          },
+          group: ['level'],
+          attributes: ['level', [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
+          raw: true
+        });
+
+        resolve(total);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
 }

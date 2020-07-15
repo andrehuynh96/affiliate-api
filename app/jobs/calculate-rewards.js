@@ -17,9 +17,9 @@ const {
 } = require('../services');
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('../model/value-object/affiliate-request-details-status');
-const PolicyType = require('../model/value-object/policy-type');
-const CommissonType = require('../model/value-object/commisson-type');
-const policyHelper = require('../lib/helpers/policy-helper');
+const PolicyType = require('app/model/value-object/policy-type');
+const CommissonType = require('app/model/value-object/commisson-type');
+const policyHelper = require('app/lib/helpers/policy-helper');
 const PolicyData = require('./policy-data');
 
 const Op = Sequelize.Op;
@@ -148,6 +148,7 @@ class CalculateRewards {
       amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
       commisson_type: CommissonType.Direct,
       referrer_client_affiliate_id: null,
+      level: null,
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -204,6 +205,7 @@ class CalculateRewards {
           amount: shareAmount.times((rate / 100) * (membershipRate / 100)).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
           referrer_client_affiliate_id: invitee ? invitee.id : null,
+          level: index + 1,
         });
       }
     });
@@ -260,6 +262,7 @@ class CalculateRewards {
           amount: shareAmount.times(rate / 100).toDecimalPlaces(ROUND_DECIMAL_DIGITS).toNumber(),
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
           referrer_client_affiliate_id: invitee ? invitee.id : null,
+          level: index + 1,
         });
       }
     });

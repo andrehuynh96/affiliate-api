@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const _ = require('lodash');
 const utils = require('app/lib/utils');
 const pkg = require('../../package.json');
 
@@ -91,7 +92,12 @@ const config = {
     secretKey: process.env.PLUTX_USERID_APP_SECRET_KEY,
   },
   affiliate: {
+    maxLevels: utils.toNumber(process.env.AFFILIATE_MAX_LEVELS),
     numOfRefferalStructures: utils.toNumber(process.env.AFFILIATE_NUM_OF_REFFERAL_STRUCTURES),
+    defaultCurrencyList: (process.env.AFFILIATE_DEFAULT_CURRENCY_LIST || '').split(',').map(x => _.trim(x)),
+  },
+  membership: {
+    defaultCurrencyList: (process.env.MEMBERSHIP_DEFAULT_CURRENCY_LIST || '').split(',').map(x => _.trim(x)),
   },
 
 };
