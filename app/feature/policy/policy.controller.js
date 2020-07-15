@@ -237,6 +237,9 @@ const controller = {
       };
       const data = classInstance;
       delete data.id;
+      delete data.type;
+      delete data.currency_symbol;
+
       const [numOfItems, items] = await policyService.updateWhere(cond, data);
 
       if (!numOfItems) {
