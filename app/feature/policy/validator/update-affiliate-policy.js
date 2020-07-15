@@ -1,9 +1,8 @@
 const Joi = require('joi');
 
-const createAffiliatePolicySchema = Joi.object().keys({
+const updateAffiliatePolicySchema = Joi.object().keys({
   name: Joi.string().max(250).required(),
   description: Joi.string().optional().allow('').allow(null).max(1000),
-  currency_symbol: Joi.string().allow('').allow(null).max(100).optional(),
   type: Joi.string().max(250).required(),
   proportion_share: Joi.number().min(0).max(100).required(),
   max_levels: Joi.number().integer().min(1).optional(),
@@ -13,4 +12,4 @@ const createAffiliatePolicySchema = Joi.object().keys({
   ),
 });
 
-module.exports = createAffiliatePolicySchema;
+module.exports = updateAffiliatePolicySchema;
