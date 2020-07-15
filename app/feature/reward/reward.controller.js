@@ -2,7 +2,7 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Sequelize = require('sequelize');
 const moment = require('moment');
-const { map } = require('p-iteration');
+const { map, forEach } = require('p-iteration');
 const v4 = require('uuid/v4');
 const Decimal = require('decimal.js');
 const {
@@ -23,6 +23,8 @@ const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-
 const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
 const AffiliateType = require('app/model').affiliate_types;
 const db = require('app/model');
+const config = require('app/config');
+
 
 const Container = typedi.Container;
 const Op = Sequelize.Op;
@@ -218,27 +220,33 @@ const controller = {
         return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
       }
 
+      const defaultCurrencyList = [...config.membership.defaultCurrencyList];
       const rewardService = Container.get(RewardService);
       const claimRewardService = Container.get(ClaimRewardService);
       const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
 
       // Client doesn't have any reward
       if (!currencyList.length) {
-        const result = [
-          {
-            currency: 'USDT',
+        const result = defaultCurrencyList.map(currency => {
+          return {
+            currency,
             total_amount: 0,
             available_amount: 0,
             pending_amount: 0,
             paid_amount: 0,
-          },
-        ];
+          };
+        });
 
         return res.ok(result);
       }
 
+      const notFoundCurrencyList = defaultCurrencyList;
       const result = await map(currencyList, async (item) => {
         const { currency_symbol } = item;
+        if (defaultCurrencyList.includes(currency_symbol)) {
+          _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+        }
+
         const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
         const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
         const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
@@ -265,10 +273,146 @@ const controller = {
         };
       });
 
+      if (notFoundCurrencyList.length > 0) {
+        notFoundCurrencyList.forEach(currency => {
+          result.push({
+            currency: currency,
+            total_amount: 0,
+            available_amount: 0,
+            pending_amount: 0,
+            paid_amount: 0,
+          });
+        });
+      }
+
       return res.ok(result);
     }
     catch (err) {
       logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  getAffiliateRewardStatistics: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::getAffiliateRewardStatistics');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const defaultCurrencyList = [...config.affiliate.defaultCurrencyList];
+      const rewardService = Container.get(RewardService);
+      const claimRewardService = Container.get(ClaimRewardService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+      const notFoundCurrencyList = defaultCurrencyList;
+      const result = await map(currencyList, async (item) => {
+        const { currency_symbol } = item;
+        if (defaultCurrencyList.includes(currency_symbol)) {
+          _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+        }
+
+        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol);
+        const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
+        const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
+          ClaimRewardStatus.Approved,
+          ClaimRewardStatus.InProcessing,
+          ClaimRewardStatus.Completed,
+        ]);
+        // eslint-disable-next-line prefer-const
+        let [groupTotalReward, withdrawAmount, pendingAmount] = await Promise.all([
+          getTotalRewardTask,
+          getPaidAmountOfClaimRewardTask,
+          getPendingAmountClaimRewardTask,
+        ]);
+
+        console.log(groupTotalReward);
+        let totalReward = Decimal(0);
+        const rewardList = groupTotalReward.map(item => {
+          const amount = Decimal(Number(item.total));
+          totalReward = totalReward.add(amount);
+
+          return {
+            level: item.level || 0,
+            amount: amount.toNumber(),
+          };
+        });
+
+        const availableAmount = totalReward.sub(Number(pendingAmount)).toNumber();
+
+        return {
+          currency_symbol: currency_symbol,
+          reward_list: rewardList,
+          total_amount: totalReward.toNumber(),
+          available_amount: availableAmount,
+          pending_amount: pendingAmount,
+          paid_amount: withdrawAmount,
+        };
+      });
+
+      if (notFoundCurrencyList.length > 0) {
+        notFoundCurrencyList.forEach(currency => {
+          result.push({
+            currency_symbol: currency,
+            reward_list: [],
+            total_amount: 0,
+            available_amount: 0,
+            pending_amount: 0,
+            paid_amount: 0,
+          });
+        });
+      }
+
+      // Fill policy info
+      const levelList = [0];
+      for (let level = 1; level <= config.affiliate.maxLevels; level++) {
+        levelList.push(level);
+      }
+
+      await forEach(result, async item => {
+        const membershipPolicy = await policyHelper.getMembershipPolicyForCurrency({
+          currencySymbol: item.currency_symbol,
+          affiliateTypeId,
+          affiliateTypeService,
+        });
+
+        levelList.forEach(level => {
+          let levelInfo = item.reward_list.find(rw => rw.level === level);
+
+          if (!levelInfo) {
+            levelInfo = {
+              level,
+              amount: 0
+            };
+
+            item.reward_list.push(levelInfo);
+          }
+
+          if (level === 0) {
+            levelInfo.membership_policy = {
+              proportion_share: Number(membershipPolicy.proportion_share),
+              membership_rate: membershipPolicy.membership_rate,
+            };
+          }
+
+          item.reward_list = _.sortBy(item.reward_list, 'level');
+        });
+
+      });
+
+      return res.ok(result);
+    }
+    catch (err) {
+      logger.error('getAffiliateRewardStatistics', err);
       next(err);
     }
   },

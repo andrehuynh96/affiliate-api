@@ -6,6 +6,7 @@ const {
   ClientAffiliateService,
   PolicyService,
 } = require('app/services');
+const PolicyType = require('app/model/value-object/policy-type');
 
 const policyHelper = {
   // Get policy witch apply for clients that same root client
@@ -37,6 +38,24 @@ const policyHelper = {
       policies,
       rootClient: rootClientAffiliate
     };
+  },
+
+  async getPoliciesForCurrency({ currencySymbol, affiliateTypeId, affiliateTypeService }) {
+    let policies = null;
+
+    if (!_.some(policies)) {
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+      policies = await affiliateType.getDefaultPolicies();
+      policies = policies ? policies.filter(x => !x.deleted_flg) : [];
+    }
+
+    return policies;
+  },
+
+  async getMembershipPolicyForCurrency({ currencySymbol, affiliateTypeId, affiliateTypeService }) {
+    const policies = await policyHelper.getPoliciesForCurrency({ currencySymbol, affiliateTypeId, affiliateTypeService });
+
+    return policies.find(x => x.type === PolicyType.MEMBERSHIP);
   },
 
   async validatePolicyIdList(policyIdList, policyService) {

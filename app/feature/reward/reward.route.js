@@ -414,6 +414,181 @@ route.get('/reward-statistics',
 );
 /* #endregion */
 
+/* #region Get affiliate reward statistics */
+/**
+ * @swagger
+ * /api/v1/affiliate-reward-statistics:
+ *   get:
+ *     summary: Get affiliate reward statistics
+ *     tags:
+ *       - Reward
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - name: ext_client_id
+ *         in: query
+ *         type: string
+ *         required: true
+ *         description: Member's email
+ *
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+                  "data": [
+                      {
+                          "currency_symbol": "ATOM",
+                          "reward_list": [
+                              {
+                                  "level": 0,
+                                  "amount": 0,
+                                  "membership_policy": {
+                                      "proportion_share": 10,
+                                      "membership_rate": {
+                                          "d146bc01-9e56-4664-9788-79e518877f0b": 20,
+                                          "88fda933-0658-49c4-a9c7-4c0021e9a071": 100
+                                      }
+                                  }
+                              },
+                              {
+                                  "level": 1,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 2,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 3,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 4,
+                                  "amount": 0
+                              }
+                          ],
+                          "total_amount": 0,
+                          "available_amount": 0,
+                          "pending_amount": 0,
+                          "paid_amount": 0
+                      },
+                      {
+                          "currency_symbol": "IRIS",
+                          "reward_list": [
+                              {
+                                  "level": 0,
+                                  "amount": 0,
+                                  "membership_policy": {
+                                      "proportion_share": 10,
+                                      "membership_rate": {
+                                          "d146bc01-9e56-4664-9788-79e518877f0b": 20,
+                                          "88fda933-0658-49c4-a9c7-4c0021e9a071": 100
+                                      }
+                                  }
+                              },
+                              {
+                                  "level": 1,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 2,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 3,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 4,
+                                  "amount": 0
+                              }
+                          ],
+                          "total_amount": 0,
+                          "available_amount": 0,
+                          "pending_amount": 0,
+                          "paid_amount": 0
+                      },
+                      {
+                          "currency_symbol": "ONG",
+                          "reward_list": [
+                              {
+                                  "level": 0,
+                                  "amount": 0,
+                                  "membership_policy": {
+                                      "proportion_share": 10,
+                                      "membership_rate": {
+                                          "d146bc01-9e56-4664-9788-79e518877f0b": 20,
+                                          "88fda933-0658-49c4-a9c7-4c0021e9a071": 100
+                                      }
+                                  }
+                              },
+                              {
+                                  "level": 1,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 2,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 3,
+                                  "amount": 0
+                              },
+                              {
+                                  "level": 4,
+                                  "amount": 0
+                              }
+                          ],
+                          "total_amount": 0,
+                          "available_amount": 0,
+                          "pending_amount": 0,
+                          "paid_amount": 0
+                      }
+                  ]
+                }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.get('/affiliate-reward-statistics',
+  validator(getAvailableRewards, 'query'),
+  appAuth(),
+  verifySignature,
+  controller.getAffiliateRewardStatistics,
+);
+/* #endregion */
+
 /* #region View affiliate requests */
 /**
  * @swagger
