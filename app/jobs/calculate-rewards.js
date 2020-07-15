@@ -107,7 +107,7 @@ class CalculateRewards {
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
     const { max_levels, proportion_share, membership_rate } = policy;
     const rewardList = [];
-    if (proportion_share == 0) {
+    if (proportion_share == 0 || amount == 0) {
       return rewardList;
     }
 
@@ -159,14 +159,17 @@ class CalculateRewards {
   async processMembershipAffiliatePolicy(policyData) {
     const { stakerId, amount, affiliateRequestDetails, referrerList, policy, affiliateTypeId, currencySymbol } = policyData;
     this.logger.debug(`Processing membership policy for staker ${stakerId} with amount ${amount}.\n`, policy.get({ plain: true }));
-    const { max_levels, rates, proportion_share, membership_rate } = policy;
-    if (proportion_share == 0) {
+    const { max_levels, proportion_share, membership_rate } = policy;
+    let { rates } = policy;
+
+    const shareAmount = Decimal(amount).times(proportion_share / 100);
+    if (shareAmount == 0) {
       return [];
     }
 
-    const shareAmount = Decimal(amount).times(proportion_share / 100);
     const rewardList = [];
     const { clientService } = this;
+    rates = (rates || []).map(x => Number(x));
 
     await forEach(_.zip(referrerList, rates), async (arrays, index) => {
       const [referrer, rate] = arrays;
@@ -226,13 +229,15 @@ class CalculateRewards {
     }
 
     const { clientService } = this;
-    const { max_levels, rates, proportion_share } = policy;
-    if (proportion_share == 0) {
+    const { max_levels, proportion_share } = policy;
+    let { rates } = policy;
+    const shareAmount = Decimal(amount).times(proportion_share / 100);
+    if (shareAmount == 0) {
       return [];
     }
 
-    const shareAmount = Decimal(amount).times(proportion_share / 100);
     const rewardList = [];
+    rates = (rates || []).map(x => Number(x));
 
     await forEach(_.zip(referrerList, rates), async (arrays, index) => {
       const [referrer, rate] = arrays;

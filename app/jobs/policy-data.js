@@ -18,6 +18,12 @@ class PolicyData {
     this.affiliateTypeId = affiliateTypeId;
     this.currencySymbol = currencySymbol;
     this.rewards = [];
+
+    if (this.policy) {
+      if (this.policy.proportion_share) {
+        this.policy.proportion_share = Number(this.policy.proportion_share);
+      }
+    }
   }
 }
 
