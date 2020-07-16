@@ -21,7 +21,12 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.STRING(50),
       allowNull: false,
-    }
+    },
+    latest_id: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      default: null,
+    },
   }, {
     underscored: true,
     timestamps: true,

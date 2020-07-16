@@ -160,50 +160,6 @@ const controller = {
     }
   },
 
-  getAvailableRewards: async (req, res, next) => {
-    const logger = Container.get('logger');
-
-    try {
-      logger.info('Rewards::viewRewardHistories');
-      const { query, affiliateTypeId } = req;
-      const { offset, limit } = query;
-      const extClientId = _.trim(query.ext_client_id).toLowerCase();
-      const clientAffiliateService = Container.get(ClientAffiliateService);
-      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
-
-      if (!clientAffiliate) {
-        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
-        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
-      }
-
-      const rewardService = Container.get(RewardService);
-      const claimRewardService = Container.get(ClaimRewardService);
-      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
-
-      const result = await map(currencyList, async (item) => {
-        const { currency_symbol } = item;
-        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
-        const getTotalAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
-        let [totalReward, withdrawAmount] = await Promise.all([getTotalRewardTask, getTotalAmountOfClaimRewardTask]);
-
-        totalReward = Decimal(totalReward);
-        withdrawAmount = Decimal(withdrawAmount);
-        const availableAmount = totalReward.sub(withdrawAmount);
-
-        return {
-          currency: currency_symbol,
-          amount: availableAmount,
-        };
-      });
-
-      return res.ok(result);
-    }
-    catch (err) {
-      logger.error('search rewards: ', err);
-      next(err);
-    }
-  },
-
   getRewardStatistics: async (req, res, next) => {
     const logger = Container.get('logger');
 
@@ -247,7 +203,8 @@ const controller = {
           _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
         }
 
-        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
+        const getTotalRewardTask = rewardService.getAvailableAmount(clientAffiliate.id, currency_symbol, latestId);
         const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
         const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
           ClaimRewardStatus.Approved,
@@ -262,12 +219,11 @@ const controller = {
         ]);
 
         totalReward = Decimal(totalReward);
-        const availableAmount = totalReward.sub(Number(withdrawAmount) + Number(pendingAmount)).toNumber();
 
         return {
           currency: currency_symbol,
+          latest_id: latestId,
           total_amount: totalReward.toNumber(),
-          available_amount: availableAmount,
           pending_amount: pendingAmount,
           paid_amount: withdrawAmount,
         };
@@ -277,8 +233,8 @@ const controller = {
         notFoundCurrencyList.forEach(currency => {
           result.push({
             currency: currency,
+            latest_id: null,
             total_amount: 0,
-            available_amount: 0,
             pending_amount: 0,
             paid_amount: 0,
           });
@@ -288,7 +244,7 @@ const controller = {
       return res.ok(result);
     }
     catch (err) {
-      logger.error('search rewards: ', err);
+      logger.error('getRewardStatistics', err);
       next(err);
     }
   },
@@ -321,13 +277,15 @@ const controller = {
           _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
         }
 
-        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol);
+        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
+        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol, latestId);
         const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
         const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
           ClaimRewardStatus.Approved,
           ClaimRewardStatus.InProcessing,
           ClaimRewardStatus.Completed,
         ]);
+
         // eslint-disable-next-line prefer-const
         let [groupTotalReward, withdrawAmount, pendingAmount] = await Promise.all([
           getTotalRewardTask,
@@ -335,7 +293,6 @@ const controller = {
           getPendingAmountClaimRewardTask,
         ]);
 
-        console.log(groupTotalReward);
         let totalReward = Decimal(0);
         const rewardList = groupTotalReward.map(item => {
           const amount = Decimal(Number(item.total));
@@ -351,9 +308,10 @@ const controller = {
 
         return {
           currency_symbol: currency_symbol,
+          latest_id: latestId,
           reward_list: rewardList,
           total_amount: totalReward.toNumber(),
-          available_amount: availableAmount,
+          // available_amount: availableAmount,
           pending_amount: pendingAmount,
           paid_amount: withdrawAmount,
         };
@@ -363,9 +321,10 @@ const controller = {
         notFoundCurrencyList.forEach(currency => {
           result.push({
             currency_symbol: currency,
+            latest_id: null,
             reward_list: [],
             total_amount: 0,
-            available_amount: 0,
+            // available_amount: 0,
             pending_amount: 0,
             paid_amount: 0,
           });

@@ -251,81 +251,6 @@ route.get('/rewards',
 );
 /* #endregion */
 
-/* #region Get Available Rewards */
-/**
- * @swagger
- * /api/v1/available-rewards:
- *   get:
- *     summary: Get Available Rewards
- *     tags:
- *       - Reward
- *       - Backend
- *     description:
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         type: string
- *         required: true
- *         description: Bearer {token}
- *       - in: header
- *         name: x-affiliate-type-id
- *         type: number
- *         required: true
- *         description: Affiliate type id
- *       - name: ext_client_id
- *         in: query
- *         type: string
- *         required: true
- *         description: Member's email
- *
- *     produces:
- *       - application/json
- *     responses:
- *       200:
- *         description: Ok
- *         examples:
- *           application/json:
- *             { data:
-                  [
-                      {
-                          "currency": "ETH",
-                          "amount": "250.8"
-                      },
-                      {
-                          "currency": "USD",
-                          "amount": "1323364"
-                      }
-                  ]
-                }
- *       400:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/400'
- *
- *       401:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/401'
- *
- *       404:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/404'
- *
- *       500:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/500'
- */
-
-route.get('/available-rewards',
-  validator(getAvailableRewards, 'query'),
-  appAuth(),
-  verifySignature,
-  controller.getAvailableRewards,
-);
-/* #endregion */
-
 /* #region Get reward statistics */
 /**
  * @swagger
@@ -452,6 +377,7 @@ route.get('/reward-statistics',
                   "data": [
                       {
                           "currency_symbol": "ATOM",
+                          "latest_id": 102,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -482,12 +408,12 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
-                          "pending_amount": 0,
+                          "pending_amount": 48.61,
                           "paid_amount": 0
                       },
                       {
                           "currency_symbol": "IRIS",
+                          "latest_id": null,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -518,12 +444,12 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
                           "pending_amount": 0,
                           "paid_amount": 0
                       },
                       {
                           "currency_symbol": "ONG",
+                          "latest_id": null,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -554,7 +480,6 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
                           "pending_amount": 0,
                           "paid_amount": 0
                       }

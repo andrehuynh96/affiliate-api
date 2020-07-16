@@ -49,6 +49,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       default: null,
     },
+    status: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      default: null
+    },
   }, {
     underscored: true,
     timestamps: true,
@@ -60,7 +65,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
         name: 'rewards_amount_reward',
-        fields: ['client_affiliate_id', 'currency_symbol', 'amount', 'level']
+        fields: ['client_affiliate_id', 'currency_symbol', 'amount', 'level', 'status']
       },
     ]
   });
