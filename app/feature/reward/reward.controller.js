@@ -270,7 +270,6 @@ const controller = {
           currency: currency_symbol,
           latest_id: latestId,
           total_amount: totalReward.toNumber(),
-          available_amount: availableAmount,
           pending_amount: pendingAmount,
           paid_amount: withdrawAmount,
         };
@@ -282,7 +281,6 @@ const controller = {
             currency: currency,
             latest_id: null,
             total_amount: 0,
-            available_amount: 0,
             pending_amount: 0,
             paid_amount: 0,
           });
