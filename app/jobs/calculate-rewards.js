@@ -65,6 +65,7 @@ class CalculateRewards {
       affiliateTypeId: rootClientAffiliate.affiliate_type_id,
       clientAffiliateService,
       affiliateTypeService,
+      currencySymbol: currencySymbol,
     });
 
     const policyDataList = policies.map((policy) => {

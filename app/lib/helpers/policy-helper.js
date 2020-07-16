@@ -13,10 +13,22 @@ const policyHelper = {
   async getPolicies({ affiliateTypeId, clientAffiliate, clientAffiliateService, affiliateTypeService }) {
     const rootClientAffiliateId = clientAffiliate.root_client_affiliate_id || clientAffiliate.id;
 
-    return policyHelper.getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService, affiliateTypeService });
+    return policyHelper.getPolicyForRootClient({
+      rootClientAffiliateId,
+      affiliateTypeId,
+      clientAffiliateService,
+      affiliateTypeService,
+      currencySymbol: null,
+    });
   },
 
-  async getPolicyForRootClient({ rootClientAffiliateId, affiliateTypeId, clientAffiliateService, affiliateTypeService }) {
+  async getPolicyForRootClient({
+    rootClientAffiliateId,
+    affiliateTypeId,
+    clientAffiliateService,
+    affiliateTypeService,
+    currencySymbol,
+  }) {
     let rootClientAffiliate = null;
     let policies = null;
     // First, we find policy witch apply for root user
@@ -32,6 +44,19 @@ const policyHelper = {
       const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
       policies = await affiliateType.getDefaultPolicies();
       policies = policies ? policies.filter(x => !x.deleted_flg) : [];
+
+      let currencyPolicies = [];
+      if (currencySymbol) {
+        currencyPolicies = policies.filter(x => x.currency_symbol === currencySymbol);
+      }
+
+      if (currencyPolicies.length > 0) {
+        policies = currencyPolicies;
+      } else {
+        policies = policies.filter(x => !x.currency_symbol);
+      }
+
+      // console.log(policies.map(x => x.id));
     }
 
     return {
@@ -43,11 +68,9 @@ const policyHelper = {
   async getPoliciesForCurrency({ currencySymbol, affiliateTypeId, affiliateTypeService }) {
     let policies = null;
 
-    if (!_.some(policies)) {
-      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
-      policies = await affiliateType.getDefaultPolicies();
-      policies = policies ? policies.filter(x => !x.deleted_flg) : [];
-    }
+    const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+    policies = await affiliateType.getDefaultPolicies();
+    policies = policies ? policies.filter(x => !x.deleted_flg) : [];
 
     return policies;
   },
