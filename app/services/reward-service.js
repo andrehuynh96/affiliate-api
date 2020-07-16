@@ -54,7 +54,7 @@ class _RewardService extends BaseService {
 
   }
 
-  getTotalAmount(affiliateClientId, currencySymbol) {
+  getTotalAmount(affiliateClientId, currencySymbol, latestId) {
     return new Promise(async (resolve, reject) => {
       try {
         const cond = {
@@ -63,6 +63,12 @@ class _RewardService extends BaseService {
             currency_symbol: currencySymbol,
           }
         };
+        if (latestId) {
+          cond.where.id = {
+            [Op.lte]: latestId,
+          };
+        }
+
         const total = await this.model.sum('amount', cond);
 
         resolve(total);
@@ -72,13 +78,35 @@ class _RewardService extends BaseService {
     });
   }
 
-  getTotalAmountGroupByLevel(affiliateClientId, currencySymbol) {
+  getLatestId(affiliateClientId, currencySymbol) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findOne({
+          where: {
+            client_affiliate_id: affiliateClientId,
+            currency_symbol: currencySymbol,
+          },
+          order: [['id', 'DESC']]
+        });
+
+        resolve(result ? Number(result.id) : null);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  getTotalAmountGroupByLevel(affiliateClientId, currencySymbol, latestId) {
     return new Promise(async (resolve, reject) => {
       try {
         const total = await this.model.findAll({
           where: {
             client_affiliate_id: affiliateClientId,
             currency_symbol: currencySymbol,
+            status: { [Op.eq]: null },
+            id: {
+              [Op.lte]: latestId,
+            }
           },
           group: ['level'],
           attributes: ['level', [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],

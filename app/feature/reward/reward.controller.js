@@ -321,13 +321,16 @@ const controller = {
           _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
         }
 
-        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol);
+        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
+        console.log('latestId: ', latestId);
+        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol, latestId);
         const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
         const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
           ClaimRewardStatus.Approved,
           ClaimRewardStatus.InProcessing,
           ClaimRewardStatus.Completed,
         ]);
+
         // eslint-disable-next-line prefer-const
         let [groupTotalReward, withdrawAmount, pendingAmount] = await Promise.all([
           getTotalRewardTask,
@@ -335,7 +338,6 @@ const controller = {
           getPendingAmountClaimRewardTask,
         ]);
 
-        console.log(groupTotalReward);
         let totalReward = Decimal(0);
         const rewardList = groupTotalReward.map(item => {
           const amount = Decimal(Number(item.total));
@@ -351,9 +353,10 @@ const controller = {
 
         return {
           currency_symbol: currency_symbol,
+          latest_id: latestId,
           reward_list: rewardList,
           total_amount: totalReward.toNumber(),
-          available_amount: availableAmount,
+          // available_amount: availableAmount,
           pending_amount: pendingAmount,
           paid_amount: withdrawAmount,
         };
@@ -363,9 +366,10 @@ const controller = {
         notFoundCurrencyList.forEach(currency => {
           result.push({
             currency_symbol: currency,
+            latest_id: null,
             reward_list: [],
             total_amount: 0,
-            available_amount: 0,
+            // available_amount: 0,
             pending_amount: 0,
             paid_amount: 0,
           });
