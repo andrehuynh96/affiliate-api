@@ -67,6 +67,38 @@ class _RewardService extends BaseService {
           cond.where.id = {
             [Op.lte]: latestId,
           };
+
+          cond.where.status = {
+            [Op.eq]: null
+          };
+        }
+
+        const total = await this.model.sum('amount', cond);
+
+        resolve(total);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  getAvailableAmount(affiliateClientId, currencySymbol, latestId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          where: {
+            client_affiliate_id: affiliateClientId,
+            currency_symbol: currencySymbol,
+          }
+        };
+        if (latestId) {
+          cond.where.id = {
+            [Op.lte]: latestId,
+          };
+
+          cond.where.status = {
+            [Op.eq]: null
+          };
         }
 
         const total = await this.model.sum('amount', cond);

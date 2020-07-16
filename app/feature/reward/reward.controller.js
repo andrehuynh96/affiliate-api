@@ -247,6 +247,8 @@ const controller = {
           _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
         }
 
+        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
+        console.log('latestId: ', latestId);
         const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
         const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
         const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
@@ -266,6 +268,7 @@ const controller = {
 
         return {
           currency: currency_symbol,
+          latest_id: latestId,
           total_amount: totalReward.toNumber(),
           available_amount: availableAmount,
           pending_amount: pendingAmount,
@@ -277,6 +280,7 @@ const controller = {
         notFoundCurrencyList.forEach(currency => {
           result.push({
             currency: currency,
+            latest_id: null,
             total_amount: 0,
             available_amount: 0,
             pending_amount: 0,
@@ -288,7 +292,7 @@ const controller = {
       return res.ok(result);
     }
     catch (err) {
-      logger.error('search rewards: ', err);
+      logger.error('getRewardStatistics', err);
       next(err);
     }
   },
