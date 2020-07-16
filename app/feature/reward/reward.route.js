@@ -452,6 +452,7 @@ route.get('/reward-statistics',
                   "data": [
                       {
                           "currency_symbol": "ATOM",
+                          "latest_id": 102,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -482,12 +483,12 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
-                          "pending_amount": 0,
+                          "pending_amount": 48.61,
                           "paid_amount": 0
                       },
                       {
                           "currency_symbol": "IRIS",
+                          "latest_id": null,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -518,12 +519,12 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
                           "pending_amount": 0,
                           "paid_amount": 0
                       },
                       {
                           "currency_symbol": "ONG",
+                          "latest_id": null,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -554,7 +555,6 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
                           "pending_amount": 0,
                           "paid_amount": 0
                       }

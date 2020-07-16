@@ -150,6 +150,7 @@ class CalculateRewards {
       commisson_type: CommissonType.Direct,
       referrer_client_affiliate_id: null,
       level: null,
+      status: null,
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -210,6 +211,7 @@ class CalculateRewards {
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
+          status: null,
         });
       }
     });
@@ -269,6 +271,7 @@ class CalculateRewards {
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
+          status: null,
         });
       }
     });

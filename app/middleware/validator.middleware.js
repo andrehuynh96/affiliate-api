@@ -10,7 +10,6 @@ module.exports = function (schema, type) {
     const result = joi.validate(req[type], schema);
 
     if (result.error) {
-      logger.debug(result.error);
       const err = {
         details: result.error.details,
       };
