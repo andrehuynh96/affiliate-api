@@ -49,8 +49,9 @@ const route = express.Router();
  *            - amount
  *            example:
  *              {
-                  "currency_symbol": "ETH",
+                  "currency_symbol": "USDT",
                   "ext_client_id": "stakerd@blockchainlabs.asia",
+                  "latest_id": 130,
                   "amount": 1.1
                 }
  *     produces:
