@@ -239,6 +239,9 @@ const controller = {
       delete data.id;
       delete data.type;
       delete data.currency_symbol;
+      if (_.isUndefined(body.is_membership_system)) {
+        delete data.is_membership_system;
+      }
 
       const [numOfItems, items] = await policyService.updateWhere(cond, data);
 
