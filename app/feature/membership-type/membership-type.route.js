@@ -1,6 +1,7 @@
 const express = require('express');
 const controller = require('./membership-type.controller');
 const validator = require('app/middleware/validator.middleware');
+const { update } = require('./validator');
 const appAuth = require('app/middleware/authenticate.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
 
@@ -9,11 +10,11 @@ const route = express.Router();
 /* #region Update claims reward status */
 /**
  * @swagger
- * /api/v1/claim-rewards/:
+ * /api/v1/membership-type-config/:
  *   put:
- *     summary: Update claims reward status
+ *     summary: Update membership type
  *     tags:
- *       - ClaimReward
+ *       - MembershipType
  *       - Backend
  *     description:
  *     parameters:
@@ -46,11 +47,18 @@ const route = express.Router();
  *            - status
  *            example:
  *              {
-                  "id_list": [
-                    "ddd4517b-44ff-4d94-ae16-5465a681a260",
-                    "65560ce4-ba58-4b99-a537-366c5a27a200"
-                  ],
-                  "status": "Approved",
+                  "membershipTypes": [{
+                        "id": "88fda933-0658-49c4-a9c7-4c0021e9a071",
+                        "name": "Gold",
+                        "price": 500,
+                        "is_enabled": true
+                      },
+                      {
+                        "id": "d146bc01-9e56-4664-9788-79e518877f0b",
+                        "name": "Silver",
+                        "price": 0,
+                        "is_enabled": true
+                      }]
                 }
  *     produces:
  *       - application/json
@@ -81,7 +89,7 @@ const route = express.Router();
  */
 
 route.put('/membership-type-config',
-//   validator(update, 'body'),
+  validator(update, 'body'),
   appAuth(),
   verifySignature,
   controller.updateMembershipTypeConfig,
