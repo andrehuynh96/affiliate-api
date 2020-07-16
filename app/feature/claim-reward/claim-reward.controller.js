@@ -49,22 +49,12 @@ const controller = {
       const ttl = 15 * 1000; // 15 seconds
       lock = await lockService.lockRessource(ressourceId, ttl);
 
-      let totalReward, withdrawAmount, availableAmount;
-      if (latest_id) {
-        totalReward = await rewardService.getAvailableAmount(clientAffiliateId, currency_symbol, latest_id);
+      let totalReward;
+      totalReward = await rewardService.getAvailableAmount(clientAffiliateId, currency_symbol, latest_id);
 
-        totalReward = Decimal(totalReward);
-        withdrawAmount = Decimal(0);
-        availableAmount = totalReward.sub(withdrawAmount.add(amount));
-      } else {
-        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliateId, currency_symbol);
-        const getTotalAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliateId, currency_symbol);
-        [totalReward, withdrawAmount] = await Promise.all([getTotalRewardTask, getTotalAmountOfClaimRewardTask]);
-
-        totalReward = Decimal(totalReward);
-        withdrawAmount = Decimal(withdrawAmount);
-        availableAmount = totalReward.sub(withdrawAmount.add(amount));
-      }
+      totalReward = Decimal(totalReward);
+      const withdrawAmount = Decimal(0);
+      const availableAmount = totalReward.sub(withdrawAmount.add(amount));
 
       logger.info(`Processing claim request for client ${extClientId} (clientAffiliateId: ${clientAffiliateId})`, {
         currencySymbol: currency_symbol,

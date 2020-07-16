@@ -89,17 +89,14 @@ class _RewardService extends BaseService {
           where: {
             client_affiliate_id: affiliateClientId,
             currency_symbol: currencySymbol,
+            id: {
+              [Op.lte]: latestId,
+            },
+            status: {
+              [Op.eq]: null
+            },
           }
         };
-        if (latestId) {
-          cond.where.id = {
-            [Op.lte]: latestId,
-          };
-
-          cond.where.status = {
-            [Op.eq]: null
-          };
-        }
 
         const total = await this.model.sum('amount', cond);
 
