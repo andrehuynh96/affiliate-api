@@ -80,11 +80,11 @@ const route = express.Router();
  *           $ref: '#/definitions/500'
  */
 
-route.put('/membership-types',
+route.put('/membership-type-config',
 //   validator(update, 'body'),
   appAuth(),
   verifySignature,
-  controller.updateMembershipType,
+  controller.updateMembershipTypeConfig,
 );
 /* #endregion */
 

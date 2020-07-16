@@ -1,13 +1,14 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const config = require('app/config');
+const db = require('app/model');
 const {
     MembershipTypeService
 } = require('app/services');
 const Container = typedi.Container;
 
 module.exports = {
-    updateMembershipType: async (req, res, next) => {
+    updateMembershipTypeConfig: async (req, res, next) => {
         const logger = Container.get('logger');
 
         try {
@@ -16,58 +17,57 @@ module.exports = {
             const membershipTypesService = Container.get(MembershipTypeService);
             const membershipTypes = body.membershipTypes;
             const membershipTypeIds = membershipTypes.map(item => item.id);
-            const membershipTypesAlready = await MembershipTypeService.findAll({
+            const membershipTypesAlready = await membershipTypesService.findAll({
                 id: membershipTypeIds
             });
-            const availableMembershipTypes = [];
-            const unavailableMembershipTypes = [];
+            const membershipTypesUpdateData = [];
+            let membershipTypesInsertData = [];
             if (membershipTypesAlready.length > 0) {
-                membershipTypesAlready.forEach(item => {
-                    const availableMembershipType = membershipTypes.find(x => x.id === item.id);
-                    if (availableMembershipType) {
-                        availableMembershipTypes.push(availableMembershipType);
-                    }
-                });
 
                 membershipTypes.forEach(item => {
                     const isUnavailableMembershipType = membershipTypesAlready.every(x => x.id !== item.id);
                     if (isUnavailableMembershipType) {
-                        unavailableMembershipTypes.push(item);
+                        membershipTypesInsertData.push(item);
                     }
                 });
 
-                const membershipTypesUpdateData = await _pushDataMembershipType(availableMembershipTypes);
-                const membershipTypesInsertData = await _pushDataMembershipType(unavailableMembershipTypes);
-
-                const availableIds = membershipTypesUpdateData.map(item => item.id);
-                const unavailableIds = membershipTypesInsertData.map(item => item.id);
-                return res.ok(availableIds,unavailableIds);
+                membershipTypesAlready.forEach(item => {
+                    const availableMembershipType = membershipTypes.find(x => x.id === item.id);
+                    if (availableMembershipType) {
+                        membershipTypesUpdateData.push(availableMembershipType);
+                    }
+                });
             }
             else {
-               const membershipTypesInsertData = await _pushDataMembershipType(membershipTypes);
-               const unavailableIds = membershipTypesInsertData.map(item => item.id);
-                return res.ok(unavailableIds);
+                membershipTypesInsertData = membershipTypes;
             }
-            // return res.ok(true);
+            const transaction = await db.sequelize.transaction();
+            try {
+                if (membershipTypesInsertData.length > 0) {
+                    await membershipTypesService.bulkCreate(membershipTypesInsertData, { transaction });
+                }
+                if (membershipTypesUpdateData.length > 0) {
+                    for (const item of membershipTypesUpdateData) {
+                      const cond = {
+                            id: item.id
+                        };
+                        delete item.id;
+                        await membershipTypesService.updateWhere(cond, item, { transaction });
+                    }
+                }
+                await transaction.commit();
+                return res.ok(true);
+
+            } catch (error) {
+                await transaction.rollback();
+                logger.error(error);
+                throw error;
+            }
         }
         catch (error) {
             logger.error(error);
+
             next(error);
         }
     }
 };
-async function _pushDataMembershipType(membershipTypes){
-    const membershipTypesPreData = [];
-    membershipTypes.forEach(item => {
-        membershipTypesPreData.push({
-            name: item.name,
-            price: item.price,
-            currency_symbol: item.currency_symbol,
-            type: item.type,
-            display_order: item.display_order,
-            is_enabled: item.is_enabled,
-            deleted_flg: item.deleted_flg
-        });
-    });
-    return membershipTypesPreData;
-}
