@@ -48,6 +48,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       default: false,
     },
+    currency_symbol: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
   }, {
     underscored: true,
     timestamps: true,

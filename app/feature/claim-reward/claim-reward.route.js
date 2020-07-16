@@ -206,7 +206,7 @@ route.get('/claim-rewards',
 /* #region Update claims reward status */
 /**
  * @swagger
- * /api/v1/claim-rewards/:claimRewardId:
+ * /api/v1/claim-rewards/:
  *   put:
  *     summary: Update claims reward status
  *     tags:
@@ -243,7 +243,11 @@ route.get('/claim-rewards',
  *            - status
  *            example:
  *              {
-                  "status": "COMPLETED",
+                  "id_list": [
+                    "ddd4517b-44ff-4d94-ae16-5465a681a260",
+                    "65560ce4-ba58-4b99-a537-366c5a27a200"
+                  ],
+                  "status": "Approved",
                 }
  *     produces:
  *       - application/json
@@ -253,15 +257,7 @@ route.get('/claim-rewards',
  *         examples:
  *           application/json:
  *             {
- *                 "data":{
-                      "id": "d6bcb267-f09c-4ead-b3dc-875d32ab8a9d",
-                      "client_affiliate_id": "67",
-                      "currency_symbol": "ETH",
-                      "amount": "1.1",
-                      "status": "PENDING",
-                      "updated_at": "2020-03-30T03:21:09.206Z",
-                      "created_at": "2020-03-30T03:21:09.206Z"
-                    }
+ *                 "data": true
  *             }
  *       400:
  *         description: Bad request
@@ -281,8 +277,7 @@ route.get('/claim-rewards',
  *           $ref: '#/definitions/500'
  */
 
-route.put('/claim-rewards/:claimRewardId',
-  validator(claimRewardIdParam, 'params'),
+route.put('/claim-rewards',
   validator(update, 'body'),
   appAuth(),
   verifySignature,

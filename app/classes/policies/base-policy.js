@@ -6,6 +6,7 @@ class BasePolicy {
     this.id = null;
     this.name = '';
     this.description = '';
+    this.currency_symbol = null;
     this.type = PolicyType.UNKNOWN;
     this.max_levels = null;
     this.proportion_share = 0;

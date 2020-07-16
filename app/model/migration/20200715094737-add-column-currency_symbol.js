@@ -4,19 +4,16 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(t => {
       return Promise.all([
-        queryInterface.describeTable('rewards')
+        queryInterface.describeTable('policies')
           .then(async (tableDefinition) => {
-            if (tableDefinition['commisson_type']) {
+            if (tableDefinition['currency_symbol']) {
               return Promise.resolve();
             }
 
-            await queryInterface.addColumn('rewards', 'commisson_type', {
-              type: Sequelize.DataTypes.STRING(50),
+            await queryInterface.addColumn('policies', 'currency_symbol', {
+              type: Sequelize.DataTypes.STRING(100),
               allowNull: true,
             });
-
-            const sql = 'UPDATE public.rewards SET commisson_type=\'\' where commisson_type is null;';
-            await queryInterface.sequelize.query(sql, {}, {});
 
             return Promise.resolve();
           })
@@ -28,7 +25,7 @@ module.exports = {
   down: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(t => {
       return Promise.all([
-        queryInterface.removeColumn('rewards', 'commisson_type', { transaction: t }),
+        queryInterface.removeColumn('policies', 'currency_symbol', { transaction: t }),
       ]);
     });
   }

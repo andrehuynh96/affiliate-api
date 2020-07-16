@@ -6,14 +6,7 @@ const inviteeMapper = require('app/response-schema/invitee.response-schema');
 
 const clientHelper = {
   buildTree(clientAffiliate, descendants) {
-    const allItems = descendants.concat(clientAffiliate).map(x => {
-      return {
-        ...inviteeMapper(x),
-        referrer_client_affiliate_id: x.referrer_client_affiliate_id,
-        ext_client_id: x.extClientId,
-        id: x.id,
-      };
-    });
+    const allItems = descendants.concat(clientAffiliate);
 
     const cache = _.reduce(allItems, (val, item) => {
       val[item.id] = item;
@@ -52,6 +45,13 @@ const clientHelper = {
     }
 
     node.children = null;
+  },
+  getAllNodes(node, nodes) {
+    nodes.push(node);
+
+    if (node.children.length > 0) {
+      node.children.forEach(childNode => clientHelper.getAllNodes(childNode, nodes));
+    }
   },
   getRootOrgUnitListHasSystemAdminOU(orgUnitList) {
     const idCache = _.keyBy(orgUnitList, 'id');

@@ -15,6 +15,9 @@ const {
   createMembershipPolicySchema,
   createMembershipAffiliatePolicySchema,
   createAffiliatePolicySchema,
+  updateMembershipPolicySchema,
+  updateMembershipAffiliatePolicySchema,
+  updateAffiliatePolicySchema,
 } = require('app/feature/policy/validator');
 const {
   MembershipPolicy,
@@ -190,17 +193,17 @@ const controller = {
       let classInstance;
       switch (type) {
         case MembershipType.MEMBERSHIP:
-          schema = createMembershipPolicySchema;
+          schema = updateMembershipPolicySchema;
           classInstance = new MembershipPolicy(body);
           break;
 
         case MembershipType.MEMBERSHIP_AFFILIATE:
-          schema = createMembershipAffiliatePolicySchema;
+          schema = updateMembershipAffiliatePolicySchema;
           classInstance = new MembershipAffiliatePolicy(body);
           break;
 
         case MembershipType.AFFILIATE:
-          schema = createAffiliatePolicySchema;
+          schema = updateAffiliatePolicySchema;
           classInstance = new AffiliatePolicy(body);
           break;
       }
@@ -234,6 +237,12 @@ const controller = {
       };
       const data = classInstance;
       delete data.id;
+      delete data.type;
+      delete data.currency_symbol;
+      if (_.isUndefined(body.is_membership_system)) {
+        delete data.is_membership_system;
+      }
+
       const [numOfItems, items] = await policyService.updateWhere(cond, data);
 
       if (!numOfItems) {

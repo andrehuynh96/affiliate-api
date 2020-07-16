@@ -158,7 +158,7 @@ class _ClientAffiliateService extends BaseService {
 
     const result = referrerList.map((item) => {
       return {
-        id: item.id,
+        id: Number(item.id),
         affiliate_type_id: item.affiliate_type_id,
         level: item.level,
         root_client_id: item.root_client_id,
@@ -198,7 +198,7 @@ class _ClientAffiliateService extends BaseService {
           {
             replacements: {
               root_client_affiliate_id,
-              parent_path: `${clientAffiliate.parent_path}.${clientAffiliate.key}`,
+              parent_path: `${clientAffiliate.parent_path}.${clientAffiliate.id}`,
             },
           },
           {
@@ -207,8 +207,8 @@ class _ClientAffiliateService extends BaseService {
             type: db.QueryTypes.SELECT,
           });
 
-        const orgList = orgUnitResult[0].concat(clientAffiliate);
-        const orgUnitCache = _.reduce(orgList, (val, item) => {
+        const items = orgUnitResult[0].concat(clientAffiliate);
+        const orgUnitCache = _.reduce(items, (val, item) => {
           val[item.id] = item;
           item.children = [];
 
@@ -216,8 +216,8 @@ class _ClientAffiliateService extends BaseService {
         }, {});
 
         // Find parents
-        orgList.forEach((item) => {
-          item.parent = item.parent_id ? orgUnitCache[item.parent_id] : null;
+        items.forEach((item) => {
+          item.parent = item.referrer_client_affiliate_id ? orgUnitCache[item.referrer_client_affiliate_id] : null;
 
           if (item.parent) {
             item.parent.children.push(item);

@@ -4,18 +4,19 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(t => {
       return Promise.all([
-        queryInterface.describeTable('rewards')
+        queryInterface.describeTable('clients')
           .then(async (tableDefinition) => {
-            if (tableDefinition['commisson_type']) {
+            if (tableDefinition['actived_flg']) {
               return Promise.resolve();
             }
 
-            await queryInterface.addColumn('rewards', 'commisson_type', {
-              type: Sequelize.DataTypes.STRING(50),
+            await queryInterface.addColumn('clients', 'actived_flg', {
+              type: Sequelize.DataTypes.BOOLEAN,
               allowNull: true,
+              default: true,
             });
 
-            const sql = 'UPDATE public.rewards SET commisson_type=\'\' where commisson_type is null;';
+            const sql = 'UPDATE public.clients SET actived_flg=true where actived_flg is null;';
             await queryInterface.sequelize.query(sql, {}, {});
 
             return Promise.resolve();
@@ -28,7 +29,7 @@ module.exports = {
   down: (queryInterface, Sequelize) => {
     return queryInterface.sequelize.transaction(t => {
       return Promise.all([
-        queryInterface.removeColumn('rewards', 'commisson_type', { transaction: t }),
+        queryInterface.removeColumn('clients', 'actived_flg', { transaction: t }),
       ]);
     });
   }

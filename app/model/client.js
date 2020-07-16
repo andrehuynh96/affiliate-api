@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       allowNull: false,
     },
+    actived_flg: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      default: true,
+    },
     membership_type_id: {
       type: DataTypes.STRING(50),
       allowNull: true,

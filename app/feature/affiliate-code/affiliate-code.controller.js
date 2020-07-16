@@ -78,7 +78,7 @@ const controller = {
         });
 
         if (!referrerClientAffiliate) {
-          return res.badRequest(res.__('MEMBERSHIP_ORDER_AFFILIATE_CODE_IS_INVALID'), 'MEMBERSHIP_ORDER_AFFILIATE_CODE_IS_INVALID', { fields: ['affiliate_code'] });
+          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
       }
 
@@ -105,11 +105,11 @@ const controller = {
       const level = referrerClientAffiliate.level + 1;
       const maxLevels = affiliatePolicy.max_levels;
 
-      if (maxLevels && level > maxLevels) {
-        const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+      // if (maxLevels && level > maxLevels) {
+      //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
-        return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
-      }
+      //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
+      // }
 
       return res.ok({ isValid: true });
     }

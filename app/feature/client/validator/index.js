@@ -7,4 +7,6 @@ module.exports = {
   getAffiliateCodes: require('./get-affiliate-codes'),
   getInvitees: require('./get-invitees'),
   getTreeChart: require('./get-tree-chart'),
+  extClientId: require('./ext-client-id'),
+  getRefferalStructure: require('./get-refferal-structure'),
 };
