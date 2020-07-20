@@ -289,6 +289,7 @@ route.get('/rewards',
                   [
                     {
                         "currency": "USD",
+                        "latest_id": 130,
                         "total_amount": 30,
                         "available_amount": 24,
                         "pending_amount": 6,
@@ -296,6 +297,7 @@ route.get('/rewards',
                     },
                     {
                         "currency": "ETH",
+                        "latest_id": 131,
                         "total_amount": 250.8,
                         "available_amount": 250,
                         "pending_amount": 0.688228,
@@ -303,6 +305,7 @@ route.get('/rewards',
                     },
                     {
                         "currency": "USDT",
+                        "latest_id": 132,
                         "total_amount": 6,
                         "available_amount": 6,
                         "pending_amount": 0,
