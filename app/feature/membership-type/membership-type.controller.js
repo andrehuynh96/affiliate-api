@@ -16,10 +16,7 @@ module.exports = {
             const { body } = req;
             const membershipTypesService = Container.get(MembershipTypeService);
             const membershipTypes = body.membershipTypes;
-            const membershipTypeIds = membershipTypes.map(item => item.id);
-            const membershipTypesAlready = await membershipTypesService.findAll({
-                id: membershipTypeIds
-            });
+            const membershipTypesAlready = await membershipTypesService.findAll({});
             const membershipTypesUpdateData = [];
             let membershipTypesInsertData = [];
             if (membershipTypesAlready.length > 0) {
