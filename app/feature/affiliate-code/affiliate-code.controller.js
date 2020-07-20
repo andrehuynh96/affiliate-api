@@ -8,10 +8,12 @@ const {
   ClientAffiliateService,
   AffiliateTypeService,
   AffiliateCodeStatisticsService,
+  MembershipTypeService
 } = require('app/services');
 const mapper = require('app/response-schema/affiliate-code.response-schema');
 const { policyHelper, clientHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
+const MembershipTypeName = require('app/model/value-object/membership-type-name');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -83,10 +85,21 @@ const controller = {
       }
 
       const clientService = Container.get(ClientService);
+      const membershipTypeService = Container.get(MembershipTypeService);
       const client = await clientService.findByPk(referrerClientAffiliate.client_id);
       const membership_type_id = client.membership_type_id;
 
       if (!membership_type_id) {
+        return res.ok({ isValid: false });
+      }
+
+      const membershipType = await membershipTypeService.findOne({
+        where: {
+          id: membership_type_id
+        }
+      });
+
+      if (!membershipType || membershipType.type === MembershipTypeName.Free) {
         return res.ok({ isValid: false });
       }
 
