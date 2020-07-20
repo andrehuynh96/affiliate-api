@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING(256),
       allowNull: false
     },
+    is_membership_system: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      default: false,
+    },
     proportion_share: {
       type: DataTypes.DECIMAL,
       allowNull: false,
@@ -32,6 +37,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     membership_rate: {
       type: DataTypes.JSON,
+      allowNull: true,
+    },
+    organization_id: {
+      type: DataTypes.UUID,
       allowNull: true,
     },
     deleted_flg: {
@@ -56,6 +65,9 @@ module.exports = (sequelize, DataTypes) => {
       through: 'client_policies',
       foreignKey: 'policy_id',
     });
+
+    Policy.belongsTo(models.organizations);
+
   };
 
   return Policy;

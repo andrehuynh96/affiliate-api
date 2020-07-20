@@ -12,7 +12,12 @@ class MembershipAffiliatePolicy extends BasePolicy {
 
     this.type = PolicyType.MEMBERSHIP_AFFILIATE;
     this.rates = this.rates || [];
-    this.membership_rate = this.membership_rate || {};
+    this.membership_rates = this.membership_rates || [];
+    this.membership_rate = this.membership_rates.reduce((result, item) => {
+      result[item.membership_type_id] = item.rate;
+
+      return result;
+    }, {});
   }
 
 }

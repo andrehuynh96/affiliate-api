@@ -3,9 +3,11 @@ const typedi = require('typedi');
 const Sequelize = require('sequelize');
 const BaseService = require('./base-service');
 const ClientAffiliate = require('app/model').client_affiliates;
+const Client = require('app/model').clients;
 const AffiliateCode = require('app/model').affiliate_codes;
 const Policy = require('app/model').policies;
 const db = require('app/model').sequelize;
+const { policyHelper, clientHelper } = require('app/lib/helpers');
 
 const Op = Sequelize.Op;
 const { Container, Service } = typedi;
@@ -19,7 +21,9 @@ class _ClientAffiliateService extends BaseService {
     this.redisCacherService = Container.get('redisCacherService');
   }
 
-  create(data) {
+  create(data, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.create(data, {
@@ -28,7 +32,8 @@ class _ClientAffiliateService extends BaseService {
               model: AffiliateCode,
               as: 'affiliateCodes'
             },
-          ]
+          ],
+          transaction: options.transaction,
         });
 
         resolve(result);
@@ -64,17 +69,22 @@ class _ClientAffiliateService extends BaseService {
     });
   }
 
-  findByIdList(idList, affiliateTypeId) {
+  findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.findAll({
+        const client = await Client.findOne({
           where: {
-            affiliate_type_id: affiliateTypeId,
-            user_id: {
-              [Op.in]: idList
+            ext_client_id: extClientId,
+          },
+          include: [{
+            as: 'ClientAffiliates',
+            model: ClientAffiliate,
+            where: {
+              affiliate_type_id: affiliateTypeId,
             }
-          }
+          }]
         });
+        const result = client ? client.ClientAffiliates[0] : null;
 
         resolve(result);
       } catch (err) {
@@ -148,7 +158,7 @@ class _ClientAffiliateService extends BaseService {
 
     const result = referrerList.map((item) => {
       return {
-        id: item.id,
+        id: Number(item.id),
         affiliate_type_id: item.affiliate_type_id,
         level: item.level,
         root_client_id: item.root_client_id,
@@ -162,6 +172,82 @@ class _ClientAffiliateService extends BaseService {
     await this.redisCacherService.set(key, result, ttlInSeconds);
 
     return result;
+  }
+
+  async getDescendants(clientAffiliate) {
+    if (clientAffiliate.level === 1) {
+      return this.getDescendantsForRoot(clientAffiliate);
+    }
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const { id, parent_path, root_client_affiliate_id } = clientAffiliate;
+        const query = `
+        SELECT id, client_id, affiliate_type_id, referrer_client_affiliate_id, "level", parent_path, root_client_affiliate_id, actived_flg, created_at, updated_at
+        FROM public.client_affiliates
+        WHERE (
+          (
+            parent_path <@ :parent_path
+            AND root_client_affiliate_id = :root_client_affiliate_id
+          )
+        )
+        ORDER BY "level" DESC
+      `;
+
+        const orgUnitResult = await db.query(query,
+          {
+            replacements: {
+              root_client_affiliate_id,
+              parent_path: `${clientAffiliate.parent_path}.${clientAffiliate.id}`,
+            },
+          },
+          {
+            model: ClientAffiliate,
+            mapToModel: true,
+            type: db.QueryTypes.SELECT,
+          });
+
+        const items = orgUnitResult[0].concat(clientAffiliate);
+        const orgUnitCache = _.reduce(items, (val, item) => {
+          val[item.id] = item;
+          item.children = [];
+
+          return val;
+        }, {});
+
+        // Find parents
+        items.forEach((item) => {
+          item.parent = item.referrer_client_affiliate_id ? orgUnitCache[item.referrer_client_affiliate_id] : null;
+
+          if (item.parent) {
+            item.parent.children.push(item);
+          }
+        });
+
+        let result = [];
+        clientHelper.treeToList(clientAffiliate, result, null);
+        result = result.filter(x => x.id !== clientAffiliate.id);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  async getDescendantsForRoot(clientAffiliate) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const cond = {
+          root_client_affiliate_id: clientAffiliate.id,
+        };
+        const result = await this.findAll(cond);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
 }

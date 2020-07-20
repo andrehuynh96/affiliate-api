@@ -2,17 +2,29 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Sequelize = require('sequelize');
 const moment = require('moment');
+const { map, forEach } = require('p-iteration');
 const v4 = require('uuid/v4');
+const Decimal = require('decimal.js');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
   ClientService,
   ClientAffiliateService,
+  RewardService,
+  ClaimRewardService,
+  AffiliateTypeService,
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
+const affiliateRequestDetailsMapper = require('app/response-schema/affiliate-request-details.response-schema');
+const rewardMapper = require('app/response-schema/reward.response-schema');
 const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('app/model/value-object/affiliate-request-details-status');
+const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
+const AffiliateType = require('app/model').affiliate_types;
+const db = require('app/model');
+const config = require('app/config');
+
 
 const Container = typedi.Container;
 const Op = Sequelize.Op;
@@ -79,70 +91,385 @@ const controller = {
         affiliate_type_id: affiliateTypeId,
         details: requestDetailsLists,
       };
-      const affiliateRequest = await affiliateRequestService.create(data);
 
-      // Add to queue job
-      const calculateRewardsJob = Container.get('calculateRewardsJob');
-      const job = await calculateRewardsJob.addJob(affiliateRequest);
+      const transaction = await db.sequelize.transaction();
+      try {
+        const affiliateRequest = await affiliateRequestService.create(data, { transaction });
 
-      affiliateRequest.job_id = job.id + '';
-      await affiliateRequestService.updateWhere({
-        id: affiliateRequest.id
-      }, {
-        job_id: affiliateRequest.job_id,
-      });
+        // Add to queue job
+        const calculateRewardsJob = Container.get('calculateRewardsJob');
+        const job = await calculateRewardsJob.addJob(affiliateRequest);
 
-      return res.ok(affiliateRequest);
+        affiliateRequest.job_id = job.id + '';
+        await affiliateRequestService.updateWhere(
+          {
+            id: affiliateRequest.id
+          },
+          {
+            job_id: affiliateRequest.job_id,
+          },
+          { transaction });
+        await transaction.commit();
+
+        return res.ok(affiliateRequest);
+      } catch (err) {
+        await transaction.rollback();
+        throw err;
+      }
     }
     catch (err) {
       next(err);
     }
   },
 
-  search: async (req, res, next) => {
+  viewRewardHistories: async (req, res, next) => {
     const logger = Container.get('logger');
 
     try {
+      logger.info('Rewards::viewRewardHistories');
       const { query, affiliateTypeId } = req;
       const { offset, limit } = query;
-      const keyword = _.trim(query.keyword);
-      logger.info('AffiliateRequest::search');
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
 
-      const andCondition = [
-        {
-          affiliate_type_id: affiliateTypeId
-        }
-      ];
-
-      if (keyword) {
-        const cond2 = {
-          [Op.or]: [
-            {
-              status: {
-                [Op.substring]: keyword,
-              },
-            },
-            {
-              currency_symbol: {
-                [Op.substring]: keyword,
-              },
-            },
-          ]
-        };
-
-        andCondition.push(cond2);
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
       }
 
       const condition = {
-        [Op.and]: andCondition,
+        client_affiliate_id: clientAffiliate.id,
       };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const rewardService = Container.get(RewardService);
+      const { count: total, rows: items } = await rewardService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      return res.ok({
+        items: rewardMapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  getAvailableRewards: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::viewRewardHistories');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const rewardService = Container.get(RewardService);
+      const claimRewardService = Container.get(ClaimRewardService);
+      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+
+      const result = await map(currencyList, async (item) => {
+        const { currency_symbol } = item;
+        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        const getTotalAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        let [totalReward, withdrawAmount] = await Promise.all([getTotalRewardTask, getTotalAmountOfClaimRewardTask]);
+
+        totalReward = Decimal(totalReward);
+        withdrawAmount = Decimal(withdrawAmount);
+        const availableAmount = totalReward.sub(withdrawAmount);
+
+        return {
+          currency: currency_symbol,
+          amount: availableAmount,
+        };
+      });
+
+      return res.ok(result);
+    }
+    catch (err) {
+      logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  getRewardStatistics: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::getRewardStatistics');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const defaultCurrencyList = [...config.membership.defaultCurrencyList];
+      const rewardService = Container.get(RewardService);
+      const claimRewardService = Container.get(ClaimRewardService);
+      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+
+      // Client doesn't have any reward
+      if (!currencyList.length) {
+        const result = defaultCurrencyList.map(currency => {
+          return {
+            currency,
+            total_amount: 0,
+            available_amount: 0,
+            pending_amount: 0,
+            paid_amount: 0,
+          };
+        });
+
+        return res.ok(result);
+      }
+
+      const notFoundCurrencyList = defaultCurrencyList;
+      const result = await map(currencyList, async (item) => {
+        const { currency_symbol } = item;
+        if (defaultCurrencyList.includes(currency_symbol)) {
+          _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+        }
+
+        const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliate.id, currency_symbol);
+        const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
+        const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
+          ClaimRewardStatus.Approved,
+          ClaimRewardStatus.InProcessing,
+          ClaimRewardStatus.Completed,
+        ]);
+        // eslint-disable-next-line prefer-const
+        let [totalReward, withdrawAmount, pendingAmount] = await Promise.all([
+          getTotalRewardTask,
+          getPaidAmountOfClaimRewardTask,
+          getPendingAmountClaimRewardTask,
+        ]);
+
+        totalReward = Decimal(totalReward);
+        const availableAmount = totalReward.sub(Number(withdrawAmount) + Number(pendingAmount)).toNumber();
+
+        return {
+          currency: currency_symbol,
+          total_amount: totalReward.toNumber(),
+          available_amount: availableAmount,
+          pending_amount: pendingAmount,
+          paid_amount: withdrawAmount,
+        };
+      });
+
+      if (notFoundCurrencyList.length > 0) {
+        notFoundCurrencyList.forEach(currency => {
+          result.push({
+            currency: currency,
+            total_amount: 0,
+            available_amount: 0,
+            pending_amount: 0,
+            paid_amount: 0,
+          });
+        });
+      }
+
+      return res.ok(result);
+    }
+    catch (err) {
+      logger.error('search rewards: ', err);
+      next(err);
+    }
+  },
+
+  getAffiliateRewardStatistics: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('Rewards::getAffiliateRewardStatistics');
+      const { query, affiliateTypeId } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const defaultCurrencyList = [...config.affiliate.defaultCurrencyList];
+      const rewardService = Container.get(RewardService);
+      const claimRewardService = Container.get(ClaimRewardService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+      const notFoundCurrencyList = defaultCurrencyList;
+      const result = await map(currencyList, async (item) => {
+        const { currency_symbol } = item;
+        if (defaultCurrencyList.includes(currency_symbol)) {
+          _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+        }
+
+        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol);
+        const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
+        const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
+          ClaimRewardStatus.Approved,
+          ClaimRewardStatus.InProcessing,
+          ClaimRewardStatus.Completed,
+        ]);
+        // eslint-disable-next-line prefer-const
+        let [groupTotalReward, withdrawAmount, pendingAmount] = await Promise.all([
+          getTotalRewardTask,
+          getPaidAmountOfClaimRewardTask,
+          getPendingAmountClaimRewardTask,
+        ]);
+
+        console.log(groupTotalReward);
+        let totalReward = Decimal(0);
+        const rewardList = groupTotalReward.map(item => {
+          const amount = Decimal(Number(item.total));
+          totalReward = totalReward.add(amount);
+
+          return {
+            level: item.level || 0,
+            amount: amount.toNumber(),
+          };
+        });
+
+        const availableAmount = totalReward.sub(Number(pendingAmount)).toNumber();
+
+        return {
+          currency_symbol: currency_symbol,
+          reward_list: rewardList,
+          total_amount: totalReward.toNumber(),
+          available_amount: availableAmount,
+          pending_amount: pendingAmount,
+          paid_amount: withdrawAmount,
+        };
+      });
+
+      if (notFoundCurrencyList.length > 0) {
+        notFoundCurrencyList.forEach(currency => {
+          result.push({
+            currency_symbol: currency,
+            reward_list: [],
+            total_amount: 0,
+            available_amount: 0,
+            pending_amount: 0,
+            paid_amount: 0,
+          });
+        });
+      }
+
+      // Fill policy info
+      const levelList = [0];
+      for (let level = 1; level <= config.affiliate.maxLevels; level++) {
+        levelList.push(level);
+      }
+
+      await forEach(result, async item => {
+        const membershipPolicy = await policyHelper.getMembershipPolicyForCurrency({
+          currencySymbol: item.currency_symbol,
+          affiliateTypeId,
+          affiliateTypeService,
+        });
+
+        levelList.forEach(level => {
+          let levelInfo = item.reward_list.find(rw => rw.level === level);
+
+          if (!levelInfo) {
+            levelInfo = {
+              level,
+              amount: 0
+            };
+
+            item.reward_list.push(levelInfo);
+          }
+
+          if (level === 0) {
+            levelInfo.membership_policy = {
+              proportion_share: Number(membershipPolicy.proportion_share),
+              membership_rate: membershipPolicy.membership_rate,
+            };
+          }
+
+          item.reward_list = _.sortBy(item.reward_list, 'level');
+        });
+
+      });
+
+      return res.ok(result);
+    }
+    catch (err) {
+      logger.error('getAffiliateRewardStatistics', err);
+      next(err);
+    }
+  },
+
+  searchAffiliateRequests: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('ffiliateRequests::search');
+      const { query } = req;
+      const { offset, limit } = query;
+      let fromDate, toDate;
+      const condition = {};
+
+      if (query.from_date) {
+        fromDate = moment(query.from_date).toDate();
+        condition.from_date = {
+          [Op.gte]: fromDate,
+        };
+      }
+      if (query.to_date) {
+        toDate = moment(query.to_date).add(1, 'minute').toDate();
+        condition.to_date = {
+          [Op.lt]: toDate,
+        };
+      }
+      if (fromDate && toDate && fromDate >= toDate) {
+        return res.badRequest(res.__('TO_DATE_MUST_BE_GREATER_THAN_OR_EQUAL_FROM_DATE'), 'TO_DATE_MUST_BE_GREATER_THAN_OR_EQUAL_FROM_DATE', { field: ['from_date', 'to_date'] });
+      }
+
+      if (query.status) {
+        condition.status = query.status;
+      }
+
+      if (query.currency) {
+        condition.currency_symbol = { [Op.iLike]: query.currency };
+      }
 
       const off = parseInt(offset);
       const lim = parseInt(limit);
       const order = [['created_at', 'DESC']];
-
       const affiliateRequestService = Container.get(AffiliateRequestService);
       const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateTypeIdList = _.uniq(items.map(x => x.affiliate_type_id));
+      const affiliateTypes = await affiliateTypeService.findAll({
+        id: {
+          [Op.in]: affiliateTypeIdList,
+        },
+      });
+
+      items.forEach((item) => {
+        const affiliateType = affiliateTypes.find(x => x.id === item.affiliate_type_id);
+
+        item.affiliateType = affiliateType ? affiliateType.name : null;
+      });
 
       return res.ok({
         items: mapper(items),
@@ -153,6 +480,92 @@ const controller = {
     }
     catch (err) {
       logger.error('search affiliate requests fail: ', err);
+      next(err);
+    }
+  },
+
+  getAffiliateRequestDetails: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('getAffiliateRequestDetails::search');
+      const { body, params } = req;
+      const { requestId } = params;
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const options = {
+        include: [
+          {
+            model: AffiliateType,
+            as: 'AffiliateType',
+          }
+        ],
+      };
+      const affiliateRequest = await affiliateRequestService.findByPk(requestId, options);
+
+      if (!affiliateRequest) {
+        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+      }
+
+      affiliateRequest.affiliateType = affiliateRequest.AffiliateType ? affiliateRequest.AffiliateType.name : null;
+
+      return res.ok(mapper(affiliateRequest));
+    }
+    catch (err) {
+      logger.error('getAffiliateRequestDetails: ', err);
+      next(err);
+    }
+  },
+
+  getAffiliateRequestDetailList: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('getAffiliateRequestDetails::search');
+      const { body, params, query } = req;
+      const { requestId } = params;
+      const { offset, limit } = query;
+      const affiliateRequestService = Container.get(AffiliateRequestService);
+      const affiliateRequest = await affiliateRequestService.findByPk(requestId);
+
+      if (!affiliateRequest) {
+        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+      }
+
+      const condition = {
+        affiliate_request_id: affiliateRequest.id,
+      };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const { count: total, rows: items } = await affiliateRequestService.searchDetailsList({ condition, offset: off, limit: lim, order });
+
+      let result = [];
+      if (items.length > 0) {
+        // Get email list
+        const clientService = Container.get(ClientService);
+        const clientAffiliateIdList = items.map(item => item.client_affiliate_id);
+        const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+
+        result = items.map(item => {
+          const client = clientMapping[item.client_affiliate_id];
+
+          return {
+            ...item.get({ plain: true }),
+            extClientId: client ? client.ext_client_id : null,
+            currency_symbol: affiliateRequest.currency_symbol,
+          };
+        });
+      }
+
+      return res.ok({
+        items: affiliateRequestDetailsMapper(result),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('getAffiliateRequestDetails: ', err);
       next(err);
     }
   },

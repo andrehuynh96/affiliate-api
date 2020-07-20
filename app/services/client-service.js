@@ -42,7 +42,38 @@ class _ClientService extends BaseService {
     });
   }
 
-  findByIdList(extClientIdList, affiliateTypeId) {
+  getClientMappingByClientAffiliateIdList(clientAffiliateIdList) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findAll({
+          where: {
+          },
+          include: [{
+            as: 'ClientAffiliates',
+            model: ClientAffiliate,
+            where: {
+              id: {
+                [Op.in]: clientAffiliateIdList,
+              },
+            }
+          }]
+        });
+        const mapping = {};
+
+        result.forEach((client) => {
+          const clientAffiliate = client.ClientAffiliates[0];
+
+          mapping[clientAffiliate.id] = client;
+        });
+
+        resolve(mapping);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  findByExtClientIdListAndAffiliateTypeId(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.findAll({
@@ -67,10 +98,28 @@ class _ClientService extends BaseService {
     });
   }
 
+  findByIdList(idList) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findAll({
+          where: {
+            id: {
+              [Op.in]: idList
+            }
+          },
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   getExtClientIdMapping(extClientIdList, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.findByIdList(extClientIdList, affiliateTypeId);
+        const result = await this.findByExtClientIdListAndAffiliateTypeId(extClientIdList, affiliateTypeId);
         const mapping = {};
 
         result.forEach((client) => {
@@ -87,12 +136,6 @@ class _ClientService extends BaseService {
   }
 
   async getMembershipType(clientAffiliateId, affiliateTypeId) {
-    const key = this.redisCacherService.getCacheKey('membership-type', { clientAffiliateId });
-    let result = await this.redisCacherService.get(key);
-    if (!_.isNull(result) && !_.isUndefined(result)) {
-      return result;
-    }
-
     const client = await this.model.findOne({
       include: [{
         as: 'ClientAffiliates',
@@ -104,14 +147,10 @@ class _ClientService extends BaseService {
       }]
     });
 
-    result = client.membership_type || '';
-
-    const ttlInSeconds = 60;
-    await this.redisCacherService.set(key, result, ttlInSeconds);
+    const result = client ? client.membership_type_id || '' : '';
 
     return result;
   }
-
 
 }
 

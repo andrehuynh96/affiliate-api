@@ -1,8 +1,10 @@
 const ClaimRewardStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING',
-  COMPLETED: 'COMPLETED',
-  FAILED: 'FAILED',
+  Pending: 'Pending',
+  Rejected: 'Rejected',
+  Approved: 'Approved',
+  InProcessing: 'InProcessing',
+  Completed: 'Completed',
+  Failed: 'Failed',
 };
 
 module.exports = ClaimRewardStatus;

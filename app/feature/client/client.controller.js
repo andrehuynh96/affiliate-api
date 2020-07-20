@@ -1,6 +1,6 @@
 const typedi = require('typedi');
 const _ = require('lodash');
-const { forEach } = require('p-iteration');
+const { forEach, map } = require('p-iteration');
 const Sequelize = require('sequelize');
 const db = require('app/model');
 const {
@@ -9,11 +9,16 @@ const {
   ClientService,
   ClientAffiliateService,
   PolicyService,
+  RewardService,
 } = require('app/services');
-const { policyHelper } = require('app/lib/helpers');
+const { policyHelper, clientHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
-const MembershipType = require('app/model/value-object/membership-type');
-const mapper = require('app/response-schema/policy.response-schema');
+const policyMapper = require('app/response-schema/policy.response-schema');
+const inviteeMapper = require('app/response-schema/invitee.response-schema');
+const referralStructureMapper = require('app/response-schema/referral-structure.response-schema');
+const clientMapper = require('app/response-schema/client.response-schema');
+const CalculateRewards = require('app/jobs/calculate-rewards');
+const config = require('app/config');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -21,120 +26,399 @@ const { Container, Service } = typedi;
 
 const controller = {
   create: async (req, res, next) => {
+    const logger = Container.get('logger');
+
     try {
       const { body, affiliateTypeId, organizationId } = req;
-      const { membership_type } = body;
       let { ext_client_id, affiliate_code } = body;
       ext_client_id = _.trim(ext_client_id).toLowerCase();
       affiliate_code = _.trim(affiliate_code).toUpperCase();
 
-      // Validate membership type
-      const isValidMembershipType = membership_type ? !!MembershipType[membership_type] : true;
-      if (!isValidMembershipType) {
-        return res.badRequest(res.__('REGISTER_CLIENT_INVALID_MEMBERSHIP_TYPE'), 'REGISTER_CLIENT_INVALID_MEMBERSHIP_TYPE', { fields: ['membership_type'] });
-      }
-
       const affiliateCodeService = Container.get(AffiliateCodeService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
       const clientService = Container.get(ClientService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
       let level = 1;
       let parentPath = 'root';
       let referrer_client_affiliate_id = null;
       let rootClientAffiliateId = null;
       let affiliateCodeInstance = null;
       let affiliatePolicy = null;
+      let transaction = null;
+      let referrerClientAffiliate;
 
       // Has refferer
       if (affiliate_code) {
         affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
 
         if (!affiliateCodeInstance) {
-          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+          return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
 
-        referrer_client_affiliate_id = affiliateCodeInstance.client_affiliate_id;
-        const referrerClientAffiliate = await affiliateCodeInstance.getOwner();
-
+        referrerClientAffiliate = await affiliateCodeInstance.getOwner();
         if (!referrerClientAffiliate) {
-          return res.notFound(res.__('NOT_FOUND_REFERRER_USER'), 'NOT_FOUND_REFERRER_USER');
+          return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
         }
 
+        // Referrer code doesn't exist on system
         if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
-          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+          referrerClientAffiliate = await clientAffiliateService.findOne({
+            client_id: referrerClientAffiliate.client_id,
+            affiliate_type_id: affiliateTypeId,
+          });
+
+          if (!referrerClientAffiliate) {
+            return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+          }
         }
 
-        rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
-        // Check max level that policy can set for users
-        const { policies } = await policyHelper.getPolicies({ affiliateTypeId, clientAffiliateService, clientAffiliate: referrerClientAffiliate });
-        if (!_.some(policies)) {
-          return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
-        }
-
-        affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
-        if (!affiliatePolicy) {
-          return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
-        }
-
-        level = referrerClientAffiliate.level + 1;
-        const maxLevels = affiliatePolicy.max_levels;
-
-        if (maxLevels && level > maxLevels) {
-          const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
-
-          return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
-        }
-
-        parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
+        referrer_client_affiliate_id = referrerClientAffiliate.id;
       }
 
-      const client = await clientService.findOrCreate({
-        ext_client_id,
-        organization_id: organizationId,
-      }, {
-        ext_client_id,
-        organization_id: organizationId,
-        membership_type,
-      });
-
-      const clientId = client.id;
-      // Check duplicate client
-      const existClientAffiliate = await clientAffiliateService.findOne({
-        client_id: clientId,
-        affiliate_type_id: affiliateTypeId,
-      });
-      if (existClientAffiliate) {
-        return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['client_id'] });
-      }
-
-      // Update membership
-      if (membership_type && client.membership_type !== membership_type) {
-        await clientService.updateWhere({
-          id: client.id
-        }, {
-          membership_type
+      try {
+        let client = await clientService.findOne({
+          ext_client_id,
+          organization_id: organizationId,
         });
+
+        let clientId = null;
+        if (client) {
+          // Check duplicate client
+          clientId = client.id;
+          const existClientAffiliate = await clientAffiliateService.findOne({
+            client_id: clientId,
+            affiliate_type_id: affiliateTypeId,
+          });
+
+          if (existClientAffiliate) {
+            return res.badRequest(res.__('REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID'), 'REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+          }
+        } else {
+          transaction = await db.sequelize.transaction();
+
+          client = await clientService.create({
+            ext_client_id,
+            organization_id: organizationId,
+            actived_flg: true,
+          }, { transaction });
+
+          clientId = client.id;
+        }
+
+        if (!transaction) {
+          transaction = await db.sequelize.transaction();
+        }
+
+        // Has refferer
+        if (referrerClientAffiliate) {
+          rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
+          // Check max level that policy can set for users
+          const { policies } = await policyHelper.getPolicies({
+            affiliateTypeId,
+            clientAffiliateService,
+            affiliateTypeService,
+            clientAffiliate: referrerClientAffiliate
+          });
+
+          if (!_.some(policies)) {
+            await transaction.rollback();
+
+            return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+          }
+
+          affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
+          if (!affiliatePolicy) {
+            await transaction.rollback();
+
+            return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+          }
+
+          level = referrerClientAffiliate.level + 1;
+          const maxLevels = affiliatePolicy.max_levels;
+
+          // if (maxLevels && level > maxLevels + 1) {
+          //   await transaction.rollback();
+          //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+
+          //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
+          // }
+
+          parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
+        }
+
+        const code = await affiliateCodeService.generateCode();
+        const data = {
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
+          referrer_client_affiliate_id: referrer_client_affiliate_id,
+          level,
+          parent_path: parentPath,
+          root_client_affiliate_id: rootClientAffiliateId,
+          actived_flg: true,
+          affiliateCodes: [{
+            code,
+            deleted_flg: false,
+          }]
+        };
+
+        const clientAffiliate = await clientAffiliateService.create(data, { transaction });
+        await transaction.commit();
+
+        return res.ok(clientAffiliate.affiliateCodes[0]);
+      } catch (err) {
+        if (transaction) {
+          await transaction.rollback();
+        }
+
+        throw err;
       }
-
-      const code = await affiliateCodeService.generateCode();
-      const data = {
-        client_id: clientId,
-        affiliate_type_id: affiliateTypeId,
-        referrer_client_affiliate_id: referrer_client_affiliate_id,
-        level,
-        parent_path: parentPath,
-        root_client_affiliate_id: rootClientAffiliateId,
-        actived_flg: true,
-        affiliateCodes: [{
-          code,
-          deleted_flg: false,
-        }]
-      };
-
-      const clientAffiliate = await clientAffiliateService.create(data);
-
-      return res.ok(clientAffiliate.affiliateCodes[0]);
     }
     catch (err) {
+      logger.error(err);
+      next(err);
+    }
+  },
+
+  registerMembership: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { body, affiliateTypeId, organizationId } = req;
+      // eslint-disable-next-line prefer-const
+      let { ext_client_id, affiliate_code, membership_order_id, membership_type_id, amount, currency_symbol } = body;
+      ext_client_id = _.trim(ext_client_id).toLowerCase();
+      affiliate_code = _.trim(affiliate_code).toUpperCase();
+
+      const affiliateCodeService = Container.get(AffiliateCodeService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientService = Container.get(ClientService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      let level = 1;
+      let parentPath = 'root';
+      let referrer_client_affiliate_id = null;
+      let rootClientAffiliateId = null;
+      let affiliateCodeInstance = null;
+      let affiliatePolicy = null;
+      let transaction = null;
+      let referrerClientAffiliate;
+
+      affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
+      if (!affiliateCodeInstance) {
+        return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+      }
+
+      referrerClientAffiliate = await affiliateCodeInstance.getOwner();
+      if (!referrerClientAffiliate) {
+        return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+      }
+
+      // Referrer code doesn't exist on system
+      if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
+        referrerClientAffiliate = await clientAffiliateService.findOne({
+          client_id: referrerClientAffiliate.client_id,
+          affiliate_type_id: affiliateTypeId,
+        });
+
+        if (!referrerClientAffiliate) {
+          return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+        }
+      }
+
+      referrer_client_affiliate_id = referrerClientAffiliate.id;
+      try {
+        let client = await clientService.findOne({
+          ext_client_id,
+          organization_id: organizationId,
+        });
+
+        let clientId = null;
+        if (client) {
+          // Check duplicate client
+          clientId = client.id;
+          const existClientAffiliate = await clientAffiliateService.findOne({
+            client_id: clientId,
+            affiliate_type_id: affiliateTypeId,
+          });
+
+          if (existClientAffiliate) {
+            // Update membership type
+            if (client.membership_type_id !== membership_type_id) {
+              await clientService.updateWhere(
+                {
+                  id: client.id
+                },
+                {
+                  membership_type_id
+                });
+            }
+
+            const clientAffiliateId = existClientAffiliate.id;
+            const rewardList = await controller.getRewards({
+              clientAffiliateId,
+              membershipOrderId: membership_order_id,
+              amount,
+              affiliateTypeId,
+              currencySymbol: currency_symbol,
+            });
+
+            const affiliateCodes = await existClientAffiliate.getAffiliateCodes();
+            const result = {
+              rewards: rewardList,
+              affiliate_code: affiliateCodes[0],
+            };
+
+            return res.ok(result);
+          }
+
+          transaction = await db.sequelize.transaction();
+          // Update membership type
+          if (client.membership_type_id !== membership_type_id) {
+            await clientService.updateWhere(
+              {
+                id: client.id
+              },
+              {
+                membership_type_id
+              },
+              { transaction });
+          }
+
+          clientId = client.id;
+        } else {
+          transaction = await db.sequelize.transaction();
+
+          client = await clientService.create({
+            ext_client_id,
+            organization_id: organizationId,
+            membership_type_id,
+            actived_flg: true,
+          }, { transaction });
+
+          clientId = client.id;
+        }
+
+        if (!transaction) {
+          transaction = await db.sequelize.transaction();
+        }
+
+        // Has refferer
+        if (referrerClientAffiliate) {
+          rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
+          // Check max level that policy can set for users
+          const { policies } = await policyHelper.getPolicies({
+            affiliateTypeId,
+            clientAffiliateService,
+            affiliateTypeService,
+            clientAffiliate: referrerClientAffiliate
+          });
+
+          if (!_.some(policies)) {
+            await transaction.rollback();
+
+            return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+          }
+
+          affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
+          if (!affiliatePolicy) {
+            await transaction.rollback();
+
+            return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
+          }
+
+          level = referrerClientAffiliate.level + 1;
+          const maxLevels = affiliatePolicy.max_levels;
+
+          // if (maxLevels && level > maxLevels + 1) {
+          //   await transaction.rollback();
+          //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+
+          //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['affiliate_code'] });
+          // }
+
+          parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
+        }
+
+        const code = await affiliateCodeService.generateCode();
+        const data = {
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
+          referrer_client_affiliate_id: referrer_client_affiliate_id,
+          level,
+          parent_path: parentPath,
+          root_client_affiliate_id: rootClientAffiliateId,
+          actived_flg: true,
+          affiliateCodes: [{
+            code,
+            deleted_flg: false,
+          }]
+        };
+
+        const clientAffiliate = await clientAffiliateService.create(data, { transaction });
+
+        await transaction.commit();
+
+        transaction = null;
+        const clientAffiliateId = clientAffiliate.id;
+        const rewardList = await controller.getRewards({
+          clientAffiliateId,
+          membershipOrderId: membership_order_id,
+          amount,
+          affiliateTypeId,
+          currencySymbol: currency_symbol,
+        });
+        const result = {
+          rewards: rewardList,
+          affiliate_code: clientAffiliate.affiliateCodes[0],
+        };
+
+        return res.ok(result);
+      } catch (err) {
+        if (transaction) {
+          await transaction.rollback();
+        }
+
+        throw err;
+      }
+    }
+    catch (err) {
+      logger.error(err);
+      next(err);
+    }
+  },
+
+  search: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { query, affiliateTypeId, organizationId } = req;
+      const { offset, limit } = query;
+      const keyword = _.trim(query.keyword);
+      logger.info('Client::search');
+
+      const condition = {
+        organization_id: organizationId,
+      };
+      if (keyword) {
+        condition.name = {
+          [Op.substring]: keyword,
+        };
+      }
+
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const clientService = Container.get(ClientService);
+      const { count: total, rows: items } = await clientService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      return res.ok({
+        items: clientMapper(items),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error('search policys fail: ', err);
       next(err);
     }
   },
@@ -145,7 +429,7 @@ const controller = {
     try {
       logger.info('client::setPolicies');
       const { body, affiliateTypeId, organizationId } = req;
-      const { affiliate_code, membership_type } = body;
+      const { affiliate_code } = body;
       const extClientId = _.trim(body.ext_client_id).toLowerCase();
       const { policies } = body;
 
@@ -180,17 +464,15 @@ const controller = {
       const transaction = await db.sequelize.transaction();
       try {
         const existPolicies = await clientAffiliate.getClientPolicies();
-        await clientAffiliate.removeClientPolicies(existPolicies);
-        await clientAffiliate.addClientPolicies(policyList);
+        await clientAffiliate.removeClientPolicies(existPolicies, { transaction });
+        await clientAffiliate.addClientPolicies(policyList, { transaction });
 
         await transaction.commit();
       } catch (err) {
         await transaction.rollback();
-        logger.error(err);
         throw err;
       }
 
-      // return res.ok(mapper(policyList));
       return res.ok({ isSuccess: true });
     }
     catch (err) {
@@ -303,7 +585,7 @@ const controller = {
         }
 
         await forEach(updateClientAffiliateList, async (instance) => {
-          await clientAffiliateService.update(instance);
+          await clientAffiliateService.update(instance, { transaction });
         });
 
         await transaction.commit();
@@ -322,6 +604,79 @@ const controller = {
     }
   },
 
+  updateMembershipType: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::updateMembershipType');
+      const { body, affiliateTypeId, organizationId } = req;
+      const { ext_client_id, membership_type_id } = body;
+      const extClientId = _.trim(ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+
+      const transaction = await db.sequelize.transaction();
+      try {
+        const [numOfItems, items] = await clientService.updateWhere(
+          {
+            ext_client_id,
+            organization_id: organizationId,
+          },
+          {
+            membership_type_id: membership_type_id ? membership_type_id : null,
+          }, { transaction });
+
+
+        if (!numOfItems) {
+          await transaction.rollback();
+
+          const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+          return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+        }
+
+        const client = items[0];
+        const clientId = client.id;
+        const existClientAffiliate = await clientAffiliateService.findOne({
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
+        });
+
+        if (!existClientAffiliate) {
+          const affiliateCodeService = Container.get(AffiliateCodeService);
+          const code = await affiliateCodeService.generateCode();
+          const data = {
+            client_id: clientId,
+            affiliate_type_id: affiliateTypeId,
+            referrer_client_affiliate_id: null,
+            level: 1,
+            parent_path: 'root',
+            root_client_affiliate_id: null,
+            actived_flg: true,
+            affiliateCodes: [{
+              code,
+              deleted_flg: false,
+            }]
+          };
+
+          const clientAffiliate = await clientAffiliateService.create(data, { transaction });
+        }
+        await transaction.commit();
+
+        return res.ok({ isSuccess: true });
+      } catch (error) {
+        await transaction.rollback();
+
+        throw error;
+      }
+
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+
   getAffiliateCodes: async (req, res, next) => {
     const logger = Container.get('logger');
 
@@ -329,11 +684,9 @@ const controller = {
       logger.info('client::getAffiliateCodes');
       const { body, affiliateTypeId, organizationId, query } = req;
       const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
 
-      const clientService = Container.get(ClientService);
-      const clients = await clientService.findByIdList([extClientId], affiliateTypeId);
-      const client = clients[0];
-      const clientAffiliate = client ? client.ClientAffiliates[0] : null;
       if (!clientAffiliate) {
         const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
         return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
@@ -355,6 +708,322 @@ const controller = {
       next(err);
     }
   },
+
+  getInvitees: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('client::getInvitees');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const { offset, limit } = query;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+
+      // const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      const condition = {
+        referrer_client_affiliate_id: clientAffiliate.id,
+      };
+      const off = parseInt(offset);
+      const lim = parseInt(limit);
+      const order = [['created_at', 'DESC']];
+      const { count: total, rows: items } = await clientAffiliateService.findAndCountAll({ condition, offset: off, limit: lim, order });
+
+      let result = [];
+      if (items.length > 0) {
+        // Get email list
+        const clientService = Container.get(ClientService);
+        const clientIdList = items.map(x => x.client_id);
+        const clients = await clientService.findByIdList(clientIdList);
+
+        result = items.map(item => {
+          const client = clients.find(x => x.id === item.id);
+
+          return {
+            ...item.get({ plain: true }),
+            extClientId: client ? client.ext_client_id : null,
+          };
+        });
+      }
+
+      return res.ok({
+        items: inviteeMapper(result),
+        offset: off,
+        limit: lim,
+        total: total
+      });
+    }
+    catch (err) {
+      logger.error(err);
+
+      next(err);
+    }
+  },
+
+  getTreeChart: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('Get tree chart');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        const client = await clientService.findOne({ ext_client_id: extClientId });
+        const rootNode = {
+          id: client ? client.id : null,
+          ext_client_id: extClientId,
+          affiliate_type_name: affiliateType.name,
+          children: [],
+        };
+
+        return res.ok(rootNode);
+      }
+
+      const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
+      const clientIdList = descendants.map(x => x.client_id);
+      const clients = await clientService.findByIdList(clientIdList);
+      const mapItems = descendants.map(clientAffiliate => {
+        const client = clients.find(client => client.id === clientAffiliate.client_id);
+
+        return {
+          ...(clientAffiliate.get ? clientAffiliate.get({ plain: true }) : clientAffiliate),
+          ext_client_id: client ? client.ext_client_id : null,
+        };
+      });
+
+      const rootClientAffiliate = {
+        ...clientAffiliate.get({ plain: true }),
+        ext_client_id: extClientId,
+      };
+      const rootNode = clientHelper.buildTree(rootClientAffiliate, mapItems);
+      rootNode.affiliate_type_name = affiliateType.name;
+
+      return res.ok(rootNode);
+    }
+    catch (error) {
+      logger.error('getTreeChart fail', error);
+
+      next(error);
+    }
+  },
+
+  getReferralStructure: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('Get Referral Structure');
+      const { body, affiliateTypeId, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      const affiliateType = await affiliateTypeService.findByPk(affiliateTypeId);
+      const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
+
+      if (!clientAffiliate) {
+        return res.ok([]);
+      }
+
+      const descendants = await clientAffiliateService.getDescendants(clientAffiliate);
+      const maxLevel = clientAffiliate.level + config.affiliate.numOfRefferalStructures;
+      const rootClientAffiliate = {
+        ...clientAffiliate.get({ plain: true }),
+        extClientId: extClientId,
+      };
+      const mapItems = descendants.map(clientAffiliate => {
+        return {
+          ...(clientAffiliate.get ? clientAffiliate.get({ plain: true }) : clientAffiliate),
+        };
+      });
+      const rootNode = clientHelper.buildTree(rootClientAffiliate, mapItems);
+
+      let result = rootNode.children;
+      const total = result.length;
+      const grandTotal = {
+        num_of_level_1_affiliates: total,
+        num_of_level_2_affiliates: 0,
+        num_of_level_3_affiliates: 0,
+        num_of_level_4_affiliates: 0,
+        total: total,
+      };
+
+      if (!total) {
+        result.unshift(grandTotal);
+
+        return res.ok(result);
+      }
+
+      result = _.orderBy(result, ['createdAt'], ['desc']);
+      const clientIdList = result.map(x => x.client_id);
+      const clients = await clientService.findByIdList(clientIdList);
+
+      result = result.map((item) => {
+        const nodes = [];
+        clientHelper.getAllNodes(item, nodes);
+        const client = clients.find(client => client.id == item.client_id);
+        item.ext_client_id = client ? client.ext_client_id : null;
+        item = referralStructureMapper(item);
+
+        for (let level = item.level + 1; level <= maxLevel; level++) {
+          const propertyName = `num_of_level_${level - rootClientAffiliate.level}_affiliates`;
+          const total1 = nodes.filter(node => node.level == level).length;
+
+          item[propertyName] = total1;
+          grandTotal[propertyName] = (grandTotal[propertyName] || 0) + total1;
+          grandTotal.total += total1;
+        }
+
+        return item;
+      });
+
+      result.unshift(grandTotal);
+
+      return res.ok(result);
+    }
+    catch (error) {
+      logger.error('Get Referral Structure', error);
+
+      next(error);
+    }
+  },
+
+  deactivate: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('deactivate');
+      const { body, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const [numOfItems, items] = await clientService.updateWhere(
+        {
+          ext_client_id: extClientId,
+          organization_id: organizationId,
+        },
+        {
+          actived_flg: false,
+        });
+
+      if (!numOfItems) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      return res.ok({ isSuccess: true });
+    }
+    catch (error) {
+      logger.error('deactivate', error);
+
+      next(error);
+    }
+  },
+
+  activate: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('activate');
+      const { body, organizationId, query } = req;
+      const extClientId = _.trim(query.ext_client_id).toLowerCase();
+      const clientService = Container.get(ClientService);
+      const [numOfItems, items] = await clientService.updateWhere(
+        {
+          ext_client_id: extClientId,
+          organization_id: organizationId,
+        },
+        {
+          actived_flg: true,
+        });
+
+      if (!numOfItems) {
+        const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
+        return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
+      }
+
+      return res.ok({ isSuccess: true });
+    }
+    catch (error) {
+      logger.error('activate', error);
+
+      next(error);
+    }
+  },
+
+  // Private functions
+  async getRewards({
+    clientAffiliateId,
+    affiliateTypeId,
+    membershipOrderId,
+    amount,
+    currencySymbol,
+  }) {
+    const rewardService = Container.get(RewardService);
+    const cond = {
+      membership_order_id: membershipOrderId,
+    };
+    let rewardList = await rewardService.findAll(cond);
+    // Already calculated rewards for Membership Order
+    if (rewardList.length) {
+      return controller.fillExtClientId(rewardList);
+    }
+
+    const calculateRewards = new CalculateRewards();
+    const affiliateRequestDetails = {
+      client_affiliate_id: clientAffiliateId,
+      amount,
+    };
+    rewardList = await calculateRewards.getRewardList({
+      affiliateTypeId: affiliateTypeId,
+      currencySymbol: currencySymbol,
+      affiliateRequestDetails,
+    });
+    rewardList.forEach(item => {
+      item.from_client_affiliate_id = clientAffiliateId;
+      item.membership_order_id = membershipOrderId;
+    });
+
+    await rewardService.bulkCreate(rewardList);
+
+    return controller.fillExtClientId(rewardList);
+  },
+
+  async fillExtClientId(rewardList) {
+    const clientService = Container.get(ClientService);
+    const clientAffiliateService = Container.get(ClientAffiliateService);
+    const clientAffiliateIdList = [];
+    rewardList.forEach(item => {
+      clientAffiliateIdList.push(item.client_affiliate_id);
+      clientAffiliateIdList.push(item.from_client_affiliate_id);
+
+      if (item.referrer_client_affiliate_id) {
+        clientAffiliateIdList.push(item.referrer_client_affiliate_id);
+      }
+    });
+    const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(_.uniq(clientAffiliateIdList));
+
+    rewardList = rewardList.map(item => {
+      const plainItem = item.get ? item.get({ plain: true }) : item;
+
+      let client = clientMapping[plainItem.client_affiliate_id];
+      plainItem.ext_client_id = client ? client.ext_client_id : null;
+
+      client = clientMapping[plainItem.referrer_client_affiliate_id || plainItem.from_client_affiliate_id || ''];
+      plainItem.introduced_by_ext_client_id = client ? client.ext_client_id : null;
+
+      return plainItem;
+    });
+
+    return rewardList;
+  }
+
 
 };
 

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const _ = require('lodash');
 const utils = require('app/lib/utils');
 const pkg = require('../../package.json');
 
@@ -49,7 +50,7 @@ const config = {
         logging: process.env.POSTPRES_DEBUG === 'true',
       }
     },
-    enableSeed: process.env.ENABLE_SEED === '1',
+    enableSeed: process.env.ENABLE_SEED === '1' || process.env.ENABLE_SEED === 'true',
   },
   redis: {
     host: process.env.REDIS_HOST,
@@ -78,9 +79,27 @@ const config = {
     private: fs.readFileSync(path.resolve(__dirname, process.env.JWT_PRIVATE_KEY_FILE), 'utf8'),
   },
   signature: {
+    isEnabled: process.env.SIGNATURE_IS_ENABLED === 'true',
     expiresIn: utils.toNumber(process.env.SIGNATURE_EXPIRES_IN),
     showChecksum: process.env.SIGNATURE_SHOW_CHECKSUM === 'true',
   },
+  plutxUserID: {
+    isEnabled: process.env.PLUTX_USERID_IS_ENABLED === 'true',
+    appName: process.env.PLUTX_USERID_APP_NAME,
+    kid: process.env.PLUTX_USERID_KID,
+    apiUrl: process.env.PLUTX_USERID_API_URL,
+    apiKey: process.env.PLUTX_USERID_APP_API_KEY,
+    secretKey: process.env.PLUTX_USERID_APP_SECRET_KEY,
+  },
+  affiliate: {
+    maxLevels: utils.toNumber(process.env.AFFILIATE_MAX_LEVELS),
+    numOfRefferalStructures: utils.toNumber(process.env.AFFILIATE_NUM_OF_REFFERAL_STRUCTURES),
+    defaultCurrencyList: (process.env.AFFILIATE_DEFAULT_CURRENCY_LIST || '').split(',').map(x => _.trim(x)),
+  },
+  membership: {
+    defaultCurrencyList: (process.env.MEMBERSHIP_DEFAULT_CURRENCY_LIST || '').split(',').map(x => _.trim(x)),
+  },
+
 };
 
 console.log('=======================================================');

@@ -17,36 +17,30 @@ class _AffiliateRequestService extends BaseService {
     super(AffiliateRequest, 'AffiliateRequest');
   }
 
-  create(data) {
+  create(data, options) {
+    const { transaction } = options;
+
     return new Promise(async (resolve, reject) => {
       try {
         const details = data.details;
         delete data.details;
 
-        db.transaction(async (t) => {
-          const affiliateRequest = await this.model.create(data, {
-            transaction: t,
-          });
-
-          details.forEach((item) => {
-            item.affiliate_request_id = affiliateRequest.id;
-          });
-
-          const chunks = _.chunk(details, NUM_OF_ITEMS_IN_A_BATCH);
-          await forEach(chunks, async (chunk) => {
-            await AffiliateRequestDetails.bulkCreate(details, {
-              transaction: t,
-            });
-          });
-
-          return affiliateRequest;
-        }).then(result => {
-          // Transaction has been committed
-          resolve(result);
-        }).catch(err => {
-          // Transaction has been rolled back
-          reject(err);
+        const affiliateRequest = await this.model.create(data, {
+          transaction,
         });
+
+        details.forEach((item) => {
+          item.affiliate_request_id = affiliateRequest.id;
+        });
+
+        const chunks = _.chunk(details, NUM_OF_ITEMS_IN_A_BATCH);
+        await forEach(chunks, async (chunk) => {
+          await AffiliateRequestDetails.bulkCreate(details, {
+            transaction,
+          });
+        });
+
+        resolve(affiliateRequest);
       } catch (err) {
         reject(err);
       }
@@ -97,6 +91,23 @@ class _AffiliateRequestService extends BaseService {
         }
 
         const result = await AffiliateRequestDetails.findAll(cond);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  searchDetailsList({ condition, offset, limit, order }) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await AffiliateRequestDetails.findAndCountAll({
+          where: condition,
+          offset,
+          limit,
+          order
+        });
 
         resolve(result);
       } catch (err) {

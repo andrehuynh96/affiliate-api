@@ -3,6 +3,7 @@ const controller = require('./policy.controller');
 const { create, update, policyIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
 const appAuth = require('app/middleware/authenticate.middleware');
+const userIdAppAuth = require('app/middleware/plutx-userid-app-auth.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
 
 const route = express.Router();
@@ -98,7 +99,7 @@ const route = express.Router();
  */
 
 route.post('/policies',
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  appAuth(),
   verifySignature,
   controller.create,
 );
@@ -112,6 +113,7 @@ route.post('/policies',
  *     summary: Get policy details
  *     tags:
  *       - Policy
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -183,7 +185,7 @@ route.post('/policies',
 
 route.get('/policies/:policyId',
   validator(policyIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  appAuth(),
   verifySignature,
   controller.getById,
 );
@@ -197,6 +199,7 @@ route.get('/policies/:policyId',
  *     summary: Search policies
  *     tags:
  *       - Policy
+ *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -204,6 +207,11 @@ route.get('/policies/:policyId',
  *         type: string
  *         required: true
  *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
  *       - name: keyword
  *         in: query
  *         type: string
@@ -320,8 +328,7 @@ route.get('/policies/:policyId',
 
 route.get('/policies',
   validator(search, 'query'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
-  verifySignature,
+  appAuth(),
   controller.search,
 );
 /* #endregion */
@@ -334,6 +341,7 @@ route.get('/policies',
  *     summary: Update a policy
  *     tags:
  *       - Policy
+  *       - Backend
  *     description:
  *     parameters:
  *       - in: header
@@ -351,7 +359,12 @@ route.get('/policies',
  *         type: string
  *         required: true
  *         description: Checksum
-  *       - in: params
+  *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: params
  *         name: policyId
  *         required: true
  *         description: Policy Id
@@ -364,15 +377,16 @@ route.get('/policies',
  *            - name
  *            example:
  *              {
-                  "name": "AffiliateSystem - AFFILIATE Policy #011",
+                  "name": "Membership system - Affiliate Policy",
                   "description": "",
-                  "type": "AFFILIATE",
-                  "proportion_share": 10.123,
+                  "proportion_share": 10,
+                  "max_levels": 5,
                   "rates": [
-                      50.11,
-                      30,
-                      11,
-                      9
+                      "50",
+                      "30",
+                      "10",
+                      "7",
+                      "3"
                   ]
                 }
  *     produces:
@@ -435,94 +449,98 @@ route.get('/policies',
 
 route.put('/policies/:policyId',
   validator(policyIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  appAuth(),
   verifySignature,
   controller.update,
 );
 /* #endregion */
 
-/* #region Delete a policy */
-/**
- * @swagger
- * /api/v1/policies/:policyId:
- *   delete:
- *     summary: Delete a policy
- *     tags:
- *       - Policy
- *     description:
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         type: string
- *         required: true
- *         description: Bearer {token}
- *       - in: header
- *         name: x-time
- *         type: string
- *         required: true
- *         description: Unix Time
- *       - in: header
- *         name: x-checksum
- *         type: string
- *         required: true
- *         description: Checksum
- *       - in: params
- *         name: policyId
- *         required: true
- *         description: Policy Id
- *     produces:
- *       - application/json
- *     responses:
- *       200:
- *         description: Ok
- *         examples:
- *           application/json:
- *             {
- *                 "data":{
-                        "deleted": true
-                    }
- *             }
- *       400:
- *         description: Bad request
- *         schema:
- *           $ref: '#/definitions/400'
- *
- *       401:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/401'
- *
- *       404:
- *         description: Not found
- *         schema:
- *           properties:
- *             message:
- *              type: string
- *             error:
- *              type: string
- *             code:
- *              type: string
- *             fields:
- *              type: object
- *           example:
- *             message: Policy is not found.
- *             error: error
- *             code: POLICY_IS_NOT_FOUND
- *             fields: ['policyId']
- *
- *       500:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/500'
- */
+// /* #region Delete a policy */
+// /**
+//  * @swagger
+//  * /api/v1/policies/:policyId:
+//  *   delete:
+//  *     summary: Delete a policy
+//  *     tags:
+//  *       - Policy
+//  *     description:
+//  *     parameters:
+//  *       - in: header
+//  *         name: Authorization
+//  *         type: string
+//  *         required: true
+//  *         description: Bearer {token}
+//  *       - in: header
+//  *         name: x-time
+//  *         type: string
+//  *         required: true
+//  *         description: Unix Time
+//  *       - in: header
+//  *         name: x-checksum
+//  *         type: string
+//  *         required: true
+//  *         description: Checksum
+//  *       - in: params
+//  *         name: policyId
+//  *         required: true
+//  *         description: Policy Id
+//  *     produces:
+//  *       - application/json
+//  *     responses:
+//  *       200:
+//  *         description: Ok
+//  *         examples:
+//  *           application/json:
+//  *             {
+//  *                 "data":{
+//                         "deleted": true
+//                     }
+//  *             }
+//  *       400:
+//  *         description: Bad request
+//  *         schema:
+//  *           $ref: '#/definitions/400'
+//  *
+//  *       401:
+//  *         description: Error
+//  *         schema:
+//  *           $ref: '#/definitions/401'
+//  *
+//  *       404:
+//  *         description: Not found
+//  *         schema:
+//  *           properties:
+//  *             message:
+//  *              type: string
+//  *             error:
+//  *              type: string
+//  *             code:
+//  *              type: string
+//  *             fields:
+//  *              type: object
+//  *           example:
+//  *             message: Policy is not found.
+//  *             error: error
+//  *             code: POLICY_IS_NOT_FOUND
+//  *             fields: ['policyId']
+//  *
+//  *       500:
+//  *         description: Error
+//  *         schema:
+//  *           $ref: '#/definitions/500'
+//  */
 
-route.delete('/policies/:policyId',
-  validator(policyIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
-  verifySignature,
-  controller.delete,
-);
-/* #endregion */
+// route.delete('/policies/:policyId',
+//   validator(policyIdParam, 'params'),
+//   userIdAppAuth({
+//     isIgnoredAffiliateTypeId: true,
+//     scopes: ['affiliate', 'system_admin'],
+//     checkAllScopes: true,
+//   }),
+//   verifySignature,
+//   controller.delete,
+// );
+// /* #endregion */
 
 module.exports = route;
 

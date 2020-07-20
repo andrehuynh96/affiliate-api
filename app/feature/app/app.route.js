@@ -2,7 +2,7 @@ const express = require('express');
 const controller = require('./app.controller');
 const { create, update, organizationId, appIdParam, search } = require('./validator');
 const validator = require('app/middleware/validator.middleware');
-const appAuth = require('app/middleware/authenticate.middleware');
+const userIdAppAuth = require('app/middleware/plutx-userid-app-auth.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
 
 const route = express.Router();
@@ -90,7 +90,11 @@ const route = express.Router();
 route.post('/organizations/:organizationId/apps',
   validator(organizationId, 'params'),
   validator(create),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.create,
 );
@@ -175,7 +179,11 @@ route.post('/organizations/:organizationId/apps',
 
 route.get('/organizations/:organizationId/apps/:appId',
   validator(appIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.getById,
 );
@@ -274,7 +282,11 @@ route.get('/organizations/:organizationId/apps/:appId',
 route.get('/organizations/:organizationId/apps',
   validator(organizationId, 'params'),
   validator(search, 'query'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.search,
 );
@@ -379,7 +391,11 @@ route.get('/organizations/:organizationId/apps',
 route.put('/organizations/:organizationId/apps/:appId',
   validator(appIdParam, 'params'),
   validator(update),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.update,
 );
@@ -466,7 +482,11 @@ route.put('/organizations/:organizationId/apps/:appId',
 
 route.delete('/organizations/:organizationId/apps/:appId',
   validator(appIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  userIdAppAuth({
+    isIgnoredAffiliateTypeId: true,
+    scopes: ['affiliate', 'system_admin'],
+    checkAllScopes: true,
+  }),
   verifySignature,
   controller.delete,
 );

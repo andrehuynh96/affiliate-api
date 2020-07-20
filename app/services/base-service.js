@@ -21,10 +21,12 @@ class BaseService {
     });
   }
 
-  findByPk(id) {
+  findByPk(id, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.findByPk(id);
+        const result = await this.model.findByPk(id, options);
 
         resolve(result);
       } catch (err) {
@@ -33,12 +35,14 @@ class BaseService {
     });
   }
 
-  findOne(cond) {
+  findOne(cond, options) {
+    options = options || {};
     cond = cond || {};
 
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.findOne({
+          ...options,
           where: cond,
         });
 
@@ -85,7 +89,8 @@ class BaseService {
     });
   }
 
-  findOrCreate(cond, defaultData) {
+  findOrCreate(cond, defaultData, options) {
+    options = options || {};
     cond = cond || {};
 
     return new Promise(async (resolve, reject) => {
@@ -93,6 +98,7 @@ class BaseService {
         const result = await this.model.findOrCreate({
           where: cond,
           defaults: defaultData,
+          transaction: options.transaction,
         });
 
         resolve(result[0]);
@@ -102,10 +108,12 @@ class BaseService {
     });
   }
 
-  create(data) {
+  create(data, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await this.model.create(data);
+        const result = await this.model.create(data, options);
 
         resolve(result);
       } catch (err) {
@@ -114,13 +122,29 @@ class BaseService {
     });
   }
 
-  updateWhere(cond, data) {
+  bulkCreate(items, options) {
+    options = options || {};
+
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.bulkCreate(items, options);
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  updateWhere(cond, data, options) {
+    options = options || {};
     cond = cond || {};
 
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.update(data, {
           where: cond,
+          transaction: options.transaction,
           returning: true
         });
 
@@ -131,10 +155,12 @@ class BaseService {
     });
   }
 
-  async update(instance) {
+  async update(instance, options) {
+    options = options || {};
+
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await instance.save();
+        const result = await instance.save(options);
 
         resolve(result);
       } catch (err) {
@@ -144,13 +170,14 @@ class BaseService {
   }
 
   // Hard delete
-  deleteWhere(cond, defaultData) {
+  deleteWhere(cond, transaction) {
     cond = cond || {};
 
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.destroy({
           where: cond,
+          transaction: transaction,
         });
 
         resolve(result);
@@ -160,10 +187,10 @@ class BaseService {
     });
   }
 
-  delete(instance) {
+  delete(instance, transaction) {
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await instance.destroy();
+        const result = await instance.destroy({ transaction });
 
         resolve(result);
       } catch (err) {
@@ -173,17 +200,8 @@ class BaseService {
   }
 
   // Hard delete
-  deleteByPk(id) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const instance = await this.findByPk(id);
-
-        return instance ? this.delete(instance) : null;
-      } catch (err) {
-        reject(err);
-      }
-    });
-
+  deleteByPk(id, transaction) {
+    return this.deleteWhere({ id }, transaction);
   }
 
 }

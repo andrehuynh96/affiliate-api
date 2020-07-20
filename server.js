@@ -1,3 +1,4 @@
+require('core-js');
 require('rootpath')();
 const express = require('express');
 const morgan = require('morgan');
@@ -7,8 +8,9 @@ const database = require('app/lib/database');
 const logger = require('app/lib/logger');
 const redis = require('app/lib/redis');
 const config = require('app/config');
-const { RedisCacherService } = require('./app/services');
+const { RedisCacherService, PluTXUserIDService } = require('app/services');
 const startJobs = require('app/jobs');
+const loader = require('app/loader');
 
 const { Container, Service } = typedi;
 
@@ -17,8 +19,12 @@ const setupDI = () => {
 
   const redisCacherService = Container.get(RedisCacherService);
   redisCacherService.init();
-
   Container.set('redisCacherService', redisCacherService);
+
+  const pluTXUserIDService = Container.get(PluTXUserIDService);
+  pluTXUserIDService.init();
+
+  Container.set('pluTXUserIDService', pluTXUserIDService);
 };
 
 setupDI();
@@ -31,6 +37,8 @@ database.init(async err => {
     logger.error('database start fail:', err);
     return;
   }
+
+  loader.init(app);
 
   require('app/model');
   database.instanse.sync({ force: false }).then(() => {
@@ -48,6 +56,19 @@ database.init(async err => {
   const server = http.createServer(app);
 
   server.listen(config.app.port, config.app.appHostName, function () {
+    logger.info('Sequelize migrations ...');
+    const exec = require('child_process').execSync;
+    const cmd = 'npx sequelize-cli db:migrate';
+    exec(cmd, function (error, stdout, stderr) {
+      logger.info('Sequelize done.');
+      logger.info('stdout ', stdout);
+      logger.info('stderr ', stderr);
+
+      if (error) {
+        logger.error(error);
+      }
+    });
+
     console.log('=======================================================');
     console.log(`App: ${config.app.name}, version: ${config.app.version}.`);
     console.log('=======================================================');

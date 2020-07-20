@@ -1,20 +1,24 @@
 const typedi = require('typedi');
 const _ = require('lodash');
 const Decimal = require('decimal.js');
+const Sequelize = require('sequelize');
+const { forEach } = require('p-iteration');
 const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
-const mapper = require('app/response-schema/reward.response-schema');
+const mapper = require('app/response-schema/claim-reward.response-schema');
 const config = require('app/config');
 const {
   ClaimRewardService,
   RewardService,
   ClientService,
   LockService,
+  ClientAffiliateService,
 } = require('app/services');
 
 const Container = typedi.Container;
+const Op = Sequelize.Op;
 
 const controller = {
-  calculateRewards: async (req, res, next) => {
+  claimReward: async (req, res, next) => {
     let logger, lockService, lock;
 
     try {
@@ -65,7 +69,7 @@ const controller = {
         currency_symbol,
         amount,
         affiliate_type_id: affiliateTypeId,
-        status: ClaimRewardStatus.PENDING,
+        status: ClaimRewardStatus.Pending,
       };
       const claimReward = await claimRewardService.create(data);
 
@@ -108,9 +112,13 @@ const controller = {
       }
 
       const condition = {
-        currency_symbol,
         client_affiliate_id: clientAffiliateId,
       };
+
+      if (currency_symbol) {
+        condition.currency_symbol = { [Op.iLike]: `${query.currency_symbol}` };
+      }
+
       const off = parseInt(offset);
       const lim = parseInt(limit);
       const order = [['created_at', 'DESC']];
@@ -126,6 +134,64 @@ const controller = {
     }
     catch (err) {
       logger.error('get claim reward list fail: ', err);
+      next(err);
+    }
+  },
+
+  updateClaimRewardStatus: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      logger.info('updateClaimRewardStatus');
+      const { body, params, affiliateTypeId, organizationId } = req;
+      const { status, id_list } = body;
+      const claimRewardService = Container.get(ClaimRewardService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const claimRewards = await claimRewardService.findAll({ id: id_list });
+      const notFoundIdList = [];
+      const notPendingIdList = [];
+      const cache = {};
+
+      await forEach(claimRewards, async (claimReward) => {
+        cache[claimReward.id] = claimReward;
+
+        if (!(claimReward.status === ClaimRewardStatus.Pending || claimReward.status === status)) {
+          notPendingIdList.push(claimReward.id);
+        }
+
+        const clientAffiliate = await clientAffiliateService.findByPk(claimReward.client_affiliate_id);
+        if (clientAffiliate.affiliate_type_id != affiliateTypeId) {
+          notFoundIdList.push(claimReward.id);
+        }
+      });
+
+      id_list.forEach(id => {
+        if (!cache[id]) {
+          notFoundIdList.push(id);
+        }
+      });
+
+      if (notFoundIdList.length > 0) {
+        return res.notFound(res.__('CLAIM_REWARD_IS_NOT_FOUND'), 'CLAIM_REWARD_IS_NOT_FOUND', { field: ['notFoundIdList'], id_list: notFoundIdList });
+      }
+
+      if (notPendingIdList.length > 0) {
+        return res.forbidden(res.__('CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS'), 'CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS', { id_list: notPendingIdList });
+      }
+
+      const cond = {
+        id: id_list,
+      };
+      const data = {
+        status: status,
+      };
+      await claimRewardService.updateWhere(cond, data);
+
+      return res.ok(true);
+    }
+    catch (err) {
+      logger.error(err);
+
       next(err);
     }
   },

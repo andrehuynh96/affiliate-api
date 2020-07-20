@@ -1,11 +1,55 @@
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const config = require('app/config');
-const typedi = require('typedi');
 const { KEY } = require('app/constants');
 const logger = require('app/lib/logger');
 const { AppService, AffiliateTypeService } = require('../services');
 const { Container } = require('typedi');
+const jwksClient = require('jwks-rsa');
+
+const client = jwksClient({
+  jwksUri: `${config.plutxUserID.apiUrl}/.well-known/jwks.json`,
+  strictSsl: false,
+  requestHeaders: {},
+  requestAgentOptions: {},
+  cache: true,
+  cacheMaxEntries: 5,
+  // cacheMaxAge: ms('10h'), // Default value
+});
+
+const getKey = (header, callback) => {
+  console.log(header);
+  const kid = config.plutxUserID.kid;
+
+  client.getSigningKey(kid, function (err, key) {
+    const signingKey = key.publicKey || key.rsaPublicKey;
+
+    callback(null, signingKey);
+  });
+};
+
+const getDecodedToken = (token) => {
+  // if (config.plutxUserID.isEnabled) {
+  //   return new Promise((resolve, reject) => {
+  //     jwt.verify(token, getKey, (err, data) => {
+  //       if (err) {
+  //         return reject(err);
+  //       }
+
+  //       console.log(data);
+  //       return resolve(data);
+  //     });
+  //   });
+  // }
+
+  let decodedToken = null;
+  try {
+    decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
+    // eslint-disable-next-line no-empty
+  } catch (e) { }
+
+  return Promise.resolve(decodedToken);
+};
 
 module.exports = function (options) {
   options = options || {};
@@ -25,11 +69,7 @@ module.exports = function (options) {
     }
 
     if (token) {
-      let decodedToken = null;
-      try {
-        decodedToken = jwt.verify(token, config.jwt.public, config.jwt.options);
-      // eslint-disable-next-line no-empty
-      } catch (e) { }
+      const decodedToken = await getDecodedToken(token);
 
       if (!decodedToken) {
         return res.unauthorized();
@@ -38,7 +78,7 @@ module.exports = function (options) {
       try {
         req.appId = decodedToken.app_id;
         req.apiKey = decodedToken.api_key;
-        const organizationId = req.organizationId = decodedToken.organization_id;
+        const organizationId = req.organizationId = decodedToken.organization_id || decodedToken.root_org_unit_id;
 
         if (isIgnoredAffiliateTypeId) {
           return next();
