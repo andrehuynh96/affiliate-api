@@ -720,8 +720,8 @@ const controller = {
 
       // const clientService = Container.get(ClientService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
+      console.log(extClientId,affiliateTypeId);
       const clientAffiliate = await clientAffiliateService.findByExtClientIdAndAffiliateTypeId(extClientId, affiliateTypeId);
-
       if (!clientAffiliate) {
         const errorMessage = res.__('NOT_FOUND_EXT_CLIENT_ID', extClientId);
         return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
