@@ -94,9 +94,7 @@ const controller = {
       }
 
       const membershipType = await membershipTypeService.findOne({
-        where: {
-          id: membership_type_id
-        }
+        id: membership_type_id
       });
 
       if (!membershipType || membershipType.type === MembershipTypeName.Free) {
