@@ -11,7 +11,8 @@ function infBaseResponse(req, res, next) {
       var resData = {
         message: message,
         error: 'error',
-        code: code
+        code: code,
+        system: 'Affiliate API',
       };
       if (data) {
         resData = Object.assign(resData, data);
