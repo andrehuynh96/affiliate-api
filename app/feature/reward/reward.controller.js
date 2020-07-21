@@ -356,7 +356,7 @@ const controller = {
             item.reward_list.push(levelInfo);
           }
 
-          if (level === 0) {
+          if (level === 0 && membershipPolicy) {
             levelInfo.membership_policy = {
               proportion_share: Number(membershipPolicy.proportion_share),
               membership_rate: membershipPolicy.membership_rate,
