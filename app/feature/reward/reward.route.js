@@ -10,6 +10,7 @@ const {
   getAvailableRewards,
   requestIdParam,
   searchDetailList,
+  requestDetailIdParam,
 } = require('./validator');
 
 const route = express.Router();
@@ -771,8 +772,73 @@ route.get('/affiliate-requests/:requestId/details',
   verifySignature,
   controller.getAffiliateRequestDetailList,
 );
-
 /* #endregion */
+
+/* #region View reward by request */
+/**
+ * @swagger
+ * /api/v1/affiliate-requests/:requestId/details/reward:
+ *   get:
+ *     summary: View reward by request
+ *     tags:
+ *       - AffiliateRequest
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: path
+ *         name: requestDetailId
+ *         required: true
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+                    "data": [
+                        {
+                            "extClientId": "hungtv+15000@blockchainlabs.asia",
+                            "amount": "4560209298000000000000",
+                            "currency_symbol": "IRIS",
+                            "policy": "AffiliateSystem - Membership Policy",
+                            "level": null,
+                            "commission_type": "Direct"
+                        }
+                    ]
+                }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+route.get('/affiliate-requests/:requestDetailId/details/rewards',
+  validator(requestDetailIdParam, 'params'),
+  appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
+  controller.getRewardsByAffiliateRequestDetailId,
+);
+/* #endregion */
+
 
 module.exports = route;
 

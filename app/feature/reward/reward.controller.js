@@ -462,7 +462,7 @@ const controller = {
       const affiliateRequest = await affiliateRequestService.findByPk(requestId, options);
 
       if (!affiliateRequest) {
-        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND'), 'AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND');
       }
 
       affiliateRequest.affiliateType = affiliateRequest.AffiliateType ? affiliateRequest.AffiliateType.name : null;
@@ -487,7 +487,7 @@ const controller = {
       const affiliateRequest = await affiliateRequestService.findByPk(requestId);
 
       if (!affiliateRequest) {
-        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND'), 'AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND');
       }
 
       const condition = {
@@ -528,7 +528,41 @@ const controller = {
       next(err);
     }
   },
+  getRewardsByAffiliateRequestDetailId: async (req,res,next ) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('getRewardsByRequestDetailId::getAll');
+      const { params } = req;
+      const { requestDetailId } = params;
+      const rewardService = Container.get(RewardService);
 
+      const rewards = await rewardService.getRewardsAndPolicy(requestDetailId);
+      let result = [];
+      if (rewards.length > 0) {
+        const clientService = Container.get(ClientService);
+        const clientAffiliateIdList = rewards.map(item => item.client_affiliate_id);
+        const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+
+        result = rewards.map(item => {
+          const client = clientMapping[item.client_affiliate_id];
+
+          return {
+            ext_client_id: client ? client.ext_client_id : null,
+            amount: item.amount,
+            currency_symbol: item.currency_symbol,
+            policy: item.Policy.name,
+            level: item.level,
+            commission_type: item.commisson_type
+          };
+        });
+      }
+      return res.ok(result);
+    }
+    catch (error) {
+      logger.error('getRewardsByRequestDetailId: ', error);
+      next(error);
+    }
+  },
 };
 
 module.exports = controller;

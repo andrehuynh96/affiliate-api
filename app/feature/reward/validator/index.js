@@ -5,4 +5,5 @@ module.exports = {
   getAvailableRewards: require('./get-available-rewards'),
   requestIdParam: require('./request-id-param'),
   searchDetailList: require('./search-detail-list'),
+  requestDetailIdParam: require('./request-detail-id-param'),
 };

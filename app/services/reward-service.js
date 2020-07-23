@@ -4,7 +4,7 @@ const Sequelize = require('sequelize');
 const { forEach } = require('p-iteration');
 const BaseService = require('./base-service');
 const db = require('app/model');
-
+const Policy = require('app/model').policies;
 const Op = Sequelize.Op;
 const Service = typedi.Service;
 const sequelize = db.sequelize;
@@ -141,6 +141,31 @@ class _RewardService extends BaseService {
           attributes: ['level', [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
           raw: true
         });
+
+        resolve(total);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  getRewardsAndPolicy (affiliateRequestDetailId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const total = await this.model.findAll(
+          {
+            include: [
+              {
+                model: Policy,
+                as: 'Policy',
+                attributes: ['name']
+              },
+            ],
+            where: {
+              affiliate_request_detail_id: affiliateRequestDetailId
+            },
+            order: ['level']
+          });
 
         resolve(total);
       } catch (err) {
