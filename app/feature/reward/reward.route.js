@@ -10,6 +10,7 @@ const {
   getAvailableRewards,
   requestIdParam,
   searchDetailList,
+  requestDetailIdParam,
 } = require('./validator');
 
 const route = express.Router();
@@ -788,6 +789,9 @@ route.get('/affiliate-requests/:requestId/details',
  *         type: string
  *         required: true
  *         description: Bearer {token}
+ *       - in: path
+ *         name: requestDetailId
+ *         required: true
  *     produces:
  *       - application/json
  *     responses:
@@ -796,30 +800,17 @@ route.get('/affiliate-requests/:requestId/details',
  *         examples:
  *           application/json:
  *             {
-                "data": [
-                    {
-                        "id": "176",
-                        "client_affiliate_id": "363",
-                        "referrer_client_affiliate_id": null,
-                        "affiliate_request_detail_id": "213",
-                        "from_client_affiliate_id": null,
-                        "amount": "4560209298000000000000",
-                        "policy_id": 1,
-                        "currency_symbol": "IRIS",
-                        "commisson_type": "Direct",
-                        "membership_order_id": null,
-                        "level": null,
-                        "status": "Approved",
-                        "createdAt": "2020-07-22T11:26:00.887Z",
-                        "updatedAt": "2020-07-23T03:15:49.932Z",
-                        "clientAffiliateId": "363",
-                        "affiliateRequestDetailId": "213",
-                        "Policy": {
-                            "name": "AffiliateSystem - Membership Policy"
+                    "data": [
+                        {
+                            "extClientId": "hungtv+15000@blockchainlabs.asia",
+                            "amount": "4560209298000000000000",
+                            "currency_symbol": "IRIS",
+                            "policy": "AffiliateSystem - Membership Policy",
+                            "level": null,
+                            "commission_type": "Direct"
                         }
-                    }
-                ]
-            }
+                    ]
+                }
  *       400:
  *         description: Error
  *         schema:
@@ -840,11 +831,11 @@ route.get('/affiliate-requests/:requestId/details',
  *         schema:
  *           $ref: '#/definitions/500'
  */
-route.get('/affiliate-requests/:requestId/details/rewards',
-  validator(requestIdParam, 'params'),
+route.get('/affiliate-requests/:requestDetailId/details/rewards',
+  validator(requestDetailIdParam, 'params'),
   appAuth({ isIgnoredAffiliateTypeId: true }),
   verifySignature,
-  controller.getRewardsByAffiliateRequestId,
+  controller.getRewardsByAffiliateRequestDetailId,
 );
 /* #endregion */
 

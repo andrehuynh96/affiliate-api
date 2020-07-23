@@ -14,7 +14,7 @@ const OrganizationService = require('./organization-service');
 const PluTXUserIDService = require('./plutx-userid-service');
 const AffiliateCodeStatisticsService = require('./affiliate-code-statisticss-service');
 const MembershipTypeService = require('./membership-type-service');
-const AffiliateRequestDetailService = require('./affiliate-request-detail-service');
+
 module.exports = {
   AffiliateCodeService,
   AffiliateTypeService,
@@ -31,5 +31,4 @@ module.exports = {
   PluTXUserIDService,
   AffiliateCodeStatisticsService,
   MembershipTypeService,
-  AffiliateRequestDetailService
 };

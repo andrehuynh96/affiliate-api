@@ -529,22 +529,35 @@ const controller = {
       next(err);
     }
   },
-  getRewardsByAffiliateRequestId: async (req,res,next ) => {
+  getRewardsByAffiliateRequestDetailId: async (req,res,next ) => {
     const logger = Container.get('logger');
     try {
       logger.info('getRewardsByRequestDetailId::getAll');
       const { params } = req;
-      const { requestId } = params;
-      const affiliateRequestDetailService = Container.get(AffiliateRequestDetailService);
-      const affiliateRequestDetail = await affiliateRequestDetailService.getByAffiliateRequestId(requestId);
-      if (!affiliateRequestDetail) {
-        return res.notFound(res.__('AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND'), 'AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND',{ field:['requestId'] });
-      }
+      const { requestDetailId } = params;
       const rewardService = Container.get(RewardService);
 
-      const rewards = await rewardService.getRewardsAndPolicy(affiliateRequestDetail.id);
-      console.log(affiliateRequestDetail.id);
-      return res.ok(rewards);
+      const rewards = await rewardService.getRewardsAndPolicy(requestDetailId);
+      let result = [];
+      if (rewards.length > 0) {
+        const clientService = Container.get(ClientService);
+        const clientAffiliateIdList = rewards.map(item => item.client_affiliate_id);
+        const clientMapping = await clientService.getClientMappingByClientAffiliateIdList(clientAffiliateIdList);
+
+        result = rewards.map(item => {
+          const client = clientMapping[item.client_affiliate_id];
+
+          return {
+            extClientId: client ? client.ext_client_id : null,
+            amount: item.amount,
+            currency_symbol: item.currency_symbol,
+            policy: item.Policy.name,
+            level: item.level,
+            commission_type: item.commisson_type
+          };
+        });
+      }
+      return res.ok(result);
     }
     catch (error) {
       logger.error('getRewardsByRequestDetailId: ', error);
