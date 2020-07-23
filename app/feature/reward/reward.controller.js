@@ -13,7 +13,6 @@ const {
   RewardService,
   ClaimRewardService,
   AffiliateTypeService,
-  AffiliateRequestDetailService,
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
@@ -548,7 +547,7 @@ const controller = {
           const client = clientMapping[item.client_affiliate_id];
 
           return {
-            extClientId: client ? client.ext_client_id : null,
+            ext_client_id: client ? client.ext_client_id : null,
             amount: item.amount,
             currency_symbol: item.currency_symbol,
             policy: item.Policy.name,
