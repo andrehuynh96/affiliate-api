@@ -374,7 +374,7 @@ route.post('/membership-clients',
 );
 /* #endregion */
 
-/* #region  */
+/* #region Set policies for client */
 /**
  * @swagger
  * /api/v1/clients/set-policies:
@@ -565,7 +565,7 @@ route.put('/clients/affiliate-codes',
   validator(updateAffiliateCode),
   appAuth(),
   verifySignature,
-  controller.updateAffiliateCode
+  controller.updateAffiliateCodeForAllAffiliateTypes
 );
 /* #endregion */
 
