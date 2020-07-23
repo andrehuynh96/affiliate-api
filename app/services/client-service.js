@@ -19,6 +19,23 @@ class _ClientService extends BaseService {
     this.redisCacherService = Container.get('redisCacherService');
   }
 
+  findByExtClientId(extClientId, organizationId) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await this.model.findOne({
+          where: {
+            ext_client_id: extClientId,
+            organization_id: organizationId,
+          },
+        });
+
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   findByClientAffiliateId(clientAffiliateId, affiliateTypeId) {
     return new Promise(async (resolve, reject) => {
       try {
