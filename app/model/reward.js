@@ -73,7 +73,11 @@ module.exports = (sequelize, DataTypes) => {
   Reward.associate = async (models) => {
     Reward.belongsTo(models.client_affiliates);
     Reward.belongsTo(models.affiliate_request_details);
-    Reward.belongsTo(models.policies);
+    Reward.belongsTo(models.policies,{
+      as: 'Policy',
+      foreignKey: 'policy_id',
+      sourceKey: 'id',
+    });
   };
 
   return Reward;

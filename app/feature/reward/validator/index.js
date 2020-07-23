@@ -4,5 +4,5 @@ module.exports = {
   viewRewards: require('./view-rewards'),
   getAvailableRewards: require('./get-available-rewards'),
   requestIdParam: require('./request-id-param'),
-  searchDetailList: require('./search-detail-list'),
+  searchDetailList: require('./search-detail-list')
 };

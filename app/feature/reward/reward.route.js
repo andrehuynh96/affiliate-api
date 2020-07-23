@@ -771,8 +771,83 @@ route.get('/affiliate-requests/:requestId/details',
   verifySignature,
   controller.getAffiliateRequestDetailList,
 );
-
 /* #endregion */
+
+/* #region View reward by request */
+/**
+ * @swagger
+ * /api/v1/affiliate-requests/:requestId/details/reward:
+ *   get:
+ *     summary: View reward by request
+ *     tags:
+ *       - AffiliateRequest
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+                "data": [
+                    {
+                        "id": "176",
+                        "client_affiliate_id": "363",
+                        "referrer_client_affiliate_id": null,
+                        "affiliate_request_detail_id": "213",
+                        "from_client_affiliate_id": null,
+                        "amount": "4560209298000000000000",
+                        "policy_id": 1,
+                        "currency_symbol": "IRIS",
+                        "commisson_type": "Direct",
+                        "membership_order_id": null,
+                        "level": null,
+                        "status": "Approved",
+                        "createdAt": "2020-07-22T11:26:00.887Z",
+                        "updatedAt": "2020-07-23T03:15:49.932Z",
+                        "clientAffiliateId": "363",
+                        "affiliateRequestDetailId": "213",
+                        "Policy": {
+                            "name": "AffiliateSystem - Membership Policy"
+                        }
+                    }
+                ]
+            }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+route.get('/affiliate-requests/:requestId/details/rewards',
+  validator(requestIdParam, 'params'),
+  appAuth({ isIgnoredAffiliateTypeId: true }),
+  verifySignature,
+  controller.getRewardsByAffiliateRequestId,
+);
+/* #endregion */
+
 
 module.exports = route;
 

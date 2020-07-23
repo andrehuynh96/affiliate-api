@@ -13,6 +13,7 @@ const {
   RewardService,
   ClaimRewardService,
   AffiliateTypeService,
+  AffiliateRequestDetailService,
 } = require('app/services');
 const { policyHelper } = require('app/lib/helpers');
 const mapper = require('app/response-schema/affiliate-request.response-schema');
@@ -462,7 +463,7 @@ const controller = {
       const affiliateRequest = await affiliateRequestService.findByPk(requestId, options);
 
       if (!affiliateRequest) {
-        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND'), 'AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND');
       }
 
       affiliateRequest.affiliateType = affiliateRequest.AffiliateType ? affiliateRequest.AffiliateType.name : null;
@@ -487,7 +488,7 @@ const controller = {
       const affiliateRequest = await affiliateRequestService.findByPk(requestId);
 
       if (!affiliateRequest) {
-        return res.notFound(res.__('AFFLILIATE_REQUEST_IS_NOT_FOUND'), 'AFFLILIATE_REQUEST_IS_NOT_FOUND');
+        return res.notFound(res.__('AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND'), 'AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND');
       }
 
       const condition = {
@@ -528,7 +529,28 @@ const controller = {
       next(err);
     }
   },
+  getRewardsByAffiliateRequestId: async (req,res,next ) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('getRewardsByRequestDetailId::getAll');
+      const { params } = req;
+      const { requestId } = params;
+      const affiliateRequestDetailService = Container.get(AffiliateRequestDetailService);
+      const affiliateRequestDetail = await affiliateRequestDetailService.getByAffiliateRequestId(requestId);
+      if (!affiliateRequestDetail) {
+        return res.notFound(res.__('AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND'), 'AFFILIATE_REQUEST_DETAIL_IS_NOT_FOUND',{ field:['requestId'] });
+      }
+      const rewardService = Container.get(RewardService);
 
+      const rewards = await rewardService.getRewardsAndPolicy(affiliateRequestDetail.id);
+      console.log(affiliateRequestDetail.id);
+      return res.ok(rewards);
+    }
+    catch (error) {
+      logger.error('getRewardsByRequestDetailId: ', error);
+      next(error);
+    }
+  },
 };
 
 module.exports = controller;
