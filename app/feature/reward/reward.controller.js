@@ -410,6 +410,26 @@ const controller = {
         condition.currency_symbol = { [Op.iLike]: query.currency };
       }
 
+      if (query.email) {
+        const clientService = Container.get(ClientService);
+        const clientAffiliateService = Container.get(ClientAffiliateService);
+        const affiliateRequestService = Container.get(AffiliateRequestService);
+        const clients = await clientService.findAll({
+          ext_client_id: { [Op.iLike]: `%${query.email}%` }
+        });
+        const clientIds = clients.map(item => item.id);
+
+        const clientAffiliates = await clientAffiliateService.findAll({
+          client_id: clientIds
+        });
+
+        const clientAffiliateIds = clientAffiliates.map(item => item.id);
+        const affiliateRequestDetails = await affiliateRequestService.getDetailsByClientAffiliate(clientAffiliateIds);
+        const affiliateRequestIds = affiliateRequestDetails.map(item => item.affiliate_request_id);
+        condition.id = affiliateRequestIds;
+
+      }
+
       const off = parseInt(offset);
       const lim = parseInt(limit);
       const order = [['created_at', 'DESC']];
@@ -528,7 +548,7 @@ const controller = {
       next(err);
     }
   },
-  getRewardsByAffiliateRequestDetailId: async (req,res,next ) => {
+  getRewardsByAffiliateRequestDetailId: async (req, res, next) => {
     const logger = Container.get('logger');
     try {
       logger.info('getRewardsByRequestDetailId::getAll');
