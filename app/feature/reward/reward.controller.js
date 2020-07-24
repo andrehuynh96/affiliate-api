@@ -552,7 +552,8 @@ const controller = {
             currency_symbol: item.currency_symbol,
             policy: item.Policy.name,
             level: item.level,
-            commission_type: item.commisson_type
+            commission_type: item.commisson_type,
+            setting: item.setting,
           };
         });
       }

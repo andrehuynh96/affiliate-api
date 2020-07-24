@@ -777,7 +777,7 @@ route.get('/affiliate-requests/:requestId/details',
 /* #region View reward by request */
 /**
  * @swagger
- * /api/v1/affiliate-requests/:requestId/details/reward:
+ * /api/v1/affiliate-requests/:requestId/details/rewards:
  *   get:
  *     summary: View reward by request
  *     tags:
@@ -833,7 +833,7 @@ route.get('/affiliate-requests/:requestId/details',
  */
 route.get('/affiliate-requests/:requestDetailId/details/rewards',
   validator(requestDetailIdParam, 'params'),
-  appAuth({ isIgnoredAffiliateTypeId: true }),
+  appAuth(),
   verifySignature,
   controller.getRewardsByAffiliateRequestDetailId,
 );
