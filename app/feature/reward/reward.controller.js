@@ -432,7 +432,7 @@ const controller = {
 
       const off = parseInt(offset);
       const lim = parseInt(limit);
-      const order = [['created_at', 'DESC']];
+      const order = [['from_date','DESC'],['to_date','DESC']];
       const affiliateRequestService = Container.get(AffiliateRequestService);
       const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
 
