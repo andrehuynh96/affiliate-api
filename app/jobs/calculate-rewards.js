@@ -151,7 +151,10 @@ class CalculateRewards {
       referrer_client_affiliate_id: null,
       level: null,
       status: null,
-      setting: policy,
+      setting: {
+        ...policy.get({ plain: true }),
+        membership_type_id: membershipTypeId,
+      },
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -213,7 +216,10 @@ class CalculateRewards {
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
           status: null,
-          setting: policy,
+          setting: {
+            ...policy.get({ plain: true }),
+            membership_type_id: membershipTypeId,
+          },
         });
       }
     });
@@ -274,7 +280,9 @@ class CalculateRewards {
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
           status: null,
-          setting: policy,
+          setting: {
+            ...policy.get({ plain: true }),
+          },
         });
       }
     });
