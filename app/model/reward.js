@@ -54,6 +54,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       default: null
     },
+    setting: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   }, {
     underscored: true,
     timestamps: true,
@@ -73,7 +77,7 @@ module.exports = (sequelize, DataTypes) => {
   Reward.associate = async (models) => {
     Reward.belongsTo(models.client_affiliates);
     Reward.belongsTo(models.affiliate_request_details);
-    Reward.belongsTo(models.policies,{
+    Reward.belongsTo(models.policies, {
       as: 'Policy',
       foreignKey: 'policy_id',
       sourceKey: 'id',

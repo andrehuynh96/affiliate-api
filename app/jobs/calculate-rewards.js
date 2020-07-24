@@ -151,6 +151,7 @@ class CalculateRewards {
       referrer_client_affiliate_id: null,
       level: null,
       status: null,
+      setting: policy,
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -212,6 +213,7 @@ class CalculateRewards {
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
           status: null,
+          setting: policy,
         });
       }
     });
@@ -272,6 +274,7 @@ class CalculateRewards {
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
           status: null,
+          setting: policy,
         });
       }
     });
