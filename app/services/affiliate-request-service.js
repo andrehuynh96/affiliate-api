@@ -137,7 +137,22 @@ class _AffiliateRequestService extends BaseService {
       }
     });
   }
+  getDetailsByClientAffiliate(clientAffiliateIds) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await AffiliateRequestDetails.findAll(
+          {
+            where: {
+              client_affiliate_id: clientAffiliateIds
+            }
+          });
 
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
 }
 
 
