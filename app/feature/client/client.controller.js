@@ -699,12 +699,53 @@ const controller = {
     try {
       logger.info('client::updateMembershipType');
       const { body, affiliateTypeId, organizationId } = req;
-      const { ext_client_id, membership_type_id } = body;
+      const { ext_client_id, affiliate_code, membership_type_id } = body;
       const extClientId = _.trim(ext_client_id).toLowerCase();
       const clientService = Container.get(ClientService);
       const clientAffiliateService = Container.get(ClientAffiliateService);
+      const affiliateCodeService = Container.get(AffiliateCodeService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
 
-      const transaction = await db.sequelize.transaction();
+      let level = 1;
+      let parentPath = 'root';
+      let referrerClientAffiliateId = null;
+      let rootClientAffiliateId = null;
+      let affiliateCodeInstance = null;
+      let transaction = null;
+      let referrerClientAffiliate;
+
+      // Has refferer
+      if (affiliate_code) {
+        affiliateCodeInstance = await affiliateCodeService.findByPk(affiliate_code);
+
+        if (!affiliateCodeInstance) {
+          return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+        }
+
+        referrerClientAffiliate = await affiliateCodeInstance.getOwner();
+        if (!referrerClientAffiliate) {
+          return res.notFound(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+        }
+
+        // Referrer code doesn't exist on system
+        if (referrerClientAffiliate.affiliate_type_id !== affiliateTypeId) {
+          referrerClientAffiliate = await clientAffiliateService.findOne({
+            client_id: referrerClientAffiliate.client_id,
+            affiliate_type_id: affiliateTypeId,
+          });
+
+          if (!referrerClientAffiliate) {
+            return res.badRequest(res.__('NOT_FOUND_AFFILIATE_CODE'), 'NOT_FOUND_AFFILIATE_CODE', { fields: ['affiliate_code'] });
+          }
+        }
+
+        referrerClientAffiliateId = referrerClientAffiliate.id;
+        level = referrerClientAffiliate.level + 1;
+        parentPath = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
+        rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
+      }
+
+      transaction = await db.sequelize.transaction();
       try {
         const [numOfItems, items] = await clientService.updateWhere(
           {
@@ -736,10 +777,10 @@ const controller = {
           const data = {
             client_id: clientId,
             affiliate_type_id: affiliateTypeId,
-            referrer_client_affiliate_id: null,
-            level: 1,
-            parent_path: 'root',
-            root_client_affiliate_id: null,
+            referrer_client_affiliate_id: referrerClientAffiliateId,
+            level: level,
+            parent_path: parentPath,
+            root_client_affiliate_id: rootClientAffiliateId,
             actived_flg: true,
             affiliateCodes: [{
               code,
