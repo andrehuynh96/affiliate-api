@@ -12,6 +12,7 @@ const config = {
   isProduction: process.env.PRODUCTION === 'true',
   isTest: process.env.NODE_ENV === 'test',
   isDevelopment: process.env.NODE_ENV === 'development',
+  enableDocsLink: process.env.ENABLE_DOCS_LINK === '1',
   app: {
     name: utils.getOsEnv('APP_NAME'),
     version: pkg.version,
