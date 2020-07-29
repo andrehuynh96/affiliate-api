@@ -684,8 +684,6 @@ const controller = {
 
             return res.forbidden(res.__('CLIENT_CAN_NOT_UPDATE_WITH_REFERRAL_CODE_IN_YOUR_AFFILIATE_NETWORK'), 'CLIENT_CAN_NOT_UPDATE_WITH_REFERRAL_CODE_IN_YOUR_AFFILIATE_NETWORK');
           }
-
-          console.log(affiliateType.id);
         }
 
         await transaction.commit();
