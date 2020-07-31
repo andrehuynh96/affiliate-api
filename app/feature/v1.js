@@ -10,5 +10,6 @@ router.use(require('./app/app.route'));
 router.use(require('./affiliate-type/affiliate-type.route'));
 router.use(require('./policy/policy.route'));
 router.use(require('./affiliate-code/affiliate-code.route'));
+router.use(require('./membership-type/membership-type.route'));
 
 module.exports = router;

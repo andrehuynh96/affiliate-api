@@ -8,6 +8,7 @@ const destObject = {
     '[].status': '[].status',
     '[].amount': '[].amount',
     '[].currency_symbol': '[].currency_symbol',
+    '[].setting': '[].setting?',
     '[].createdAt': '[].created_at',
     '[].updatedAt': '[].updated_at',
     '[].created_by': '[].created_by',
@@ -20,6 +21,7 @@ const destObject = {
     status: 'status',
     amount: 'amount',
     currency_symbol: 'currency_symbol',
+    setting: 'setting?',
     createdAt: 'created_at',
     updatedAt: 'updated_at',
     created_by: 'created_by',
@@ -30,7 +32,7 @@ const destObject = {
 module.exports = srcObject => {
   if (Array.isArray(srcObject)) {
     if (!srcObject || srcObject.length == 0) {
-      return srcObject;
+      return [];
     } else {
       return objectMapper(srcObject, destObject.array);
     }

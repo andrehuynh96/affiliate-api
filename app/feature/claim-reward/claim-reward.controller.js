@@ -2,8 +2,10 @@ const typedi = require('typedi');
 const _ = require('lodash');
 const Decimal = require('decimal.js');
 const Sequelize = require('sequelize');
+const db = require('app/model');
 const { forEach } = require('p-iteration');
 const ClaimRewardStatus = require('app/model/value-object/claim-reward-status');
+const RewardStatus = require('app/model/value-object/reward-status');
 const mapper = require('app/response-schema/claim-reward.response-schema');
 const config = require('app/config');
 const {
@@ -19,11 +21,11 @@ const Op = Sequelize.Op;
 
 const controller = {
   claimReward: async (req, res, next) => {
-    let logger, lockService, lock;
+    let logger, lockService, lock, transaction;
 
     try {
       const { body, affiliateTypeId } = req;
-      const { currency_symbol, amount } = body;
+      const { currency_symbol, amount, latest_id } = body;
       const extClientId = _.trim(body.ext_client_id).toLowerCase();
 
       // Validate ext_client_id
@@ -44,16 +46,22 @@ const controller = {
 
       // Prevent run pararell
       const ressourceId = _.kebabCase(['claim-reward', clientAffiliateId, currency_symbol].join('-'));
-      const ttl = 10 * 1000; // 10 seconds
+      const ttl = 15 * 1000; // 15 seconds
       lock = await lockService.lockRessource(ressourceId, ttl);
 
-      const getTotalRewardTask = rewardService.getTotalAmount(clientAffiliateId, currency_symbol);
-      const getTotalAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliateId, currency_symbol);
-      let [totalReward, withdrawAmount] = await Promise.all([getTotalRewardTask, getTotalAmountOfClaimRewardTask]);
+      let totalReward;
+      totalReward = await rewardService.getAvailableAmount(clientAffiliateId, currency_symbol, latest_id);
 
       totalReward = Decimal(totalReward);
-      withdrawAmount = Decimal(withdrawAmount);
+      const withdrawAmount = Decimal(0);
       const availableAmount = totalReward.sub(withdrawAmount.add(amount));
+
+      logger.info(`Processing claim request for client ${extClientId} (clientAffiliateId: ${clientAffiliateId})`, {
+        currencySymbol: currency_symbol,
+        availableAmount,
+        totalReward,
+        amount,
+      });
 
       // Allow claim reward
       const isAllowedClaimReward = availableAmount.isPos() || availableAmount.isZero();
@@ -61,7 +69,30 @@ const controller = {
         await controller.unLock(lock, lockService, logger);
         const errorMessage = res.__('CLAIM_REWARDS_AMOUNT_IS_EXCEED');
 
-        return res.forbidden(errorMessage, 'CLAIM_REWARDS_AMOUNT_IS_EXCEED', { fields: ['amount'] });
+        return res.forbidden(errorMessage, 'CLAIM_REWARDS_AMOUNT_IS_EXCEED', {
+          fields: ['amount'],
+          availableAmount,
+          totalReward,
+          amount,
+        });
+      }
+
+      transaction = await db.sequelize.transaction();
+      if (latest_id) {
+        await rewardService.updateWhere(
+          {
+            client_affiliate_id: clientAffiliateId,
+            status: {
+              [Op.eq]: null
+            },
+            id: {
+              [Op.lte]: latest_id,
+            },
+          },
+          {
+            status: RewardStatus.Pending,
+          },
+          { transaction });
       }
 
       const data = {
@@ -70,15 +101,17 @@ const controller = {
         amount,
         affiliate_type_id: affiliateTypeId,
         status: ClaimRewardStatus.Pending,
+        latest_id,
       };
-      const claimReward = await claimRewardService.create(data);
+      const claimReward = await claimRewardService.create(data, { transaction });
+      await transaction.commit();
 
       logger.info(`Client ${extClientId} (clientAffiliateId: ${clientAffiliateId}) has been claim reward`, {
         claimRewardId: claimReward.id,
         availableAmount: availableAmount.toDecimalPlaces(8).toNumber(),
         totalReward: totalReward.toDecimalPlaces(8).toNumber(),
         withdrawAmount: withdrawAmount.toDecimalPlaces(8).toNumber(),
-        currency_symbol
+        currency_symbol,
       });
 
       await controller.unLock(lock, lockService, logger);
@@ -86,6 +119,10 @@ const controller = {
       return res.ok(mapper(claimReward));
     }
     catch (err) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+
       await controller.unLock(lock, lockService, logger);
 
       next(err);
@@ -140,6 +177,7 @@ const controller = {
 
   updateClaimRewardStatus: async (req, res, next) => {
     const logger = Container.get('logger');
+    let transaction;
 
     try {
       logger.info('updateClaimRewardStatus');
@@ -179,17 +217,44 @@ const controller = {
         return res.forbidden(res.__('CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS'), 'CAN_NOT_UPDATE_CLAIM_REQUEST_STATUS', { id_list: notPendingIdList });
       }
 
+      const rewardService = Container.get(RewardService);
+      transaction = await db.sequelize.transaction();
+
+      await forEach(claimRewards, async (claimReward) => {
+        const { latest_id, client_affiliate_id } = claimReward;
+
+        if (latest_id) {
+          await rewardService.updateWhere(
+            {
+              client_affiliate_id: client_affiliate_id,
+              status: RewardStatus.Pending,
+              id: {
+                [Op.lte]: latest_id,
+              },
+            },
+            {
+              status: RewardStatus.Approved,
+            },
+            { transaction });
+        }
+      });
+
       const cond = {
         id: id_list,
       };
       const data = {
         status: status,
       };
-      await claimRewardService.updateWhere(cond, data);
+      await claimRewardService.updateWhere(cond, data, { transaction });
+      await transaction.commit();
 
       return res.ok(true);
     }
     catch (err) {
+      if (transaction) {
+        await transaction.rollback();
+      }
+
       logger.error(err);
 
       next(err);

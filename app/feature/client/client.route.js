@@ -374,7 +374,7 @@ route.post('/membership-clients',
 );
 /* #endregion */
 
-/* #region  */
+/* #region Set policies for client */
 /**
  * @swagger
  * /api/v1/clients/set-policies:
@@ -565,7 +565,7 @@ route.put('/clients/affiliate-codes',
   validator(updateAffiliateCode),
   appAuth(),
   verifySignature,
-  controller.updateAffiliateCode
+  controller.updateAffiliateCodeForAllAffiliateTypes
 );
 /* #endregion */
 
@@ -610,8 +610,9 @@ route.put('/clients/affiliate-codes',
  *            - membership_type_id
  *            example:
  *               {
-                    "ext_client_id":"binh.nt@blockchainlabs.asia",
-                    "membership_type_id": "f2db7def-62a2-45e9-bf87-bbe89a3dff17"
+                    "ext_client_id":"binh.nt110000@blockchainlabs.asia",
+                    "membership_type_id": "8600c494-91f4-4186-abd8-4197c72c0f43",
+                    "affiliate_code": "I6NNK6M6P"
                   }
  *     produces:
  *       - application/json

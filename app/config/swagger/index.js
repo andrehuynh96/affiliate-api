@@ -4,6 +4,10 @@ const path = require('path');
 const config = require('app/config');
 
 module.exports = function (app, prefix) {
+  if (!config.enableDocsLink) {
+    return;
+  }
+
   prefix = prefix || '';
   const swaggerOptions = {
     swaggerDefinition: {
@@ -15,7 +19,7 @@ module.exports = function (app, prefix) {
       },
       servers: [
         {
-          url: 'https://affiliate.infinito.io',
+          url: 'https://affiliate-api.moonstake.io',
         },
       ],
     },

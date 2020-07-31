@@ -49,6 +49,15 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       default: null,
     },
+    status: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      default: null
+    },
+    setting: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   }, {
     underscored: true,
     timestamps: true,
@@ -60,7 +69,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       {
         name: 'rewards_amount_reward',
-        fields: ['client_affiliate_id', 'currency_symbol', 'amount', 'level']
+        fields: ['client_affiliate_id', 'currency_symbol', 'amount', 'level', 'status']
       },
     ]
   });
@@ -68,7 +77,11 @@ module.exports = (sequelize, DataTypes) => {
   Reward.associate = async (models) => {
     Reward.belongsTo(models.client_affiliates);
     Reward.belongsTo(models.affiliate_request_details);
-    Reward.belongsTo(models.policies);
+    Reward.belongsTo(models.policies, {
+      as: 'Policy',
+      foreignKey: 'policy_id',
+      sourceKey: 'id',
+    });
   };
 
   return Reward;

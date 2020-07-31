@@ -10,6 +10,7 @@ const {
   getAvailableRewards,
   requestIdParam,
   searchDetailList,
+  requestDetailIdParam,
 } = require('./validator');
 
 const route = express.Router();
@@ -251,81 +252,6 @@ route.get('/rewards',
 );
 /* #endregion */
 
-/* #region Get Available Rewards */
-/**
- * @swagger
- * /api/v1/available-rewards:
- *   get:
- *     summary: Get Available Rewards
- *     tags:
- *       - Reward
- *       - Backend
- *     description:
- *     parameters:
- *       - in: header
- *         name: Authorization
- *         type: string
- *         required: true
- *         description: Bearer {token}
- *       - in: header
- *         name: x-affiliate-type-id
- *         type: number
- *         required: true
- *         description: Affiliate type id
- *       - name: ext_client_id
- *         in: query
- *         type: string
- *         required: true
- *         description: Member's email
- *
- *     produces:
- *       - application/json
- *     responses:
- *       200:
- *         description: Ok
- *         examples:
- *           application/json:
- *             { data:
-                  [
-                      {
-                          "currency": "ETH",
-                          "amount": "250.8"
-                      },
-                      {
-                          "currency": "USD",
-                          "amount": "1323364"
-                      }
-                  ]
-                }
- *       400:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/400'
- *
- *       401:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/401'
- *
- *       404:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/404'
- *
- *       500:
- *         description: Error
- *         schema:
- *           $ref: '#/definitions/500'
- */
-
-route.get('/available-rewards',
-  validator(getAvailableRewards, 'query'),
-  appAuth(),
-  verifySignature,
-  controller.getAvailableRewards,
-);
-/* #endregion */
-
 /* #region Get reward statistics */
 /**
  * @swagger
@@ -364,6 +290,7 @@ route.get('/available-rewards',
                   [
                     {
                         "currency": "USD",
+                        "latest_id": 130,
                         "total_amount": 30,
                         "available_amount": 24,
                         "pending_amount": 6,
@@ -371,6 +298,7 @@ route.get('/available-rewards',
                     },
                     {
                         "currency": "ETH",
+                        "latest_id": 131,
                         "total_amount": 250.8,
                         "available_amount": 250,
                         "pending_amount": 0.688228,
@@ -378,6 +306,7 @@ route.get('/available-rewards',
                     },
                     {
                         "currency": "USDT",
+                        "latest_id": 132,
                         "total_amount": 6,
                         "available_amount": 6,
                         "pending_amount": 0,
@@ -452,6 +381,7 @@ route.get('/reward-statistics',
                   "data": [
                       {
                           "currency_symbol": "ATOM",
+                          "latest_id": 102,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -482,12 +412,12 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
-                          "pending_amount": 0,
+                          "pending_amount": 48.61,
                           "paid_amount": 0
                       },
                       {
                           "currency_symbol": "IRIS",
+                          "latest_id": null,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -518,12 +448,12 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
                           "pending_amount": 0,
                           "paid_amount": 0
                       },
                       {
                           "currency_symbol": "ONG",
+                          "latest_id": null,
                           "reward_list": [
                               {
                                   "level": 0,
@@ -554,7 +484,6 @@ route.get('/reward-statistics',
                               }
                           ],
                           "total_amount": 0,
-                          "available_amount": 0,
                           "pending_amount": 0,
                           "paid_amount": 0
                       }
@@ -843,8 +772,73 @@ route.get('/affiliate-requests/:requestId/details',
   verifySignature,
   controller.getAffiliateRequestDetailList,
 );
-
 /* #endregion */
+
+/* #region View reward by request */
+/**
+ * @swagger
+ * /api/v1/affiliate-requests/:requestId/details/rewards:
+ *   get:
+ *     summary: View reward by request
+ *     tags:
+ *       - AffiliateRequest
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: path
+ *         name: requestDetailId
+ *         required: true
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+                    "data": [
+                        {
+                            "extClientId": "hungtv+15000@blockchainlabs.asia",
+                            "amount": "4560209298000000000000",
+                            "currency_symbol": "IRIS",
+                            "policy": "AffiliateSystem - Membership Policy",
+                            "level": null,
+                            "commission_type": "Direct"
+                        }
+                    ]
+                }
+ *       400:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/400'
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+route.get('/affiliate-requests/:requestDetailId/details/rewards',
+  validator(requestDetailIdParam, 'params'),
+  appAuth(),
+  verifySignature,
+  controller.getRewardsByAffiliateRequestDetailId,
+);
+/* #endregion */
+
 
 module.exports = route;
 

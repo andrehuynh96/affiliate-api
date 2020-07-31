@@ -65,6 +65,7 @@ class CalculateRewards {
       affiliateTypeId: rootClientAffiliate.affiliate_type_id,
       clientAffiliateService,
       affiliateTypeService,
+      currencySymbol: currencySymbol,
     });
 
     const policyDataList = policies.map((policy) => {
@@ -149,6 +150,11 @@ class CalculateRewards {
       commisson_type: CommissonType.Direct,
       referrer_client_affiliate_id: null,
       level: null,
+      status: null,
+      setting: {
+        ...policy.get({ plain: true }),
+        membership_type_id: membershipTypeId,
+      },
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -209,6 +215,11 @@ class CalculateRewards {
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
+          status: null,
+          setting: {
+            ...policy.get({ plain: true }),
+            membership_type_id: membershipTypeId,
+          },
         });
       }
     });
@@ -268,6 +279,10 @@ class CalculateRewards {
           commisson_type: index === 0 ? CommissonType.Direct : CommissonType.Indirect,
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
+          status: null,
+          setting: {
+            ...policy.get({ plain: true }),
+          },
         });
       }
     });

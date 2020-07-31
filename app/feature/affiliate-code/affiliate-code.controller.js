@@ -8,10 +8,12 @@ const {
   ClientAffiliateService,
   AffiliateTypeService,
   AffiliateCodeStatisticsService,
+  MembershipTypeService
 } = require('app/services');
 const mapper = require('app/response-schema/affiliate-code.response-schema');
 const { policyHelper, clientHelper } = require('app/lib/helpers');
 const PolicyType = require('app/model/value-object/policy-type');
+const MembershipTypeName = require('app/model/value-object/membership-type-name');
 
 const Op = Sequelize.Op;
 const sequelize = db.sequelize;
@@ -83,8 +85,27 @@ const controller = {
       }
 
       const clientService = Container.get(ClientService);
+      const membershipTypeService = Container.get(MembershipTypeService);
+      const client = await clientService.findByPk(referrerClientAffiliate.client_id);
+      const membership_type_id = client.membership_type_id;
+
+      if (!membership_type_id) {
+        return res.ok({ isValid: false });
+      }
+
+      const membershipType = await membershipTypeService.findOne({
+        id: membership_type_id
+      });
+
+      if (!membershipType || membershipType.type === MembershipTypeName.Free) {
+        return res.ok({ isValid: false });
+      }
+
+
+      /*
       const affiliateTypeService = Container.get(AffiliateTypeService);
       const rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
+
       // Check max level that policy can set for users
       const { policies } = await policyHelper.getPolicies({
         affiliateTypeId,
@@ -105,11 +126,12 @@ const controller = {
       const level = referrerClientAffiliate.level + 1;
       const maxLevels = affiliatePolicy.max_levels;
 
-      // if (maxLevels && level > maxLevels) {
-      //   const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
+      if (maxLevels && level > maxLevels) {
+        const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
 
-      //   return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
-      // }
+        return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
+      }
+      */
 
       return res.ok({ isValid: true });
     }
