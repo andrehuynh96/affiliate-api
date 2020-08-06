@@ -79,8 +79,10 @@ const controller = {
           const numOfReferences = await clientAffiliateService.getNumOfReferences(affiliateCodeInstance.client_affiliate_id);
           if (numOfReferences >= maxReferences) {
             return res.forbidden(res.__('REFERRER_CODE_IS_EXCEED'), 'REFERRER_CODE_IS_EXCEED', {
-              max_references: maxReferences,
-              num_of_references: numOfReferences,
+              data: {
+                max_references: maxReferences,
+                num_of_references: numOfReferences,
+              },
             });
           }
         }
@@ -674,8 +676,10 @@ const controller = {
         const numOfReferences = await clientAffiliateService.getNumOfReferences(affiliateCodeInstance.client_affiliate_id);
         if (numOfReferences >= maxReferences) {
           return res.forbidden(res.__('REFERRER_CODE_IS_EXCEED'), 'REFERRER_CODE_IS_EXCEED', {
-            max_references: maxReferences,
-            num_of_references: numOfReferences,
+            data: {
+              max_references: maxReferences,
+              num_of_references: numOfReferences,
+            },
           });
         }
       }
