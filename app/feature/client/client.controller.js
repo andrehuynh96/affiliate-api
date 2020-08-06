@@ -74,6 +74,17 @@ const controller = {
           }
         }
 
+        const maxReferences = affiliateCodeInstance.max_references || 0;
+        if (maxReferences > 0) {
+          const numOfReferences = await clientAffiliateService.getNumOfReferences(affiliateCodeInstance.client_affiliate_id);
+          if (numOfReferences >= maxReferences) {
+            return res.forbidden(res.__('REFERRER_CODE_IS_EXCEED'), 'REFERRER_CODE_IS_EXCEED', {
+              max_references: maxReferences,
+              num_of_references: numOfReferences,
+            });
+          }
+        }
+
         referrer_client_affiliate_id = referrerClientAffiliate.id;
       }
 
@@ -655,6 +666,18 @@ const controller = {
 
       if (referrerClientAffiliate.client_id === client.id) {
         return res.forbidden(res.__('CLIENT_CAN_NOT_UPDATE_WITH_YOUR_REFERRAL_CODE'), 'CLIENT_CAN_NOT_UPDATE_WITH_YOUR_REFERRAL_CODE');
+      }
+
+      // https://iblb2b.atlassian.net/browse/STAK-2675
+      const maxReferences = affiliateCodeInstance.max_references || 0;
+      if (maxReferences > 0) {
+        const numOfReferences = await clientAffiliateService.getNumOfReferences(affiliateCodeInstance.client_affiliate_id);
+        if (numOfReferences >= maxReferences) {
+          return res.forbidden(res.__('REFERRER_CODE_IS_EXCEED'), 'REFERRER_CODE_IS_EXCEED', {
+            max_references: maxReferences,
+            num_of_references: numOfReferences,
+          });
+        }
       }
 
       const affiliateTypeService = Container.get(AffiliateTypeService);

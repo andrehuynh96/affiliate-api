@@ -165,38 +165,6 @@ const controller = {
         return res.ok({ isValid: false });
       }
 
-
-      /*
-      const affiliateTypeService = Container.get(AffiliateTypeService);
-      const rootClientAffiliateId = referrerClientAffiliate.root_client_affiliate_id || referrerClientAffiliate.id;
-
-      // Check max level that policy can set for users
-      const { policies } = await policyHelper.getPolicies({
-        affiliateTypeId,
-        clientAffiliateService,
-        affiliateTypeService,
-        clientAffiliate: referrerClientAffiliate
-      });
-
-      if (!_.some(policies)) {
-        return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
-      }
-
-      const affiliatePolicy = policies.find(x => x.type === PolicyType.AFFILIATE);
-      if (!affiliatePolicy) {
-        return res.notFound(res.__('NOT_FOUND_POLICY'), 'NOT_FOUND_POLICY');
-      }
-
-      const level = referrerClientAffiliate.level + 1;
-      const maxLevels = affiliatePolicy.max_levels;
-
-      if (maxLevels && level > maxLevels) {
-        const errorMessage = res.__('POLICY_LEVEL_IS_EXCEED', maxLevels);
-
-        return res.forbidden(errorMessage, 'POLICY_LEVEL_IS_EXCEED', { fields: ['code'] });
-      }
-      */
-
       return res.ok({ isValid: true });
     }
     catch (err) {
