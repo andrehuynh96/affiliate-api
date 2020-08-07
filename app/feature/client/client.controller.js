@@ -87,6 +87,21 @@ const controller = {
           }
         }
 
+        const referrerClient = await clientService.findByPk(referrerClientAffiliate.client_id);
+        const membership_type_id = referrerClient.membership_type_id;
+        if (!membership_type_id) {
+          return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+        }
+
+        const membershipTypeService = Container.get(MembershipTypeService);
+        const membershipType = await membershipTypeService.findOne({
+          id: membership_type_id
+        });
+
+        if (!membershipType || membershipType.type === MembershipTypeName.Free) {
+          return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+        }
+
         referrer_client_affiliate_id = referrerClientAffiliate.id;
       }
 
