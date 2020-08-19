@@ -11,12 +11,17 @@ const {
   ClientService,
   ClientAffiliateService,
 } = require('app/services');
+const config = require('app/config');
 
 const Op = Sequelize.Op;
 const MEMBERSHIP_AFFILIATE_TYPE_ID = 1;
 const AFFILIATE_AFFILIATE_TYPE_ID = 2;
 
 module.exports = async () => {
+  if (!config.patchData.isEnabledSyncClientForMembershipNetwork) {
+    return;
+  }
+
   console.log('Sync membership data');
   const clientService = Container.get(ClientService);
   const clientAffiliateService = Container.get(ClientAffiliateService);

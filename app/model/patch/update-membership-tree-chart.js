@@ -11,12 +11,17 @@ const {
   ClientService,
   ClientAffiliateService,
 } = require('app/services');
+const config = require('app/config');
 
 const Op = Sequelize.Op;
 const MEMBERSHIP_AFFILIATE_TYPE_ID = 1;
 const AFFILIATE_AFFILIATE_TYPE_ID = 2;
 
 module.exports = async () => {
+  if (!config.patchData.isEnabledUpdateMembershipTreeChart) {
+    return;
+  }
+
   console.log('Update membership tree chart. START');
   const clientService = Container.get(ClientService);
   const clientAffiliateService = Container.get(ClientAffiliateService);
