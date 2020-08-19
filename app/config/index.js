@@ -100,7 +100,10 @@ const config = {
   membership: {
     defaultCurrencyList: (process.env.MEMBERSHIP_DEFAULT_CURRENCY_LIST || '').split(',').map(x => _.trim(x)),
   },
-
+  patchData: {
+    isEnabledSyncClientForMembershipNetwork: process.env.PATCH_IS_ENABLED_SYNC_CLIENT_FOR_MEMBERSHIP_NETWORK === 'true',
+    isEnabledUpdateMembershipTreeChart: process.env.PATCH_IS_ENABLED_UPDATE_MEMBERSHIP_TREE_CHART === 'true',
+  },
 };
 
 console.log('=======================================================');
