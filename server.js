@@ -11,6 +11,7 @@ const config = require('app/config');
 const { RedisCacherService, PluTXUserIDService } = require('app/services');
 const startJobs = require('app/jobs');
 const loader = require('app/loader');
+const patchData = require('app/model/patch');
 
 const { Container, Service } = typedi;
 
@@ -73,6 +74,9 @@ database.init(async err => {
     console.log(`App: ${config.app.name}, version: ${config.app.version}.`);
     console.log('=======================================================');
     console.log(`Listening at http://${config.app.appHostName}:${config.app.port}\n`);
+
+    // Patch data
+    patchData();
   });
 
   process.on('SIGINT', () => {
