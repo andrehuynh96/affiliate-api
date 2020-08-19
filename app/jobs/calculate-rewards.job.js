@@ -5,6 +5,17 @@ const Queue = require('bull');
 const config = require('../config');
 const AffiliateCode = require('../model').affiliate_codes;
 const processJob = require('./calculate-rewards.processor');
+const {
+  AffiliateCodeService,
+  AffiliateRequestService,
+  ClientService,
+  ClientAffiliateService,
+  RewardService,
+  ClaimRewardService,
+  AffiliateTypeService,
+} = require('app/services');
+const AffiliateRequestStatus = require('app/model/value-object/affiliate-request-status');
+const sleep = require('sleep');
 
 const { Container, Service } = typedi;
 const { QueueOptions, Job } = Queue;
@@ -74,6 +85,7 @@ class _CalculateRewardsJob {
     this.queue.process('*', NUM_OF_CURRENT_JOBS, processJob);
 
     await this.restartFailedJobs();
+    // await this.syncPendingJobs();
 
     // Local events pass the job instance...
     this.queue.on('progress', (job, progress) => {
@@ -90,6 +102,30 @@ class _CalculateRewardsJob {
 
     await forEach(jobs, async (job) => {
       job.retry();
+    });
+  }
+
+  async syncPendingJobs() {
+    const affiliateRequestService = Container.get(AffiliateRequestService);
+    const pendingRequests = await affiliateRequestService.findAll({
+      status: AffiliateRequestStatus.PENDING,
+    });
+
+    await forEachSeries(pendingRequests, async (request) => {
+      let job = await this.queue.getJob(request.job_id);
+      if (!job) {
+        job = await this.addJob(request);
+        request.job_id = job.id + '';
+        await affiliateRequestService.updateWhere(
+          {
+            id: request.id
+          },
+          {
+            job_id: request.job_id,
+          });
+
+        sleep.msleep(100);
+      }
     });
   }
 
