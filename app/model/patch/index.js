@@ -2,6 +2,9 @@ const updateMembershipTreeChartPatch = require('app/model/patch/update-membershi
 const syncClientForMembershipNetworkPatch = require('app/model/patch/sync-client-for-membership-network');
 
 module.exports = async () => {
-  await syncClientForMembershipNetworkPatch();
-  await updateMembershipTreeChartPatch();
+  // await syncClientForMembershipNetworkPatch();
+
+  setTimeout(async () => {
+    await updateMembershipTreeChartPatch();
+  }, 5 * 1000);
 };
