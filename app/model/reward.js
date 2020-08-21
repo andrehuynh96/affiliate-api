@@ -68,8 +68,13 @@ module.exports = (sequelize, DataTypes) => {
         fields: ['client_affiliate_id', 'policy_id', 'affiliate_request_detail_id']
       },
       {
-        name: 'rewards_amount_reward',
-        fields: ['client_affiliate_id', 'currency_symbol', 'amount', 'level', 'status']
+        name: 'rewards_amount_reward2',
+        fields: [
+          {
+            attribute: 'id',
+            order: 'DESC',
+          },
+          'client_affiliate_id', 'currency_symbol', 'amount', 'level', 'status']
       },
     ]
   });

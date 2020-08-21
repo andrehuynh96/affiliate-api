@@ -4,6 +4,7 @@ const destObject = {
   array: {
     '[].code': '[].code',
     '[].ext_client_id': '[].ext_client_id',
+    '[].max_references': '[].max_references?',
     '[].createdAt': '[].created_at',
     '[].updatedAt': '[].updated_at',
     '[].created_by': '[].created_by',
@@ -12,6 +13,7 @@ const destObject = {
   single: {
     code: 'code',
     ext_client_id: 'ext_client_id',
+    max_references: 'max_references?',
     createdAt: 'created_at',
     updatedAt: 'updated_at',
     created_by: 'created_by',

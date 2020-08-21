@@ -151,10 +151,7 @@ class CalculateRewards {
       referrer_client_affiliate_id: null,
       level: null,
       status: null,
-      setting: {
-        ...policy.get({ plain: true }),
-        membership_type_id: membershipTypeId,
-      },
+      setting: this.getSetting(policy, { membership_type_id: membershipTypeId }),
     });
 
     this.logger.debug('Output: ', rewardList);
@@ -216,10 +213,7 @@ class CalculateRewards {
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
           status: null,
-          setting: {
-            ...policy.get({ plain: true }),
-            membership_type_id: membershipTypeId,
-          },
+          setting: this.getSetting(policy, { membership_type_id: membershipTypeId }),
         });
       }
     });
@@ -280,9 +274,7 @@ class CalculateRewards {
           referrer_client_affiliate_id: invitee ? invitee.id : null,
           level: index + 1,
           status: null,
-          setting: {
-            ...policy.get({ plain: true }),
-          },
+          setting: this.getSetting(policy),
         });
       }
     });
@@ -306,6 +298,21 @@ class CalculateRewards {
 
     return client;
   }
+  getSetting(policy, extraData) {
+    let result = Object.assign({}, policy.get({ plain: true }), extraData);
+    console.log(result);
+    result = _.pick(result, [
+      'type',
+      'proportion_share',
+      'rates',
+      'membership_rate',
+      'currency_symbol',
+      'membership_type_id',
+    ]);
+
+    return result;
+  }
+
 
 }
 

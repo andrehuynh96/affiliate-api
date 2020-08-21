@@ -250,6 +250,12 @@ class _ClientAffiliateService extends BaseService {
     });
   }
 
+  async getNumOfReferences(client_affiliate_id) {
+    return this.count({
+      referrer_client_affiliate_id: client_affiliate_id,
+    });
+  }
+
 }
 
 const ClientAffiliateService = Service([], () => {

@@ -39,11 +39,11 @@ class _RewardService extends BaseService {
     return new Promise(async (resolve, reject) => {
       try {
         const result = await this.model.findAll({
-          group: ['client_affiliate_id', 'currency_symbol'],
-          attributes: ['currency_symbol'],
           where: {
             client_affiliate_id: affiliateClientId,
-          }
+          },
+          attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('currency_symbol')), 'currency_symbol']],
+          raw: true,
         });
 
         resolve(result);
@@ -149,7 +149,7 @@ class _RewardService extends BaseService {
     });
   }
 
-  getRewardsAndPolicy (affiliateRequestDetailId) {
+  getRewardsAndPolicy(affiliateRequestDetailId) {
     return new Promise(async (resolve, reject) => {
       try {
         const total = await this.model.findAll(

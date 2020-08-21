@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       default: false,
     },
+    max_references: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      default: 0,
+    },
   }, {
     underscored: true,
     timestamps: true,
