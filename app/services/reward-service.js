@@ -115,6 +115,7 @@ class _RewardService extends BaseService {
             client_affiliate_id: affiliateClientId,
             currency_symbol: currencySymbol,
           },
+          attributes: ['id'],
           order: [['id', 'DESC']]
         });
 

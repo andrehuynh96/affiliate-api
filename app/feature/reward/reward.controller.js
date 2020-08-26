@@ -269,15 +269,25 @@ const controller = {
       const rewardService = Container.get(RewardService);
       const claimRewardService = Container.get(ClaimRewardService);
       const affiliateTypeService = Container.get(AffiliateTypeService);
-      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+      // const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+      const currencyList = config.affiliate.defaultCurrencyList.map(x => {
+        return {
+          currency_symbol: x,
+        };
+      });
+
       const notFoundCurrencyList = defaultCurrencyList;
-      const result = await map(currencyList, async (item) => {
+      let result = await map(currencyList, async (item) => {
         const { currency_symbol } = item;
+        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
+        if (!latestId) {
+          return;
+        }
+
         if (defaultCurrencyList.includes(currency_symbol)) {
           _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
         }
 
-        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
         const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol, latestId);
         const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
         const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
@@ -316,6 +326,7 @@ const controller = {
           paid_amount: withdrawAmount,
         };
       });
+      result = result.filter(item => !!item);
 
       if (notFoundCurrencyList.length > 0) {
         notFoundCurrencyList.forEach(currency => {
@@ -338,11 +349,11 @@ const controller = {
       }
 
       await forEach(result, async item => {
-        const membershipPolicy = await policyHelper.getMembershipPolicyForCurrency({
-          currencySymbol: item.currency_symbol,
-          affiliateTypeId,
-          affiliateTypeService,
-        });
+        // const membershipPolicy = await policyHelper.getMembershipPolicyForCurrency({
+        //   currencySymbol: item.currency_symbol,
+        //   affiliateTypeId,
+        //   affiliateTypeService,
+        // });
 
         levelList.forEach(level => {
           let levelInfo = item.reward_list.find(rw => rw.level === level);
@@ -356,12 +367,12 @@ const controller = {
             item.reward_list.push(levelInfo);
           }
 
-          if (level === 0 && membershipPolicy) {
-            levelInfo.membership_policy = {
-              proportion_share: Number(membershipPolicy.proportion_share),
-              membership_rate: membershipPolicy.membership_rate,
-            };
-          }
+          // if (level === 0 && membershipPolicy) {
+          //   levelInfo.membership_policy = {
+          //     proportion_share: Number(membershipPolicy.proportion_share),
+          //     membership_rate: membershipPolicy.membership_rate,
+          //   };
+          // }
 
           item.reward_list = _.sortBy(item.reward_list, 'level');
         });
@@ -432,7 +443,7 @@ const controller = {
 
       const off = parseInt(offset);
       const lim = parseInt(limit);
-      const order = [['from_date','DESC'],['to_date','DESC']];
+      const order = [['from_date', 'DESC'], ['to_date', 'DESC']];
       const affiliateRequestService = Container.get(AffiliateRequestService);
       const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
 
