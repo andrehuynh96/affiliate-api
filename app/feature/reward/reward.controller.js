@@ -270,39 +270,32 @@ const controller = {
       const rewardService = Container.get(RewardService);
       const claimRewardService = Container.get(ClaimRewardService);
       const affiliateTypeService = Container.get(AffiliateTypeService);
+      const latestIdCache = {};
       const currencyList = config.affiliate.defaultCurrencyList.map(x => {
+        latestIdCache[x] = null;
+
         return {
           currency_symbol: x,
         };
       });
 
-      let start = microprofiler.start();
+      // let start = microprofiler.start();
       const notFoundCurrencyList = defaultCurrencyList;
-      const latestIdList = await map(currencyList, async (item) => {
+      await forEach(currencyList, async (item) => {
         const { currency_symbol } = item;
         const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
         if (!latestId) {
           return;
         }
 
-        _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
-        return {
-          currency_symbol,
-          latestId,
-        };
-      });
-
-      const latestIdCache = {};
-      latestIdList.filter(item => !!item).forEach(item => {
         latestIdCache[item.currency_symbol] = item.latestId;
+        _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
       });
-      microprofiler.measureFrom(start, 'getLatestId');
-      microprofiler.show('getLatestId');
+      // microprofiler.measureFrom(start, 'getLatestId',1);
 
-      start = microprofiler.start();
+      // start = microprofiler.start();
       const result = [];
-      const getTotalRewardTask2 = rewardService.getTotalAmountByAffiliateClientId(clientAffiliate.id, latestIdCache);
-
+      const getTotalRewardTask = rewardService.getTotalAmountByAffiliateClientId(clientAffiliate.id, latestIdCache);
       const getClaimRewardsTask = forEach(Object.keys(latestIdCache), async (currencySymbol) => {
         const latestId = latestIdCache[currencySymbol];
 
@@ -330,12 +323,11 @@ const controller = {
       });
 
       const [totalRewardGroups] = await Promise.all([
-        getTotalRewardTask2,
-        // getClaimRewardsTask,
+        getTotalRewardTask,
+        getClaimRewardsTask,
       ]);
       // console.log(totalRewardGroups);
-      microprofiler.measureFrom(start, 'totalRewardGroups');
-      microprofiler.show('totalRewardGroups');
+      // microprofiler.measureFrom(start, 'totalRewardGroups', 1);
 
       await forEach(result, async (item) => {
         const { currency_symbol } = item;

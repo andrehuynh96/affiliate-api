@@ -156,15 +156,11 @@ class _RewardService extends BaseService {
   getTotalAmountByAffiliateClientId(affiliateClientId, latestIdCache) {
     return new Promise(async (resolve, reject) => {
       try {
-        const startDate = new Date();
         const orConditions = [];
         Object.keys(latestIdCache).forEach((currencySymbol) => {
           const latestId = latestIdCache[currencySymbol];
           const cond = {
             currency_symbol: currencySymbol,
-            id: {
-              [Op.lte]: latestIdCache[currencySymbol],
-            }
           };
           if (latestId > 0) {
             cond.id = {
@@ -185,13 +181,9 @@ class _RewardService extends BaseService {
           attributes: ['currency_symbol', 'level', [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
           raw: true
         });
-        const endDate = new Date();
-        var diffMS = endDate - startDate;
-        console.log(`Run getTotalAmountByAffiliateClientId in ${diffMS}  ms.`);
 
         resolve(total);
       } catch (err) {
-        console.log(err);
         reject(err);
       }
     });
