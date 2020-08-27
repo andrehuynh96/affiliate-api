@@ -5,6 +5,7 @@ const moment = require('moment');
 const { map, forEach } = require('p-iteration');
 const v4 = require('uuid/v4');
 const Decimal = require('decimal.js');
+const microprofiler = require('microprofiler');
 const {
   AffiliateCodeService,
   AffiliateRequestService,
@@ -269,52 +270,81 @@ const controller = {
       const rewardService = Container.get(RewardService);
       const claimRewardService = Container.get(ClaimRewardService);
       const affiliateTypeService = Container.get(AffiliateTypeService);
-      const currencyList = await rewardService.getCurrencyListForAffiliateClient(clientAffiliate.id);
+      const latestIdCache = {};
+      const currencyList = config.affiliate.defaultCurrencyList.map(x => {
+        latestIdCache[x] = null;
+
+        return {
+          currency_symbol: x,
+        };
+      });
+
+      // let start = microprofiler.start();
       const notFoundCurrencyList = defaultCurrencyList;
-      const result = await map(currencyList, async (item) => {
+      await forEach(currencyList, async (item) => {
         const { currency_symbol } = item;
-        if (defaultCurrencyList.includes(currency_symbol)) {
-          _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
+        if (!latestId) {
+          return;
         }
 
-        const latestId = await rewardService.getLatestId(clientAffiliate.id, currency_symbol);
-        const getTotalRewardTask = rewardService.getTotalAmountGroupByLevel(clientAffiliate.id, currency_symbol, latestId);
-        const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [ClaimRewardStatus.Pending]);
-        const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currency_symbol, [
+        latestIdCache[item.currency_symbol] = item.latestId;
+        _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+      });
+      // microprofiler.measureFrom(start, 'getLatestId',1);
+
+      // start = microprofiler.start();
+      const result = [];
+      const getTotalRewardTask = rewardService.getTotalAmountByAffiliateClientId(clientAffiliate.id, latestIdCache);
+      const getClaimRewardsTask = forEach(Object.keys(latestIdCache), async (currencySymbol) => {
+        const latestId = latestIdCache[currencySymbol];
+
+        const getPendingAmountClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currencySymbol, [ClaimRewardStatus.Pending]);
+        const getPaidAmountOfClaimRewardTask = claimRewardService.getTotalAmount(clientAffiliate.id, currencySymbol, [
           ClaimRewardStatus.Approved,
           ClaimRewardStatus.InProcessing,
           ClaimRewardStatus.Completed,
         ]);
 
         // eslint-disable-next-line prefer-const
-        let [groupTotalReward, withdrawAmount, pendingAmount] = await Promise.all([
-          getTotalRewardTask,
+        let [withdrawAmount, pendingAmount] = await Promise.all([
           getPaidAmountOfClaimRewardTask,
           getPendingAmountClaimRewardTask,
         ]);
 
-        let totalReward = Decimal(0);
-        const rewardList = groupTotalReward.map(item => {
-          const amount = Decimal(Number(item.total));
-          totalReward = totalReward.add(amount);
-
-          return {
-            level: item.level || 0,
-            amount: amount.toNumber(),
-          };
-        });
-
-        const availableAmount = totalReward.sub(Number(pendingAmount)).toNumber();
-
-        return {
-          currency_symbol: currency_symbol,
+        result.push({
+          currency_symbol: currencySymbol,
           latest_id: latestId,
-          reward_list: rewardList,
-          total_amount: totalReward.toNumber(),
-          // available_amount: availableAmount,
+          total_amount: 0,
+          reward_list: [],
           pending_amount: pendingAmount,
           paid_amount: withdrawAmount,
-        };
+        });
+      });
+
+      const [totalRewardGroups] = await Promise.all([
+        getTotalRewardTask,
+        getClaimRewardsTask,
+      ]);
+      // console.log(totalRewardGroups);
+      // microprofiler.measureFrom(start, 'totalRewardGroups', 1);
+
+      await forEach(result, async (item) => {
+        const { currency_symbol } = item;
+        let totalReward = Decimal(0);
+        const rewardList = totalRewardGroups.filter(x => x.currency_symbol === currency_symbol)
+          .map(item => {
+            const amount = Decimal(Number(item.total));
+            totalReward = totalReward.add(amount);
+
+            return {
+              level: item.level || 0,
+              amount: amount.toNumber(),
+            };
+          });
+
+        item.reward_list = rewardList;
+        item.total_amount = totalReward.toNumber();
       });
 
       if (notFoundCurrencyList.length > 0) {
@@ -338,12 +368,6 @@ const controller = {
       }
 
       await forEach(result, async item => {
-        const membershipPolicy = await policyHelper.getMembershipPolicyForCurrency({
-          currencySymbol: item.currency_symbol,
-          affiliateTypeId,
-          affiliateTypeService,
-        });
-
         levelList.forEach(level => {
           let levelInfo = item.reward_list.find(rw => rw.level === level);
 
@@ -354,13 +378,6 @@ const controller = {
             };
 
             item.reward_list.push(levelInfo);
-          }
-
-          if (level === 0 && membershipPolicy) {
-            levelInfo.membership_policy = {
-              proportion_share: Number(membershipPolicy.proportion_share),
-              membership_rate: membershipPolicy.membership_rate,
-            };
           }
 
           item.reward_list = _.sortBy(item.reward_list, 'level');
@@ -432,7 +449,7 @@ const controller = {
 
       const off = parseInt(offset);
       const lim = parseInt(limit);
-      const order = [['from_date','DESC'],['to_date','DESC']];
+      const order = [['from_date', 'DESC'], ['to_date', 'DESC']];
       const affiliateRequestService = Container.get(AffiliateRequestService);
       const { count: total, rows: items } = await affiliateRequestService.findAndCountAll({ condition, offset: off, limit: lim, order });
 

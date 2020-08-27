@@ -1,10 +1,13 @@
 const typedi = require('typedi');
 const _ = require('lodash');
+const moment = require('moment');
 const Sequelize = require('sequelize');
 const { forEach } = require('p-iteration');
+const microprofiler = require('microprofiler');
 const BaseService = require('./base-service');
 const db = require('app/model');
 const Policy = require('app/model').policies;
+
 const Op = Sequelize.Op;
 const Service = typedi.Service;
 const sequelize = db.sequelize;
@@ -115,6 +118,7 @@ class _RewardService extends BaseService {
             client_affiliate_id: affiliateClientId,
             currency_symbol: currencySymbol,
           },
+          attributes: ['id'],
           order: [['id', 'DESC']]
         });
 
@@ -148,6 +152,43 @@ class _RewardService extends BaseService {
       }
     });
   }
+
+  getTotalAmountByAffiliateClientId(affiliateClientId, latestIdCache) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const orConditions = [];
+        Object.keys(latestIdCache).forEach((currencySymbol) => {
+          const latestId = latestIdCache[currencySymbol];
+          const cond = {
+            currency_symbol: currencySymbol,
+          };
+          if (latestId > 0) {
+            cond.id = {
+              [Op.lte]: latestIdCache[currencySymbol],
+            };
+          }
+
+          orConditions.push(cond);
+        });
+
+        const total = await this.model.findAll({
+          where: {
+            client_affiliate_id: affiliateClientId,
+            status: { [Op.eq]: null },
+            [Op.or]: orConditions,
+          },
+          group: ['currency_symbol', 'level'],
+          attributes: ['currency_symbol', 'level', [Sequelize.fn('SUM', Sequelize.col('amount')), 'total']],
+          raw: true
+        });
+
+        resolve(total);
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
 
   getRewardsAndPolicy(affiliateRequestDetailId) {
     return new Promise(async (resolve, reject) => {

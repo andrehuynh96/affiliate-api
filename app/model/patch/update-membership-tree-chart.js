@@ -142,7 +142,7 @@ async function updateClientAffiliate(membershipClientAffiliate, referrerClientAf
   membershipClientAffiliate.parent_path = `${referrerClientAffiliate.parent_path}.${referrerClientAffiliate.id}`;
   membershipClientAffiliate.level = referrerClientAffiliate.level + 1;
   const afterData = _.pick(membershipClientAffiliate, updateProperties);
-  let hasChanged = hasChangedData(membershipClientAffiliate);
+  const hasChanged = hasChangedData(membershipClientAffiliate);
 
   if (hasChanged) {
     logger.info(`Sync membership data for ${client.ext_client_id}. ClientAffiliateId: ${membershipClientAffiliate.id}`);
