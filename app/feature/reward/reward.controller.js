@@ -289,7 +289,6 @@ const controller = {
         latestIdCache[currency_symbol] = latestId;
         _.remove(notFoundCurrencyList, (x) => x === currency_symbol);
       });
-      console.log(notFoundCurrencyList);
       // microprofiler.measureFrom(start, 'getLatestId',1);
 
       // start = microprofiler.start();
