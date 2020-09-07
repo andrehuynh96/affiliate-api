@@ -266,14 +266,12 @@ const controller = {
         return res.badRequest(errorMessage, 'NOT_FOUND_EXT_CLIENT_ID', { fields: ['ext_client_id'] });
       }
 
-      const defaultCurrencyList = [...config.affiliate.defaultCurrencyList];
       const rewardService = Container.get(RewardService);
       const claimRewardService = Container.get(ClaimRewardService);
       const affiliateTypeService = Container.get(AffiliateTypeService);
       const latestIdCache = {};
-      const currencyList = config.affiliate.defaultCurrencyList.map(x => {
-        latestIdCache[x] = null;
-
+      const defaultCurrencyList = [...config.affiliate.defaultCurrencyList];
+      const currencyList = defaultCurrencyList.map(x => {
         return {
           currency_symbol: x,
         };
@@ -288,9 +286,10 @@ const controller = {
           return;
         }
 
-        latestIdCache[item.currency_symbol] = item.latestId;
-        _.remove(notFoundCurrencyList, (item) => item === currency_symbol);
+        latestIdCache[currency_symbol] = latestId;
+        _.remove(notFoundCurrencyList, (x) => x === currency_symbol);
       });
+      console.log(notFoundCurrencyList);
       // microprofiler.measureFrom(start, 'getLatestId',1);
 
       // start = microprofiler.start();
