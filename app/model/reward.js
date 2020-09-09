@@ -63,18 +63,47 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true,
     indexes: [
       {
-        name: 'rewards_reward_client_per_policy_key',
+        name: 'rewards_reward_client_per_policy_key_2',
         unique: true,
         fields: ['client_affiliate_id', 'policy_id', 'affiliate_request_detail_id']
       },
       {
-        name: 'rewards_amount_reward2',
+        name: 'rewards_latest_id',
         fields: [
           {
             attribute: 'id',
             order: 'DESC',
           },
-          'client_affiliate_id', 'currency_symbol', 'amount', 'level', 'status']
+          {
+            attribute: 'client_affiliate_id',
+            order: 'ASC',
+          },
+          {
+            attribute: 'currency_symbol',
+            order: 'ASC',
+          },
+        ]
+      },
+      {
+        name: 'rewards_amount_reward_3',
+        fields: [
+          {
+            attribute: 'currency_symbol',
+            order: 'ASC',
+          },
+          {
+            attribute: 'level',
+            order: 'DESC',
+          },
+          {
+            attribute: 'client_affiliate_id',
+            order: 'DESC',
+          },
+          {
+            attribute: 'id',
+            order: 'DESC',
+          },
+          'amount', 'status']
       },
     ]
   });
