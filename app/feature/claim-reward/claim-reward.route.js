@@ -47,6 +47,7 @@ const route = express.Router();
  *            - currency_symbol
  *            - ext_client_id
  *            - amount
+ *            - network_fee
  *            example:
  *              {
                   "currency_symbol": "USDT",
@@ -68,7 +69,7 @@ const route = express.Router();
                       "client_affiliate_id": "67",
                       "currency_symbol": "ETH",
                       "amount": "1.1",
-                      "network_fee": 0.00133
+                      "network_fee": 0.00133,
                       "status": "PENDING",
                       "updated_at": "2020-03-30T03:21:09.206Z",
                       "created_at": "2020-03-30T03:21:09.206Z"
