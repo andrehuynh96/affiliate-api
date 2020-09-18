@@ -27,6 +27,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       default: null,
     },
+    network_fee: {
+      type: DataTypes.DECIMAL,
+      allowNull: false,
+      default: 0,
+    },
   }, {
     underscored: true,
     timestamps: true,

@@ -25,7 +25,7 @@ const controller = {
 
     try {
       const { body, affiliateTypeId } = req;
-      const { currency_symbol, amount, latest_id } = body;
+      const { currency_symbol, amount, latest_id, network_fee } = body;
       const extClientId = _.trim(body.ext_client_id).toLowerCase();
 
       // Validate ext_client_id
@@ -61,6 +61,7 @@ const controller = {
         availableAmount,
         totalReward,
         amount,
+        network_fee,
       });
 
       // Allow claim reward
@@ -74,6 +75,7 @@ const controller = {
           availableAmount,
           totalReward,
           amount,
+          network_fee,
         });
       }
 
@@ -99,6 +101,7 @@ const controller = {
         client_affiliate_id: clientAffiliateId,
         currency_symbol,
         amount,
+        network_fee,
         affiliate_type_id: affiliateTypeId,
         status: ClaimRewardStatus.Pending,
         latest_id,
