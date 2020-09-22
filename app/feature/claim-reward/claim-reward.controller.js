@@ -100,7 +100,7 @@ const controller = {
       const data = {
         client_affiliate_id: clientAffiliateId,
         currency_symbol,
-        amount,
+        amount: Decimal(amount).minus(network_fee).toNumber(),
         network_fee,
         affiliate_type_id: affiliateTypeId,
         status: ClaimRewardStatus.Pending,
