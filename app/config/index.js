@@ -22,6 +22,7 @@ const config = {
     port: utils.normalizePort(utils.getOsEnvOptional('PORT') || utils.getOsEnv('APP_PORT')),
     rateLimit: utils.toNumber(process.env.RATE_LIMIT || 100),
     pageSize: utils.toNumber(process.env.APP_PAGE_SIZE || 10),
+    lockTimeInSeconds: utils.toNumber(process.env.APP_CLAIM_REWARD_LOCK_TIME_IN_SECONDS || 15),
   },
   logger: {
     defaultLevel: process.env.LOG_DEFAULT_LEVEL || 'debug',
