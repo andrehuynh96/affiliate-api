@@ -46,15 +46,15 @@ const controller = {
 
       // Prevent run pararell
       const ressourceId = _.kebabCase(['claim-reward', clientAffiliateId, currency_symbol].join('-'));
-      const ttl = 15 * 1000; // 15 seconds
+      const ttl = config.app.lockTimeInSeconds * 1000;
       lock = await lockService.lockRessource(ressourceId, ttl);
 
       let totalReward;
       totalReward = await rewardService.getAvailableAmount(clientAffiliateId, currency_symbol, latest_id);
 
       totalReward = Decimal(totalReward);
-      const withdrawAmount = Decimal(0);
-      const availableAmount = totalReward.sub(withdrawAmount.add(amount));
+      const withdrawAmount = Decimal(amount).add(network_fee);
+      const availableAmount = totalReward.sub(withdrawAmount);
 
       logger.info(`Processing claim request for client ${extClientId} (clientAffiliateId: ${clientAffiliateId})`, {
         currencySymbol: currency_symbol,
@@ -100,7 +100,7 @@ const controller = {
       const data = {
         client_affiliate_id: clientAffiliateId,
         currency_symbol,
-        amount,
+        amount: amount,
         network_fee,
         affiliate_type_id: affiliateTypeId,
         status: ClaimRewardStatus.Pending,
