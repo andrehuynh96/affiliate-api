@@ -209,6 +209,63 @@ const controller = {
     }
   },
 
+  unregister: async (req, res, next) => {
+    const logger = Container.get('logger');
+
+    try {
+      const { body, affiliateTypeId, organizationId } = req;
+      let { ext_client_id } = body;
+      ext_client_id = _.trim(ext_client_id).toLowerCase();
+
+      const affiliateCodeService = Container.get(AffiliateCodeService);
+      const clientAffiliateService = Container.get(ClientAffiliateService);
+      const clientService = Container.get(ClientService);
+      const affiliateTypeService = Container.get(AffiliateTypeService);
+      let transaction = null;
+      const client = await clientService.findOne({
+        ext_client_id,
+        organization_id: organizationId,
+      });
+      if (!client) {
+        return res.ok(true);
+      }
+
+      try {
+        const clientId = client.id;
+        const clientAffiliate = await clientAffiliateService.findOne({
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
+        });
+        if (!clientAffiliate) {
+          return res.ok(true);
+        }
+
+        transaction = await db.sequelize.transaction();
+        await affiliateCodeService.deleteWhere({
+          client_affiliate_id: clientAffiliate.id,
+        }, transaction);
+        await clientAffiliateService.deleteWhere({
+          client_id: clientId,
+          affiliate_type_id: affiliateTypeId,
+        }, transaction);
+
+        await transaction.commit();
+
+        return res.ok(true);
+      } catch (err) {
+        if (transaction) {
+          await transaction.rollback();
+        }
+
+        throw err;
+      }
+    }
+    catch (err) {
+      logger.error(err);
+      next(err);
+    }
+  },
+
   registerMembership: async (req, res, next) => {
     const logger = Container.get('logger');
 

@@ -5,6 +5,7 @@ const appAuth = require('app/middleware/authenticate.middleware');
 const verifySignature = require('app/middleware/verify-signature.middleware');
 const {
   create,
+  unregister,
   registerMembership,
   setPolicies,
   updateAffiliateCode,
@@ -218,6 +219,102 @@ route.post('/clients',
   appAuth(),
   verifySignature,
   controller.create
+);
+/* #endregion */
+
+/* #region Unregister new client */
+/**
+ * @swagger
+ * /api/v1/clients:
+ *   post:
+ *     summary: Unregister new client
+ *     tags:
+ *       - Client
+ *       - Backend
+ *     description:
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         type: string
+ *         required: true
+ *         description: Bearer {token}
+ *       - in: header
+ *         name: x-affiliate-type-id
+ *         type: number
+ *         required: true
+ *         description: Affiliate type id
+ *       - in: header
+ *         name: x-time
+ *         type: string
+ *         required: true
+ *         description: Unix Time
+ *       - in: header
+ *         name: x-checksum
+ *         type: string
+ *         required: true
+ *         description: Checksum
+ *       - in: body
+ *         name: data
+ *         description:
+ *         schema:
+ *            type: object
+ *            required:
+ *            - ext_client_id
+ *            - affiliate_code
+ *            example:
+ *               {
+                    "ext_client_id":"binh.nt@blockchainlabs.asia",
+                  }
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: Ok
+ *         examples:
+ *           application/json:
+ *             {
+ *                 "data": true
+ *             }
+ *
+ *       400:
+ *         description: Bad request
+ *         schema:
+ *           properties:
+ *             message:
+ *              type: string
+ *             error:
+ *              type: string
+ *             code:
+ *              type: string
+ *             fields:
+ *              type: object
+ *           example:
+ *             message: Duplicate ext_client_id
+ *             error: error
+ *             code: REGISTER_CLIENT_DUPLICATE_EXT_CLIENT_ID
+ *             fields: ['client_id']
+ *
+ *       401:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/401'
+ *
+ *       404:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/404'
+ *
+ *       500:
+ *         description: Error
+ *         schema:
+ *           $ref: '#/definitions/500'
+ */
+
+route.post('/clients/unregister',
+  validator(unregister),
+  appAuth(),
+  verifySignature,
+  controller.unregister
 );
 /* #endregion */
 
