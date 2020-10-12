@@ -18,7 +18,7 @@ module.exports = {
             const getMembershipPolicies = `SELECT * FROM policies WHERE type = 'MEMBERSHIP' `;
             const [ policies ] = await queryInterface.sequelize.query(getMembershipPolicies, {}, {});
             for (const item of policies) {
-              item.membership_rate[membership_type_id] = 15;
+              item.membership_rate[membership_type_id] = 100;
               await queryInterface.sequelize.query(`UPDATE policies SET membership_rate = '${JSON.stringify(item.membership_rate)}' WHERE type = 'MEMBERSHIP' AND id = '${item.id}' `, {}, {});
             }
             // throw new Error('Abc');
