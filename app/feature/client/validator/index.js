@@ -10,4 +10,5 @@ module.exports = {
   getTreeChart: require('./get-tree-chart'),
   extClientId: require('./ext-client-id'),
   getRefferalStructure: require('./get-refferal-structure'),
+  syncMembershipTypeClients: require('./sync-membership-type-clients'),
 };

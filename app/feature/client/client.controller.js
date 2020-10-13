@@ -1385,9 +1385,86 @@ const controller = {
     });
 
     return rewardList;
-  }
+  },
 
+  syncMembershipTypeClients: async (req, res, next) => {
+    const logger = Container.get('logger');
+    try {
+      logger.info('Sync membership type of clients');
+      const { platinum, gold } = req.body;
+      platinum.forEach(item => {
+        item = _.trim(item).toLowerCase();
+      });
+      gold.forEach(item => {
+        item = _.trim(item).toLowerCase();
+      });
+      const clientService = Container.get(ClientService);
+      const membershipTypeService = Container.get(MembershipTypeService);
 
+      const membershipTypes = await membershipTypeService.findAll({
+        is_enabled: true,
+        deleted_flg: false
+      });
+
+      const membershipCache = membershipTypes.reduce((result, value) => {
+        result[value.name.toLowerCase()] = value.id;
+        return result;
+      }, {});
+
+      const clients = await clientService.findAll({
+        membership_type_id: { [Op.not]: null }
+      });
+      const listClient = clients.map(item => item.ext_client_id);
+      const listClientSync = platinum.concat(gold);
+
+      const notFoundList = [];
+      listClientSync.forEach(item => {
+        if (!listClient.includes(item)) {
+          notFoundList.push(item);
+        }
+      });
+      if (notFoundList.length > 0) {
+        return res.badRequest(res.__('NOT_FOUND_EXT_CLIENT_ID'), 'NOT_FOUND_EXT_CLIENT_ID', { fields: notFoundList });
+      }
+
+      let transaction = null;
+      // Update clients
+      try {
+        transaction = await db.sequelize.transaction();
+
+        await clientService.updateWhere(
+          {
+            ext_client_id: platinum
+          },
+          {
+            membership_type_id: membershipCache.platinum
+          },
+          { transaction });
+
+        await clientService.updateWhere(
+          {
+            ext_client_id: gold
+          },
+          {
+            membership_type_id: membershipCache.gold
+          },
+          { transaction });
+
+        await transaction.commit();
+      } catch (error) {
+        if (transaction) {
+          await transaction.rollback();
+        }
+
+        throw error;
+      }
+      return res.ok(true);
+    }
+    catch (error) {
+      logger.error('Sync membership type of clients fail', error);
+      next(error);
+    }
+  },
 };
 
 module.exports = controller;
