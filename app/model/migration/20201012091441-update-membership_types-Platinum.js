@@ -8,7 +8,7 @@ module.exports = {
         queryInterface.describeTable('membership_types')
           .then(async (tableDefinition) => {
             const updatePriceSQL = `UPDATE membership_types SET (price,is_enabled) = (100,true) WHERE name= 'Platinum';
-            UPDATE membership_types Set (price,type) = (0,'Free') Where name= 'Gold'`;
+            UPDATE membership_types Set price = 0 Where name= 'Gold'`;
             await queryInterface.sequelize.query(updatePriceSQL, {}, {});
 
             const getPlatinumSQL = `SELECT id FROM membership_types WHERE name ='Platinum'`;
