@@ -157,13 +157,14 @@ const controller = {
         return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
       }
 
-      const membershipType = await membershipTypeService.findOne({
-        id: membership_type_id
-      });
+      // Allow silver see self referrer code // NGOC MY 28/10/2020
+      // const membershipType = await membershipTypeService.findOne({
+      //   id: membership_type_id
+      // });
 
-      if (!membershipType || membershipType.type === MembershipTypeName.Free) {
-        return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
-      }
+      // if (!membershipType || membershipType.type === MembershipTypeName.Free) {
+      //   return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+      // }
 
       return res.ok({ isValid: true });
     }
