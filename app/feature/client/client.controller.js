@@ -98,9 +98,14 @@ const controller = {
           id: membership_type_id
         });
 
-        if (!membershipType || membershipType.type === MembershipTypeName.Free) {
-          return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
-        }
+        // Check membership type of owner referrer code TODO: // HUYNH NGOC MY 28/10/2020
+      // if (!membershipType || membershipType.type === MembershipTypeName.Free) {
+      //   return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+      // }
+
+      if (!membershipType) { // Allow update referrer free membership type
+        return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+      }
 
         referrer_client_affiliate_id = referrerClientAffiliate.id;
       }
