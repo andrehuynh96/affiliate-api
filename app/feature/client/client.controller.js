@@ -726,10 +726,10 @@ const controller = {
       const membershipType = await membershipTypeService.findOne({
         id: membership_type_id
       });
-
-      if (!membershipType || membershipType.type === MembershipTypeName.Free) {
-        return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
-      }
+      // Check membership type of owner referrer code TODO: // HUYNH NGOC MY 28/10/2020
+      // if (!membershipType || membershipType.type === MembershipTypeName.Free) {
+      //   return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+      // }
 
       // Validate ext_client_id
       const client = await clientService.findByExtClientId(extClientId, organizationId);
