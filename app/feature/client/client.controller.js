@@ -731,6 +731,9 @@ const controller = {
       //   return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
       // }
 
+      if (!membershipType) { // Allow update referrer free membership type
+        return res.forbidden(res.__('THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER'), 'THE_OWNER_IS_NOT_PAID_MEMBERSHIP_MEMBER');
+      }
       // Validate ext_client_id
       const client = await clientService.findByExtClientId(extClientId, organizationId);
       if (!client) {
