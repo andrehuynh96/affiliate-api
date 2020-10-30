@@ -14,6 +14,7 @@ const {
   PolicyService,
   RewardService,
   AffiliateTypeService,
+  MembershipTypeService,
 } = require('../services');
 const AffiliateRequestStatus = require('../model/value-object/affiliate-request-status');
 const AffiliateRequestDetailsStatus = require('../model/value-object/affiliate-request-details-status');
@@ -36,6 +37,7 @@ class CalculateRewards {
     this.clientAffiliateService = Container.get(ClientAffiliateService);
     this.affiliateTypeService = Container.get(AffiliateTypeService);
     this.policyService = Container.get(PolicyService);
+    this.membershipTypeService = Container.get(MembershipTypeService);
 
     this.cache = {};
   }
@@ -260,6 +262,18 @@ class CalculateRewards {
           return;
         }
 
+        // Only paid member can receive membership bonus
+        if (isMembershipSystem) {
+          const membershipType = await this.getMembershipType(client.membership_type_id);
+          const membershipTypeName = _.toUpper(membershipType ? membershipType.name : '');
+          this.logger.info(`Client ${client.ext_client_id} is ${membershipTypeName} membership.`);
+
+          const paidMembership = ['PLATINUM', 'DIAMOND'];
+          if (!paidMembership.includes(membershipTypeName)) {
+            return rewardList;
+          }
+        }
+
         const invitee = referrerList.find(x => x.referrer_client_affiliate_id == clientAffiliateId);
 
         rewardList.push({
@@ -298,6 +312,7 @@ class CalculateRewards {
 
     return client;
   }
+
   getSetting(policy, extraData) {
     let result = Object.assign({}, policy.get({ plain: true }), extraData);
     console.log(result);
@@ -313,6 +328,13 @@ class CalculateRewards {
     return result;
   }
 
+  async getMembershipType(membershipTypeId) {
+    if (!membershipTypeId) {
+      return null;
+    }
+
+    return await this.membershipTypeService.findByPk(membershipTypeId, {});
+  }
 
 }
 
